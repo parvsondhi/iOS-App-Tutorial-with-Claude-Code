@@ -4,23 +4,467 @@ title: "Chapter 4: UI Shell with Tailwind CSS"
 description: Build the mobile-first app shell with header, bottom navigation, and tab screens.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import FileTree from '@site/src/components/FileTree';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
 # Chapter 4: UI Shell with Tailwind CSS
 
 > Let's build something you can see. By the end of this chapter, your app will have a real mobile interface.
+
+This is the chapter where your project stops feeling like a coding exercise and starts looking like an actual app. We'll build the structural skeleton — the header, bottom navigation bar, and page screens — that everything else will be built inside.
 
 ---
 
 ## What You'll Build
 
-- Mobile-first app shell with a header and bottom navigation
-- Tab-based navigation between Feed, Create, and Profile screens
-- Safe area insets for modern phones
-- Lucide icons throughout
+- A mobile-first app shell sized to a phone viewport
+- A fixed header with the app name
+- A bottom navigation bar with three tabs: **Feed**, **Create** (+), and **Profile**
+- Three placeholder page components that swap when you tap a tab
+- Lucide icons for the navigation
+- Safe area considerations for notched phones
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## What You'll Learn
+
+- How to think **mobile-first** with Tailwind CSS
+- Component composition in React
+- State management with `useState` for tab navigation
+- How to use Lucide React icons
+- Tailwind utility classes for layout, color, and spacing
+
+---
+
+## Step 1: Understand the Layout
+
+Before writing code, let's think about what a mobile app shell looks like:
+
+```
+┌──────────────────────────┐
+│  Header (fixed top)       │
+├──────────────────────────┤
+│                           │
+│                           │
+│  Page Content             │
+│  (scrollable area)        │
+│                           │
+│                           │
+│                           │
+├──────────────────────────┤
+│  Bottom Nav (fixed)       │
+│  Feed  |  (+)  |  Profile │
+└──────────────────────────┘
+```
+
+Three key principles:
+
+1. **The header stays at the top** — it doesn't scroll with content
+2. **The bottom nav stays at the bottom** — always visible for navigation
+3. **The content area fills the remaining space** and scrolls independently
+
+This is the exact pattern used by Instagram, Twitter, and most mobile apps. It's familiar because it works.
+
+---
+
+## Step 2: Create the Header Component
+
+Create a new file for our header:
+
+```tsx title="src/components/Header.tsx"
+import { Flower } from 'lucide-react'
+
+export default function Header() {
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-amber-50 border-b border-amber-200">
+      <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Flower className="w-6 h-6 text-amber-600" />
+          <h1 className="text-lg font-bold text-amber-900">GratitudeJar</h1>
+        </div>
+      </div>
+    </header>
+  )
+}
+```
+
+### Breaking down the Tailwind classes
+
+Let's pause and understand what each class does. This is important — Tailwind will be our styling tool for the entire project.
+
+**On the `<header>` element:**
+
+| Class | What it does |
+|---|---|
+| `fixed top-0 left-0 right-0` | Fixes the header to the top of the screen, spanning full width |
+| `z-50` | Sets a high z-index so it stays above scrolling content |
+| `bg-amber-50` | Light amber background — warm and on-brand |
+| `border-b border-amber-200` | Subtle bottom border for visual separation |
+
+**On the inner `<div>`:**
+
+| Class | What it does |
+|---|---|
+| `max-w-lg` | Caps width at 512px — we're designing for mobile |
+| `mx-auto` | Centers the content horizontally |
+| `px-4` | Horizontal padding (16px on each side) |
+| `h-14` | Fixed height of 56px |
+| `flex items-center justify-between` | Flexbox with vertical centering and space between items |
+
+:::tip Mobile-First Means Max Width
+We use `max-w-lg` to constrain the app to a phone-like width even on desktop. This is how most mobile-first web apps work — the content stays centered and narrow. The alternative (filling the full desktop width) would look strange for a phone app.
 :::
+
+---
+
+## Step 3: Create the Bottom Navigation
+
+The bottom nav is the main way users move between screens. Create a new file:
+
+```tsx title="src/components/BottomNav.tsx"
+import { BookOpen, PlusCircle, User } from 'lucide-react'
+
+type Tab = 'feed' | 'create' | 'profile'
+
+interface BottomNavProps {
+  activeTab: Tab
+  onTabChange: (tab: Tab) => void
+}
+
+export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+  const tabs: { id: Tab; label: string; icon: typeof BookOpen }[] = [
+    { id: 'feed', label: 'Feed', icon: BookOpen },
+    { id: 'create', label: 'New', icon: PlusCircle },
+    { id: 'profile', label: 'Profile', icon: User },
+  ]
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-amber-50 border-t border-amber-200">
+      <div className="max-w-lg mx-auto flex">
+        {tabs.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => onTabChange(id)}
+            className={`flex-1 flex flex-col items-center py-2 transition-colors ${
+              activeTab === id
+                ? 'text-amber-700'
+                : 'text-amber-400 hover:text-amber-600'
+            }`}
+          >
+            <Icon className={`w-6 h-6 ${id === 'create' ? 'w-7 h-7' : ''}`} />
+            <span className="text-xs mt-1">{label}</span>
+          </button>
+        ))}
+      </div>
+    </nav>
+  )
+}
+```
+
+### What's happening here
+
+**The TypeScript part:**
+- `type Tab = 'feed' | 'create' | 'profile'` — a union type that only allows these three strings. If you accidentally write `'feeed'`, TypeScript catches it.
+- `BottomNavProps` — this component receives the current active tab and a function to change it. The parent (`App.tsx`) owns the state.
+
+**The Tailwind part:**
+- The nav is `fixed bottom-0` — pinned to the bottom
+- Each button uses `flex-1` to take equal width
+- Active tab gets `text-amber-700` (darker), inactive gets `text-amber-400` (lighter)
+- The Create button icon is slightly larger (`w-7 h-7`) to draw attention
+
+**The `transition-colors` class** makes the color change smooth instead of instant. Small detail, big polish.
+
+---
+
+## Step 4: Create the Page Components
+
+We need three placeholder pages for each tab. These will be simple for now and we'll fill them with real content in later chapters.
+
+```tsx title="src/pages/Feed.tsx"
+import { BookOpen } from 'lucide-react'
+
+export default function Feed() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center px-4">
+      <BookOpen className="w-16 h-16 text-amber-300 mb-4" />
+      <h2 className="text-xl font-semibold text-amber-900 mb-2">Your Journal</h2>
+      <p className="text-amber-600">
+        Your gratitude entries will appear here.
+        <br />
+        We'll build this in Chapter 5.
+      </p>
+    </div>
+  )
+}
+```
+
+```tsx title="src/pages/Create.tsx"
+import { PlusCircle } from 'lucide-react'
+
+export default function Create() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center px-4">
+      <PlusCircle className="w-16 h-16 text-amber-300 mb-4" />
+      <h2 className="text-xl font-semibold text-amber-900 mb-2">New Entry</h2>
+      <p className="text-amber-600">
+        Create text and photo entries here.
+        <br />
+        We'll build this in Chapter 5.
+      </p>
+    </div>
+  )
+}
+```
+
+```tsx title="src/pages/Profile.tsx"
+import { User } from 'lucide-react'
+
+export default function Profile() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center px-4">
+      <User className="w-16 h-16 text-amber-300 mb-4" />
+      <h2 className="text-xl font-semibold text-amber-900 mb-2">Profile</h2>
+      <p className="text-amber-600">
+        Your profile and settings will live here.
+        <br />
+        We'll build this in Chapter 8.
+      </p>
+    </div>
+  )
+}
+```
+
+These pages follow the same pattern: icon, title, description. They're placeholder screens that tell users (and you) what's coming.
+
+---
+
+## Step 5: Wire It All Together in App.tsx
+
+Now we connect everything. Replace `src/App.tsx` with:
+
+```tsx title="src/App.tsx"
+import { useState } from 'react'
+import Header from './components/Header'
+import BottomNav from './components/BottomNav'
+import Feed from './pages/Feed'
+import Create from './pages/Create'
+import Profile from './pages/Profile'
+
+type Tab = 'feed' | 'create' | 'profile'
+
+function App() {
+  const [activeTab, setActiveTab] = useState<Tab>('feed')
+
+  return (
+    <div className="min-h-screen bg-amber-50">
+      <Header />
+
+      {/* Main content area — sits between header and bottom nav */}
+      <main className="max-w-lg mx-auto pt-14 pb-20 min-h-screen">
+        <div className="h-[calc(100vh-8.5rem)] flex flex-col">
+          {activeTab === 'feed' && <Feed />}
+          {activeTab === 'create' && <Create />}
+          {activeTab === 'profile' && <Profile />}
+        </div>
+      </main>
+
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+    </div>
+  )
+}
+
+export default App
+```
+
+### How tab navigation works
+
+This is a common React pattern called **conditional rendering**:
+
+1. `useState<Tab>('feed')` — creates a state variable holding the current tab. Starts on `'feed'`.
+2. `setActiveTab` — function to change the active tab. We pass this to `BottomNav`.
+3. When the user taps a tab, `BottomNav` calls `onTabChange('create')` → `setActiveTab('create')` → React re-renders → `Create` component appears.
+
+**The layout math:**
+
+- `pt-14` — top padding of 56px (same as the header height) so content doesn't hide behind the fixed header
+- `pb-20` — bottom padding of 80px (enough space for the fixed bottom nav)
+- `h-[calc(100vh-8.5rem)]` — fills the remaining viewport height between header and nav. The `8.5rem` accounts for the header (3.5rem) + bottom nav (5rem).
+
+### Why not use React Router?
+
+For a simple tab-based app like this, `useState` is simpler and lighter than adding a router. We're switching between three screens in the same view — there are no URLs to manage, no browser back button behavior to worry about. If the app grew to have nested navigation or deep linking, we'd add a router then. Remember: don't over-engineer.
+
+<ClaudeCodePrompt
+  prompt="I have a React app with three tabs (Feed, Create, Profile) using useState for navigation. The header is fixed at the top and bottom nav is fixed at the bottom. Can you review my layout for any issues with mobile viewport sizing or fixed positioning?"
+  context="Fixed positioning on mobile can cause issues with keyboard pop-ups and notched phones. It's good to get a review."
+  tip="Ask Claude Code to review layout code specifically for mobile edge cases — it knows the common gotchas."
+/>
+
+---
+
+## Step 6: Add Mobile Viewport Meta Tag
+
+For the app to render correctly on mobile devices, we need the viewport meta tag. Open `index.html` and make sure this line exists in the `<head>`:
+
+```html title="index.html"
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+```
+
+The key addition is `viewport-fit=cover` — this tells the browser to extend the app behind the notch and home indicator on modern iPhones. Combined with safe area padding (which we'll add when we wrap with Capacitor), this ensures proper rendering on all devices.
+
+---
+
+## Step 7: Test Your App Shell
+
+Start the dev server:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173` and check:
+
+1. **Header** appears at the top with the flower icon and "GratitudeJar" text
+2. **Bottom nav** appears at the bottom with three tabs
+3. **Feed tab** is active by default (the Feed icon should be darker)
+4. **Click "New"** — the center content changes to the Create placeholder
+5. **Click "Profile"** — switches to the Profile placeholder
+6. **Click "Feed"** — back to the Feed view
+7. The active tab icon changes color when you switch
+
+### Test mobile sizing
+
+Open Chrome DevTools (`Cmd + Option + I`), click the device toolbar icon (or press `Cmd + Shift + M`), and select **iPhone 14** from the device dropdown. Your app should look like a real mobile app:
+
+- Content is centered and doesn't stretch to fill a wide screen
+- The header and bottom nav span the full width
+- Tapping tabs switches the view
+
+```
+┌──────────────────────────┐
+│  🌸 GratitudeJar         │
+├──────────────────────────┤
+│                           │
+│        📖                 │
+│    Your Journal           │
+│                           │
+│  Your gratitude entries   │
+│  will appear here.        │
+│                           │
+├──────────────────────────┤
+│  📖 Feed | ➕ New | 👤    │
+└──────────────────────────┘
+```
+
+---
+
+## Step 8: Commit Your Progress
+
+You've built a real app shell. Let's save it:
+
+```bash
+git add .
+git commit -m "Add app shell: header, bottom nav, and tab navigation"
+git push
+```
+
+---
+
+## Understanding the Component Architecture
+
+Let's zoom out and look at how these components relate to each other:
+
+```
+App (owns activeTab state)
+├── Header (stateless — just renders)
+├── main
+│   ├── Feed (renders when activeTab === 'feed')
+│   ├── Create (renders when activeTab === 'create')
+│   └── Profile (renders when activeTab === 'profile')
+└── BottomNav (receives activeTab, calls onTabChange)
+```
+
+**Key design decisions:**
+
+1. **State lives in App** — the parent owns the data. Children either display it (Header, pages) or update it (BottomNav).
+2. **Props flow down** — `App` passes `activeTab` and `onTabChange` down to `BottomNav`. This is called "lifting state up" in React.
+3. **Components are small and focused** — each file does one thing. `Header` renders the header. `BottomNav` renders the nav. Pages render their content.
+
+This pattern scales well. As we add features, each component stays manageable because it only handles its own concerns.
+
+---
+
+## The Project So Far
+
+<FileTree title="Updated project structure">
+
+```
+gratitude-jar/
+├── src/
+│   ├── components/
+│   │   ├── Header.tsx        ← NEW
+│   │   └── BottomNav.tsx     ← NEW
+│   ├── hooks/
+│   ├── lib/
+│   │   ├── firebase.ts
+│   │   └── types.ts
+│   ├── pages/
+│   │   ├── Feed.tsx          ← NEW
+│   │   ├── Create.tsx        ← NEW
+│   │   └── Profile.tsx       ← NEW
+│   ├── App.tsx               ← UPDATED
+│   ├── index.css
+│   ├── main.tsx
+│   └── vite-env.d.ts
+├── .env
+├── .gitignore
+├── index.html                ← UPDATED (viewport)
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
+```
+
+</FileTree>
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Cannot find module 'lucide-react'",
+    solution: <p>Run <code>npm install lucide-react</code>. If you already installed it in Chapter 3, make sure you're in the correct project directory.</p>
+  },
+  {
+    error: "Header and bottom nav overlap the content",
+    solution: <p>Make sure the <code>main</code> element has <code>pt-14</code> (top padding for the header) and <code>pb-20</code> (bottom padding for the nav). These spacers prevent the fixed elements from covering the scrollable content.</p>
+  },
+  {
+    error: "Tab clicks don't change the page",
+    solution: <p>Check that you're passing <code>setActiveTab</code> (not <code>activeTab</code>) as the <code>onTabChange</code> prop to <code>BottomNav</code>. Also verify the <code>Tab</code> type is defined in both <code>App.tsx</code> and <code>BottomNav.tsx</code>.</p>
+  },
+  {
+    error: "Icons don't appear (blank space where icon should be)",
+    solution: <p>Make sure you imported the specific icons from lucide-react: <code>{"import { BookOpen, PlusCircle, User } from 'lucide-react'"}</code>. Lucide uses named exports, not a default export.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={4}>
+- The app has a **fixed header** with the GratitudeJar name and flower icon
+- A **bottom navigation bar** with three tabs: Feed, New, and Profile
+- Clicking each tab **switches the displayed page**
+- The **active tab** is visually highlighted with a darker color
+- The layout looks correct in **Chrome DevTools mobile view**
+- All components are in separate files with clear names
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+You have an app shell that looks and navigates like a real mobile app. In the next chapter, we'll build the core feature — creating, viewing, editing, and deleting journal entries. That's where the app comes alive.
 
 **[Next: Chapter 5 — Core Feature: Entries →](./entries)**

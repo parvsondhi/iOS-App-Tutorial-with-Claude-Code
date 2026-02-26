@@ -4,11 +4,15 @@ title: "Chapter 2: Dev Environment Setup"
 description: Install Node.js, VS Code, Xcode, and everything else you need to build an iOS app.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
 # Chapter 2: Dev Environment Setup
 
 > Before we write any code, we need the right tools installed and configured.
 
-By the end of this chapter, you'll have a fully working development environment ready for React, Firebase, and iOS development.
+By the end of this chapter, you'll have a fully working development environment ready for React, Firebase, and iOS development. This is the "boring" chapter — but skipping it is the #1 reason beginners get stuck later.
 
 ---
 
@@ -22,8 +26,278 @@ By the end of this chapter, you'll have a fully working development environment 
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## Step 1: Install Xcode (Start This First)
+
+Xcode is Apple's IDE for iOS development. It includes the iOS Simulator, build tools, and everything Capacitor needs to compile your app. The download is **~8 GB**, so start it now and let it download while you set up everything else.
+
+1. Open the **Mac App Store**
+2. Search for **Xcode**
+3. Click **Get** / **Install**
+4. Once installed, open Xcode once to accept the license agreement
+5. Let it install the additional components when prompted
+
+### Install Xcode Command Line Tools
+
+Even if Xcode is still downloading, you can install the command line tools right away:
+
+```bash
+xcode-select --install
+```
+
+A dialog will pop up asking you to install. Click **Install** and wait for it to finish.
+
+### Verify
+
+```bash
+xcode-select -p
+# Should output: /Applications/Xcode.app/Contents/Developer
+
+xcodebuild -version
+# Should output something like: Xcode 15.4
+```
+
+:::tip Don't Skip Xcode
+Even though we won't use Xcode until Part 4, installing it now saves you from a painful 30-minute wait later when you're in the flow of building. Trust us on this one.
 :::
+
+---
+
+## Step 2: Install Node.js
+
+Node.js is the runtime that powers React, Vite, and all our command-line tools. We recommend **Node.js 20 LTS** (Long Term Support).
+
+### Option A: Direct Download (Simplest)
+
+1. Go to [nodejs.org](https://nodejs.org)
+2. Download the **LTS** version (should be 20.x or newer)
+3. Run the installer and follow the prompts
+
+### Option B: Using nvm (Recommended for Developers)
+
+`nvm` (Node Version Manager) lets you switch between Node.js versions easily. This is useful if you work on multiple projects.
+
+```bash
+# Install nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+# Close and reopen your terminal, then:
+nvm install 20
+nvm use 20
+nvm alias default 20
+```
+
+### Verify
+
+```bash
+node -v
+# Should output: v20.x.x (anything 18+ works)
+
+npm -v
+# Should output: 10.x.x (comes bundled with Node)
+```
+
+---
+
+## Step 3: Install Git
+
+Git tracks changes to your code. You'll use it to save progress at the end of every chapter.
+
+### Check if Git is already installed
+
+```bash
+git --version
+# If you see a version number, you're good!
+```
+
+If it's not installed, the Xcode command line tools (Step 1) should have included it. If you still don't have it:
+
+```bash
+# Install via Homebrew (if you have it)
+brew install git
+
+# Or download from: https://git-scm.com/download/mac
+```
+
+### Configure Git (first time only)
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "your@email.com"
+```
+
+Use the same email you use for GitHub — this links your commits to your account.
+
+---
+
+## Step 4: Install VS Code
+
+VS Code is our recommended code editor. It's free, fast, and has excellent extensions for everything we're using.
+
+1. Download from [code.visualstudio.com](https://code.visualstudio.com)
+2. Move the app to your **Applications** folder
+3. Open it
+
+### Install the `code` command
+
+This lets you open files and folders from the terminal:
+
+1. Open VS Code
+2. Press `Cmd + Shift + P` to open the Command Palette
+3. Type **"shell command"** and select **"Install 'code' command in PATH"**
+
+Now you can do:
+
+```bash
+code .          # Open current folder in VS Code
+code myfile.ts  # Open a specific file
+```
+
+### Recommended Extensions
+
+Open the Extensions panel (`Cmd + Shift + X`) and install these:
+
+| Extension | Why |
+|---|---|
+| **Tailwind CSS IntelliSense** | Autocomplete for Tailwind classes |
+| **ES7+ React/Redux/React-Native Snippets** | Type `rafce` to scaffold a component |
+| **Prettier - Code formatter** | Auto-format on save |
+| **Error Lens** | Shows errors inline instead of just in the Problems tab |
+| **Auto Rename Tag** | Rename opening tags and closing tags together |
+
+### Configure Auto-Format on Save
+
+Open VS Code settings (`Cmd + ,`) and search for "format on save." Check the box. Then set the default formatter to **Prettier**.
+
+Or add this to your `.vscode/settings.json`:
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-io"
+}
+```
+
+---
+
+## Step 5: Create a GitHub Account and Repository
+
+We'll use GitHub to store our code and eventually connect it to Vercel for deployment.
+
+1. Create a GitHub account at [github.com](https://github.com) if you don't have one
+2. Create a new repository:
+   - Name: `gratitude-jar` (or whatever you like)
+   - Keep it **Public** (or Private — your choice)
+   - **Don't** add a README, .gitignore, or license — we'll create these ourselves
+
+### Set Up SSH Authentication (Optional but Recommended)
+
+SSH lets you push code to GitHub without typing your password every time:
+
+```bash
+# Generate a key pair
+ssh-keygen -t ed25519 -C "your@email.com"
+# Press Enter for default location, then set a passphrase (or leave empty)
+
+# Copy the public key
+pbcopy < ~/.ssh/id_ed25519.pub
+
+# Add it to GitHub:
+# Go to github.com → Settings → SSH and GPG keys → New SSH key
+# Paste the key and save
+```
+
+Test it:
+
+```bash
+ssh -T git@github.com
+# Should say: Hi username! You've successfully authenticated...
+```
+
+---
+
+## Step 6: Install Claude Code (Optional)
+
+Claude Code is an AI coding assistant that runs in your terminal. Throughout this tutorial, you'll see optional Claude Code prompts showing how AI can help you code faster.
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+After installing, run `claude` in your terminal to set up authentication.
+
+<ClaudeCodePrompt
+  prompt="Check my development environment. I need Node.js 18+, Git, and VS Code installed for a React + Firebase + Capacitor project. Tell me if anything is missing."
+  context="You can use Claude Code to verify your setup before moving on."
+  tip="This is a great first interaction with Claude Code — it can check versions and spot issues you might miss."
+/>
+
+:::info Claude Code Is Optional
+Every Claude Code prompt in this tutorial shows you an **optional** way to accelerate your workflow. The tutorial works perfectly fine without it. Think of it as having a knowledgeable colleague available to ask questions.
+:::
+
+---
+
+## Step 7: Verify Everything
+
+Let's make sure all our tools are installed and working. Run each of these commands:
+
+```bash
+# Node.js and npm
+node -v          # v18.0.0 or higher
+npm -v           # 9.0.0 or higher
+
+# Git
+git --version    # git version 2.x.x
+
+# Xcode
+xcode-select -p  # /Applications/Xcode.app/Contents/Developer
+xcodebuild -version  # Xcode 15.x or higher
+
+# VS Code (if you installed the code command)
+code --version   # 1.x.x
+
+# Claude Code (if installed)
+claude --version
+```
+
+If any command fails, go back to the relevant step above and troubleshoot.
+
+<TroubleshootingAccordion items={[
+  {
+    error: "xcode-select: error: command line tools are already installed",
+    solution: <p>This actually means you're fine — the tools are installed. Run <code>xcode-select -p</code> to confirm.</p>
+  },
+  {
+    error: "nvm: command not found",
+    solution: <p>Close your terminal completely and reopen it. If that doesn't work, add this to your <code>~/.zshrc</code> file: <code>export NVM_DIR="$HOME/.nvm"</code> and <code>[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"</code>. Then restart your terminal.</p>
+  },
+  {
+    error: "npm ERR! EACCES: permission denied",
+    solution: <p>Don't use <code>sudo npm install</code> — that causes more problems. Instead, fix npm permissions: <code>mkdir ~/.npm-global && npm config set prefix '~/.npm-global'</code>. Then add <code>export PATH=~/.npm-global/bin:$PATH</code> to your <code>~/.zshrc</code> and restart your terminal.</p>
+  },
+  {
+    error: "xcrun: error: unable to find utility 'simctl'",
+    solution: <p>Xcode is installed but the command line tools aren't pointed at it. Run: <code>sudo xcode-select -s /Applications/Xcode.app/Contents/Developer</code>.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={2}>
+- You have **Node.js 18+** installed and `node -v` works
+- You have **Git** configured with your name and email
+- You have **VS Code** with the recommended extensions
+- You have **Xcode 15+** installed (or it's downloading)
+- You have a **GitHub repository** created for your project
+- (Optional) You have **Claude Code** installed
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+Your machine is ready. In the next chapter, we'll create the GratitudeJar project, install all dependencies, and see it running in the browser for the first time.
 
 **[Next: Chapter 3 — Project Scaffolding →](./scaffolding)**
