@@ -1,0 +1,254 @@
+---
+sidebar_position: 1
+title: "Chapter 1: From Idea to Blueprint"
+description: Learn how to scope an MVP, sketch wireframes, design a data model, and choose your tech stack.
+---
+
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+
+# Chapter 1: From Idea to Blueprint
+
+> Every app starts as a vague idea. This chapter turns yours into a concrete plan.
+
+By the end of this chapter, you'll have a clear picture of what you're building, why each technology was chosen, and a data model that will guide every line of code you write.
+
+---
+
+## What You'll Learn
+
+- How to scope an MVP — what to build first, what to cut
+- Simple wireframe sketching
+- Designing your data model before writing code
+- Why this tech stack: React + Firebase + Capacitor
+- The difference between a web app, a PWA, and a native app
+
+---
+
+## The App: GratitudeJar
+
+Let's start with what we're building and why.
+
+**GratitudeJar** is a daily journal app. The concept is simple:
+
+1. **Write** a thought or **snap** a photo
+2. **Browse** past entries in a scrollable feed
+3. **Shake** the phone to rediscover a random memory
+
+That's it. Three core interactions. The simplicity is the point — it lets us focus on learning the full stack without getting lost in complex business logic.
+
+### Why a journal app?
+
+- **Universal appeal** — everyone can relate to journaling
+- **Natural daily habit** — gives the app a reason to exist on your phone
+- **Covers the full stack** — auth, database, file storage, native APIs
+- **The shake interaction** — this is the hero moment. Nothing makes you feel like you built a "real app" faster than shaking your phone and having something happen.
+
+---
+
+## Scoping Your MVP
+
+MVP stands for **Minimum Viable Product** — the smallest version of your app that still delivers value. The trap most beginners fall into is trying to build everything at once.
+
+### What's IN the MVP
+
+| Feature | Why it's essential |
+|---|---|
+| Create text entries | Core functionality |
+| Create photo entries | Teaches file uploads |
+| View entry feed | Users need to see their data |
+| Edit and delete entries | Complete CRUD cycle |
+| Shake to show random entry | The "wow" feature |
+| Basic authentication | Protect user data |
+
+### What's OUT of the MVP (for now)
+
+| Feature | Why we're cutting it |
+|---|---|
+| Social sharing | Adds complexity without teaching new concepts |
+| Tags and categories | Nice to have, not essential |
+| Push notifications | Requires additional setup and a server |
+| Multiple journals | Overcomplicates the data model |
+| Rich text editor | A rabbit hole — plain text is fine |
+
+:::tip The MVP Rule
+If you're unsure whether a feature belongs in the MVP, cut it. You can always add it later. Shipping something simple that works is infinitely better than not shipping something complex.
+:::
+
+---
+
+## Wireframes
+
+You don't need fancy tools. A pen and paper works. Here's what we're sketching:
+
+### Screen 1: Entry Feed
+
+The main screen. A scrollable list of entries, newest first. Text entries show the content preview. Photo entries show the image with an optional caption.
+
+```
+┌─────────────────────────┐
+│  GratitudeJar      [+]  │
+├─────────────────────────┤
+│                         │
+│  ┌─────────────────┐    │
+│  │ Today            │    │
+│  │ Grateful for...  │    │
+│  └─────────────────┘    │
+│                         │
+│  ┌─────────────────┐    │
+│  │ [  Photo     ]   │    │
+│  │ Sunset walk      │    │
+│  └─────────────────┘    │
+│                         │
+│  ┌─────────────────┐    │
+│  │ Yesterday        │    │
+│  │ Good coffee...   │    │
+│  └─────────────────┘    │
+│                         │
+├─────────────────────────┤
+│  Feed    (+)   Profile  │
+└─────────────────────────┘
+```
+
+### Screen 2: Create Entry
+
+A modal that slides up. Toggle between text and photo. Simple form with a save button.
+
+```
+┌─────────────────────────┐
+│  New Entry        [X]   │
+├─────────────────────────┤
+│                         │
+│  [Text] [Photo]         │
+│                         │
+│  ┌─────────────────┐    │
+│  │                  │    │
+│  │  Write your      │    │
+│  │  thought here... │    │
+│  │                  │    │
+│  └─────────────────┘    │
+│                         │
+│  ┌─────────────────────┐│
+│  │     Save Entry      ││
+│  └─────────────────────┘│
+└─────────────────────────┘
+```
+
+### Screen 3: Shake Result
+
+When you shake the phone, a card animates into view showing a random past entry.
+
+```
+┌─────────────────────────┐
+│                         │
+│    ┌───────────────┐    │
+│    │                │    │
+│    │  ✨ From your  │    │
+│    │  jar:          │    │
+│    │                │    │
+│    │  "The sunset   │    │
+│    │   was amazing  │    │
+│    │   today"       │    │
+│    │                │    │
+│    │  Mar 15, 2025  │    │
+│    │                │    │
+│    └───────────────┘    │
+│                         │
+│     [Shake Again]       │
+│                         │
+└─────────────────────────┘
+```
+
+<ClaudeCodePrompt
+  prompt="I'm building a journal app called GratitudeJar with text entries, photo entries, and a shake-to-discover feature. Help me think through the wireframes — what screens do I need and what should the user flow look like?"
+  tip="Claude Code is great at helping you think through UX flows before you write any code. Describe your app concept and ask it to help you plan."
+/>
+
+---
+
+## Data Model
+
+Before writing any code, we design the data model. This is the shape of the data your app will store.
+
+```ts
+type Entry = {
+  id: string          // Unique identifier (Firestore auto-generates this)
+  type: "text" | "photo"  // What kind of entry
+  content: string     // Text body OR Firebase Storage URL for photos
+  caption?: string    // Optional caption (photo entries only)
+  date: string        // "YYYY-MM-DD" format
+  createdAt: Timestamp // Firebase server timestamp for ordering
+}
+```
+
+### Why these fields?
+
+- **`id`** — Every entry needs a unique identifier. Firestore generates these automatically.
+- **`type`** — Tells us how to render the entry. Text entries show the content as text. Photo entries show the content as an image URL.
+- **`content`** — Does double duty. For text entries, it's the journal text. For photo entries, it's the URL of the uploaded image. This keeps the model simple.
+- **`caption?`** — Optional. Only makes sense for photo entries. The `?` in TypeScript means this field can be omitted.
+- **`date`** — A simple string like `"2025-03-15"`. We use this for grouping entries by day and for the calendar heatmap.
+- **`createdAt`** — Firebase's server-side timestamp. This ensures entries sort correctly even if the user's phone clock is wrong.
+
+<ClaudeCodePrompt
+  prompt="Review this TypeScript data model for a journal app. The Entry type has id, type (text or photo), content, optional caption, date string, and createdAt Timestamp. Are there any edge cases or improvements I should consider?"
+  tip="Getting a second opinion on your data model before building on top of it can save hours of refactoring later."
+/>
+
+---
+
+## Why This Tech Stack
+
+### React + Vite + TypeScript
+
+**React** is the most popular frontend framework. The skills you learn here transfer directly to job opportunities. **Vite** is the modern build tool — it's fast and requires almost zero configuration. **TypeScript** adds type safety — it catches bugs before they reach the browser.
+
+### Tailwind CSS
+
+Instead of writing CSS files, you style elements directly with utility classes: `className="text-lg font-bold text-gray-900"`. It's fast to write, easy to maintain, and perfect for mobile-first design.
+
+### Firebase (Auth + Firestore + Storage)
+
+Firebase gives us three backend services in one:
+- **Authentication** — login/signup without building a server
+- **Firestore** — a real-time database that syncs automatically
+- **Storage** — upload and serve photos with security rules
+
+The alternative would be building a custom backend with Node.js, Express, PostgreSQL, and AWS S3. That's 10x more work and teaches backend development, not mobile app development.
+
+### Capacitor
+
+Capacitor wraps your web app in a native iOS shell. Your React code runs inside a WKWebView (Safari's rendering engine), but you get access to native APIs like the camera and haptics through JavaScript plugins.
+
+**Why not React Native?** React Native requires you to learn a different set of components (`<View>` instead of `<div>`). With Capacitor, you write standard HTML/CSS/JS and it just works on iOS. The learning curve is much lower.
+
+---
+
+## Web App vs. PWA vs. Native App
+
+| | Web App | PWA | Native (Capacitor) |
+|---|---|---|---|
+| **Runs in** | Browser | Browser (installable) | Native app shell |
+| **App Store** | No | No | Yes |
+| **Camera access** | Limited | Limited | Full |
+| **Haptics** | No | No | Yes |
+| **Offline** | Manual | Service Worker | Built-in |
+| **TestFlight** | No | No | Yes |
+
+We're building all three, progressively:
+1. **Chapters 4–10**: Web app (works in any browser)
+2. **Chapters 11–14**: Wrap it with Capacitor (becomes a native iOS app)
+3. **Chapters 15–17**: Ship to TestFlight
+
+---
+
+## What's Next
+
+You now have:
+- A clear MVP scope
+- Wireframes for the three main screens
+- A data model to build on
+- An understanding of why each technology was chosen
+
+In the next chapter, we'll set up your development environment — Node.js, VS Code, Xcode, and everything else you need to start coding.
+
+**[Next: Chapter 2 — Dev Environment Setup →](../part-2-foundation/dev-environment)**
