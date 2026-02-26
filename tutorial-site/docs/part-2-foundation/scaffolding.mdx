@@ -4,27 +4,482 @@ title: "Chapter 3: Project Scaffolding"
 description: Create the GratitudeJar project with Vite, React, TypeScript, and install all dependencies.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import FileTree from '@site/src/components/FileTree';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
 # Chapter 3: Project Scaffolding
 
 > Time to create the project and lay the foundation for everything that follows.
 
-By the end of this chapter, you'll have a running React + TypeScript project with all dependencies installed and your project structure organized.
+By the end of this chapter, you'll have a running React + TypeScript project with Tailwind CSS styling, all dependencies installed, and your project structure organized. You'll see it live in the browser.
 
 ---
 
 ## What You'll Do
 
 - Scaffold a new project with `npm create vite@latest`
-- Install React, TypeScript, Tailwind CSS v4, Firebase, Capacitor, and Lucide React
+- Install React, TypeScript, Tailwind CSS v4, Firebase, and Lucide React
 - Set up the folder structure
 - Write your TypeScript interfaces (`types.ts`)
-- Configure environment variables
+- Create a Firebase project and get your config keys
 - See your first `npm run dev` output
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## Step 1: Create the Project with Vite
+
+Open your terminal and navigate to where you want your project to live. Then run:
+
+```bash
+npm create vite@latest gratitude-jar -- --template react-ts
+```
+
+This creates a new folder called `gratitude-jar` with React + TypeScript already configured. Let's break down what just happened:
+
+- `npm create vite@latest` — runs Vite's project generator
+- `gratitude-jar` — the folder name
+- `--template react-ts` — tells Vite to use the React + TypeScript template
+
+Now enter the project and install the base dependencies:
+
+```bash
+cd gratitude-jar
+npm install
+```
+
+### Test that it works
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser. You should see the default Vite + React landing page with a counter button. That page is about to be replaced with our app — but it proves everything is wired up correctly.
+
+Press `Ctrl + C` to stop the dev server.
+
+---
+
+## Step 2: Install Dependencies
+
+We need several packages. Let's install them all at once:
+
+```bash
+# Core dependencies
+npm install firebase lucide-react
+
+# Tailwind CSS v4 (uses the new Vite plugin)
+npm install tailwindcss @tailwindcss/vite
+```
+
+### What did we just install?
+
+| Package | What it does |
+|---|---|
+| `firebase` | Firebase SDK — auth, Firestore, storage |
+| `lucide-react` | Beautiful open-source icon library |
+| `tailwindcss` | Utility-first CSS framework |
+| `@tailwindcss/vite` | Vite plugin for Tailwind CSS v4 |
+
+:::info We'll Install Capacitor Later
+Capacitor and its plugins are only needed when we wrap the web app for iOS in Part 4. Installing them now would just add confusion. One step at a time.
 :::
+
+---
+
+## Step 3: Configure Tailwind CSS v4
+
+Tailwind CSS v4 uses a new Vite plugin instead of the old PostCSS setup. It's much simpler.
+
+### Add the plugin to `vite.config.ts`
+
+Open `vite.config.ts` and update it:
+
+```ts title="vite.config.ts"
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(),
+  ],
+})
+```
+
+### Replace the CSS
+
+Open `src/index.css` and replace **everything** in it with:
+
+```css title="src/index.css"
+@import "tailwindcss";
+```
+
+That single line imports all of Tailwind's utility classes. Tailwind v4 handles the rest automatically.
+
+### Delete the old CSS
+
+Remove `src/App.css` — we won't need component-specific CSS files. Tailwind handles all our styling.
+
+```bash
+rm src/App.css
+```
+
+Also open `src/App.tsx` and remove the line that imports `App.css`:
+
+```tsx
+// DELETE this line from App.tsx:
+import './App.css'
+```
+
+---
+
+## Step 4: Clean Up the Starter Files
+
+Vite's template comes with demo content we don't need. Let's clear it out.
+
+### Replace `src/App.tsx`
+
+Replace the entire file with a minimal starting point:
+
+```tsx title="src/App.tsx"
+function App() {
+  return (
+    <div className="min-h-screen bg-amber-50 flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-amber-900 mb-2">
+          GratitudeJar
+        </h1>
+        <p className="text-amber-700">
+          Your app is running. Let's build something.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default App
+```
+
+### Delete unused files
+
+```bash
+rm src/assets/react.svg
+rm public/vite.svg
+```
+
+### Update the page title
+
+Open `index.html` and change the `<title>` tag:
+
+```html
+<title>GratitudeJar</title>
+```
+
+### Test it
+
+```bash
+npm run dev
+```
+
+You should see a warm amber page with "GratitudeJar" centered on the screen. If Tailwind classes are working (amber background, bold text), your setup is correct.
+
+---
+
+## Step 5: Set Up the Folder Structure
+
+A clear folder structure keeps you organized as the app grows. Create the following folders inside `src/`:
+
+```bash
+mkdir -p src/components src/pages src/lib src/hooks
+```
+
+<FileTree title="src/ folder structure">
+
+```
+src/
+├── components/     # Reusable UI components (Header, EntryCard, etc.)
+├── hooks/          # Custom React hooks
+├── lib/            # Utilities and config (firebase.ts, etc.)
+├── pages/          # Full-page components (Feed, Profile, etc.)
+├── App.tsx         # Root component
+├── main.tsx        # Entry point
+├── index.css       # Tailwind import
+└── vite-env.d.ts   # Vite TypeScript declarations
+```
+
+</FileTree>
+
+### Why this structure?
+
+- **`components/`** — Small, reusable pieces. A button, a card, a header. These get used across multiple pages.
+- **`pages/`** — One file per screen. `Feed.tsx`, `Profile.tsx`, etc. Each page composes components together.
+- **`lib/`** — Configuration and utility functions. Firebase config lives here. Helper functions live here.
+- **`hooks/`** — Custom React hooks like `useEntries()` or `useAuth()`. These encapsulate logic and keep components clean.
+
+---
+
+## Step 6: Create the TypeScript Types
+
+In Chapter 1, we designed the `Entry` data model. Now let's make it real. Create a new file:
+
+```ts title="src/lib/types.ts"
+import { Timestamp } from 'firebase/firestore'
+
+export type Entry = {
+  id: string
+  type: 'text' | 'photo'
+  content: string
+  caption?: string
+  date: string          // "YYYY-MM-DD"
+  createdAt: Timestamp
+}
+
+export type NewEntry = Omit<Entry, 'id' | 'createdAt'>
+```
+
+### What's `NewEntry`?
+
+When creating a new entry, we don't have an `id` yet (Firestore generates it) and `createdAt` is set server-side. `Omit<Entry, 'id' | 'createdAt'>` creates a type that has all of `Entry`'s fields *except* those two. TypeScript will enforce this — if you accidentally try to set `id` on a `NewEntry`, it'll show an error.
+
+<ClaudeCodePrompt
+  prompt="Explain the TypeScript Omit utility type. I'm using Omit<Entry, 'id' | 'createdAt'> to create a NewEntry type. How does this work?"
+  context="Understanding utility types like Omit, Pick, and Partial will help you throughout this project."
+  tip="Don't memorize everything — learn to ask when you hit something unfamiliar. That's what Claude Code is for."
+/>
+
+---
+
+## Step 7: Set Up Firebase
+
+Firebase provides our backend — authentication, database, and file storage — without building a server.
+
+### Create a Firebase Project
+
+1. Go to [console.firebase.google.com](https://console.firebase.google.com)
+2. Click **Add project**
+3. Name it `gratitude-jar` (or anything you like)
+4. **Disable** Google Analytics (we don't need it and it adds complexity)
+5. Click **Create project**
+
+### Register a Web App
+
+1. In your Firebase project dashboard, click the **web icon** (`</>`) to add a web app
+2. Name it `gratitude-jar-web`
+3. **Don't** check "Also set up Firebase Hosting" — we'll use Vercel
+4. Click **Register app**
+5. Firebase will show you a config object — **copy it**. It looks like this:
+
+```ts
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "gratitude-jar-xxxxx.firebaseapp.com",
+  projectId: "gratitude-jar-xxxxx",
+  storageBucket: "gratitude-jar-xxxxx.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abc123"
+}
+```
+
+### Enable Firestore
+
+1. In the Firebase console, go to **Build → Firestore Database**
+2. Click **Create database**
+3. Choose **Start in test mode** (we'll add security rules later)
+4. Pick a location close to you (e.g., `us-central1` for North America)
+
+### Enable Storage
+
+1. Go to **Build → Storage**
+2. Click **Get started**
+3. Choose **Start in test mode**
+4. Same location as Firestore
+
+### Enable Authentication
+
+1. Go to **Build → Authentication**
+2. Click **Get started**
+3. Under **Sign-in method**, enable **Email/Password**
+
+---
+
+## Step 8: Configure Environment Variables
+
+Never commit API keys directly in your code. We'll use environment variables instead.
+
+Create a `.env` file in the project root:
+
+```bash title=".env"
+VITE_FIREBASE_API_KEY=AIzaSy...
+VITE_FIREBASE_AUTH_DOMAIN=gratitude-jar-xxxxx.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=gratitude-jar-xxxxx
+VITE_FIREBASE_STORAGE_BUCKET=gratitude-jar-xxxxx.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123456789:web:abc123
+```
+
+Replace the values with the ones from your Firebase config.
+
+:::caution Why VITE_ Prefix?
+Vite only exposes environment variables that start with `VITE_` to your frontend code. This is a safety feature — it prevents accidentally leaking server-side secrets to the browser. We prefix all our variables with `VITE_` so they're accessible via `import.meta.env.VITE_FIREBASE_API_KEY`.
+:::
+
+### Add `.env` to `.gitignore`
+
+Create a `.gitignore` file in the root (Vite may have already created one) and make sure it includes:
+
+```bash title=".gitignore"
+node_modules
+dist
+.env
+.env.local
+```
+
+### Create the Firebase config file
+
+Now create the file that initializes Firebase in your app:
+
+```ts title="src/lib/firebase.ts"
+import { initializeApp } from 'firebase/app'
+import { getFirestore } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
+import { getAuth } from 'firebase/auth'
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+}
+
+const app = initializeApp(firebaseConfig)
+
+export const db = getFirestore(app)
+export const storage = getStorage(app)
+export const auth = getAuth(app)
+```
+
+This file is the single source of truth for Firebase in your app. Every other file that needs Firebase will import from here.
+
+---
+
+## Step 9: Initialize Git
+
+Let's turn your project into a Git repository and make the first commit:
+
+```bash
+git init
+git add .
+git commit -m "Initial project setup: React + TypeScript + Tailwind + Firebase config"
+```
+
+### Connect to GitHub
+
+If you created a GitHub repo in Chapter 2:
+
+```bash
+# Using SSH (recommended)
+git remote add origin git@github.com:YOUR_USERNAME/gratitude-jar.git
+
+# Or using HTTPS
+git remote add origin https://github.com/YOUR_USERNAME/gratitude-jar.git
+
+# Push
+git push -u origin main
+```
+
+<ClaudeCodePrompt
+  prompt="I just scaffolded a Vite + React + TypeScript project and installed Firebase, Tailwind CSS v4, and Lucide React. Review my project structure and tell me if I'm missing anything before I start building components."
+  context="A quick sanity check before we start building the actual UI."
+  tip="Claude Code can spot missing configs, incorrect imports, and common setup mistakes."
+/>
+
+---
+
+## Step 10: Final Verification
+
+Let's make sure everything works together. Run the dev server:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173` and confirm:
+
+1. The page loads with a warm amber background
+2. The text "GratitudeJar" appears centered and bold
+3. No errors in the browser console (`Cmd + Option + J` in Chrome)
+4. No errors in the terminal
+
+<FileTree title="Your project should now look like this">
+
+```
+gratitude-jar/
+├── node_modules/
+├── public/
+├── src/
+│   ├── components/       # Empty for now
+│   ├── hooks/            # Empty for now
+│   ├── lib/
+│   │   ├── firebase.ts   # Firebase initialization
+│   │   └── types.ts      # Entry and NewEntry types
+│   ├── pages/            # Empty for now
+│   ├── App.tsx           # Minimal placeholder
+│   ├── index.css         # Tailwind import
+│   ├── main.tsx          # Entry point
+│   └── vite-env.d.ts
+├── .env                  # Firebase keys (not committed)
+├── .gitignore
+├── index.html
+├── package.json
+├── tsconfig.json
+├── tsconfig.app.json
+├── tsconfig.node.json
+└── vite.config.ts
+```
+
+</FileTree>
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Tailwind classes not working (no styling applied)",
+    solution: <p>Make sure your <code>src/index.css</code> contains only <code>@import "tailwindcss";</code> and that you've added the <code>tailwindcss()</code> plugin to <code>vite.config.ts</code>. Restart the dev server after making changes.</p>
+  },
+  {
+    error: "Cannot find module 'firebase/firestore'",
+    solution: <p>Run <code>npm install firebase</code> again. If it persists, delete <code>node_modules</code> and <code>package-lock.json</code>, then run <code>npm install</code>.</p>
+  },
+  {
+    error: "import.meta.env.VITE_FIREBASE_API_KEY is undefined",
+    solution: <p>Make sure your <code>.env</code> file is in the project root (same level as <code>package.json</code>), and that variable names start with <code>VITE_</code>. You must restart the dev server after creating or editing <code>.env</code>.</p>
+  },
+  {
+    error: "Port 5173 is already in use",
+    solution: <p>Another process is using that port. Either close it or run Vite on a different port: <code>npm run dev -- --port 5174</code>.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={3}>
+- Running `npm run dev` shows a page with "GratitudeJar" on an amber background
+- Tailwind CSS classes are working (you can see the amber colors and centered layout)
+- The `src/lib/types.ts` file defines `Entry` and `NewEntry` types
+- The `src/lib/firebase.ts` file initializes Firebase
+- Your `.env` file has your Firebase config keys
+- Your project is committed to Git and pushed to GitHub
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+The foundation is laid. In the next chapter, we build the app shell — the header, bottom navigation, and tab screens that make it look and feel like a real mobile app.
 
 **[Next: Chapter 4 — UI Shell with Tailwind CSS →](../part-3-web-app/ui-shell)**
