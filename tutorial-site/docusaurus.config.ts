@@ -103,6 +103,15 @@ const config: Config = {
           ],
         },
         {
+          title: 'Community',
+          items: [
+            {
+              label: 'Follow @parvsondhi on X',
+              href: 'https://x.com/parvsondhi',
+            },
+          ],
+        },
+        {
           title: 'Tech Stack',
           items: [
             {
