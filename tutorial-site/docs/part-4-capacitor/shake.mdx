@@ -74,7 +74,11 @@ The algorithm:
 Send this prompt to Claude Code to create the shake detection hook, then compare the result with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
   prompt="Create a custom React hook at src/hooks/useShakeDetection.ts that uses Capacitor's Motion plugin to detect phone shakes. Accept options for threshold (default 30), cooldownMs (default 1000), and an onShake callback. Calculate total acceleration from x/y/z values, trigger onShake when it exceeds the threshold, and enforce a cooldown between triggers. Only listen on native platforms (Capacitor.isNativePlatform()). Use useCallback for the handler and useRef for timing to avoid unnecessary re-renders."
+  context="This hook bridges the accelerometer hardware to React state. It filters noise from real shakes using a threshold and cooldown."
+  expectedOutput="Claude Code will create src/hooks/useShakeDetection.ts with Motion listener setup, acceleration calculation, threshold check, and cooldown enforcement."
   tip="The threshold of 30 filters out normal movement (10-15) while catching deliberate shakes (25-40+). The cooldown prevents one shake from triggering multiple events."
 />
 
@@ -158,7 +162,11 @@ export function useShakeDetection({ threshold = 30, cooldownMs = 1000, onShake }
 When a shake is detected, we show a full-screen card with a random entry. Send this prompt to Claude Code to create the overlay component and its animations, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
   prompt="Create a ShakeReveal component at src/components/ShakeReveal.tsx that shows a full-screen overlay with a random journal entry. Accept props: entry (Entry type), onDismiss, and onShakeAgain. Show a dark backdrop with fade-in animation. The card should have a bounce-in animation, an amber header with Sparkles icon saying 'From Your Jar', display the entry content (text with quotes or photo with caption), show the formatted date, and include a 'Shake Again' button with RotateCcw icon. Dismiss on backdrop click or Escape key. Also add the CSS keyframe animations for fade-in and bounce-in to src/index.css."
+  context="This is the hero UI — the magical reveal when a user shakes their phone to discover a past memory."
+  expectedOutput="Claude Code will create ShakeReveal.tsx with animated overlay, entry display, dismiss/shake-again actions, and CSS keyframe animations."
   tip="The bounce-in animation uses a spring-like cubic bezier curve — the card overshoots slightly and settles, which feels playful for a 'jar reveal' moment."
 />
 
@@ -293,7 +301,11 @@ The `bounce-in` animation uses a spring-like cubic bezier curve. The card starts
 Now connect the shake detection to the reveal overlay. Send this prompt to Claude Code, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
   prompt="Update src/App.tsx to integrate the shake-to-discover feature. Add a shakeEntry state (Entry | null). Create a handleShake callback that picks a random entry from the entries array, fires hapticHeavy, and sets the shakeEntry. Use the useShakeDetection hook with this callback. Add a handleShakeAgain function that picks a new random entry. Render the ShakeReveal overlay when shakeEntry is set, with onDismiss clearing shakeEntry and onShakeAgain wired to handleShakeAgain."
+  context="Wiring the shake detection hook, random entry selection, haptics, and the reveal overlay together in App.tsx."
+  expectedOutput="Claude Code will update App.tsx with shakeEntry state, handleShake/handleShakeAgain callbacks, useShakeDetection integration, and ShakeReveal rendering."
   tip="The guard 'if (shakeEntry) return' in handleShake prevents new shakes while a reveal is already showing."
 />
 
@@ -355,7 +367,11 @@ function App() {
 Shaking doesn't work in the browser or Simulator. Send this prompt to Claude Code to add a fallback button, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 6"
   prompt="Update src/components/Header.tsx to add a shake fallback button for web and Simulator testing. Add onShake and hasEntries props. When both are provided, show a Sparkles icon button in the header that triggers onShake on click. Then update App.tsx to pass handleShake and entries.length > 0 to the Header component."
+  context="Shaking doesn't work in the browser or Simulator, so we need a tappable fallback for testing."
+  expectedOutput="Claude Code will update Header.tsx with optional onShake/hasEntries props and a Sparkles button, and update App.tsx to pass the props."
   tip="This sparkles button in the header gives web users and Simulator testers a way to trigger the same reveal as a physical shake."
 />
 

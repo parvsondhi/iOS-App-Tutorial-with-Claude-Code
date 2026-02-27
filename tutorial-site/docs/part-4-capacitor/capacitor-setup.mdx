@@ -112,7 +112,11 @@ This creates an `ios/` folder in your project containing a full Xcode project. Y
 Send this prompt to Claude Code to configure Capacitor, then compare the result with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
   prompt="Update capacitor.config.ts with our app settings. Set appId to 'com.yourname.gratitudejar', appName to 'GratitudeJar', webDir to 'dist'. Add a server block with url 'http://localhost:5173' and cleartext true for development hot-reload."
+  context="The config file tells Capacitor how to build and run the iOS app. The server block enables hot-reload during development."
+  expectedOutput="Claude Code will update capacitor.config.ts with the app ID, name, web directory, and development server settings."
   tip="The server block enables live reload during development — you'll remove it before shipping to TestFlight."
 />
 
@@ -263,7 +267,11 @@ You don't need to become an Xcode expert, but understanding the basics helps:
 For an even smoother dev experience, send this prompt to Claude Code to add convenience scripts, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 7"
   prompt="Add convenience scripts to package.json for the Capacitor workflow: 'cap:sync' runs 'cap sync', 'cap:open' runs 'cap open ios', and 'ios:dev' runs both in sequence."
+  context="Convenience scripts save you from remembering the full Capacitor CLI commands."
+  expectedOutput="Claude Code will add cap:sync, cap:open, and ios:dev scripts to package.json."
   tip="These scripts simplify the Capacitor dev loop so you don't have to remember the full commands."
 />
 
