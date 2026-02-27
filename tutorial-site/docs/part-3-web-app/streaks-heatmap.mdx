@@ -4,26 +4,548 @@ title: "Chapter 10: Streaks & Calendar Heatmap"
 description: Build a calendar heatmap and streak counter to visualize the journaling habit.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import FileTree from '@site/src/components/FileTree';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 10: Streaks & Calendar Heatmap
 
 > Turn journaling into a habit. Visualize posting history with a heatmap and track streaks.
 
+The Profile page currently shows an email and a number. That's functional but not motivating. In this chapter, we'll add a GitHub-style calendar heatmap that shows which days the user journaled, and a streak counter that tracks consecutive days. These are powerful habit-building tools.
+
 ---
 
 ## What You'll Build
 
-- Calendar heatmap showing days you posted
-- Streak calculation logic
-- Timezone handling (the `getLocalDateString` lesson)
-- Profile screen with stats
+- A calendar heatmap component showing the last 12 weeks of activity
+- Streak calculation logic (current streak + longest streak)
+- Stats cards on the Profile page
+- Color intensity based on number of entries per day
+- Timezone-safe date handling
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## What You'll Learn
+
+- Building a grid-based calendar from scratch (no libraries)
+- Date arithmetic in JavaScript
+- The `Map` data structure for grouping entries by day
+- CSS Grid for the heatmap layout
+- Why timezone handling is harder than you think
+
+---
+
+## Step 1: Understand the Heatmap Layout
+
+GitHub's contribution graph is a grid of 7 rows (days of the week) by ~52 columns (weeks). Each cell is colored based on activity. We'll build a simplified version showing the last 12 weeks:
+
+```
+       Week 1  Week 2  Week 3  ...  Week 12
+Mon    [ ]     [██]    [ ]          [██]
+Tue    [░]     [ ]     [░]          [ ]
+Wed    [██]    [██]    [ ]          [░]
+Thu    [ ]     [░]     [██]         [██]
+Fri    [░]     [ ]     [ ]          [ ]
+Sat    [ ]     [ ]     [░]          [██]
+Sun    [██]    [░]     [██]         [ ]
+
+Legend:  [ ] = no entries  [░] = 1 entry  [██] = 2+ entries
+```
+
+---
+
+## Step 2: Build the Date Utilities
+
+We need helpers to work with date ranges and group entries by day:
+
+```ts title="src/lib/dates.ts (add these functions)"
+export function getDaysInRange(startDate: Date, endDate: Date): string[] {
+  const days: string[] = []
+  const current = new Date(startDate)
+
+  while (current <= endDate) {
+    days.push(getLocalDateString(current))
+    current.setDate(current.getDate() + 1)
+  }
+
+  return days
+}
+
+export function getWeeksAgo(weeks: number): Date {
+  const date = new Date()
+  date.setDate(date.getDate() - weeks * 7)
+  // Adjust to start on Monday
+  const day = date.getDay()
+  const diff = day === 0 ? 6 : day - 1
+  date.setDate(date.getDate() - diff)
+  return date
+}
+```
+
+---
+
+## Step 3: Build the Streak Calculator
+
+Streaks need careful date math. A streak is broken when a calendar day is skipped:
+
+```ts title="src/lib/streaks.ts"
+import { getLocalDateString } from './dates'
+
+export function calculateStreaks(entryDates: string[]): {
+  currentStreak: number
+  longestStreak: number
+  totalDays: number
+} {
+  if (entryDates.length === 0) {
+    return { currentStreak: 0, longestStreak: 0, totalDays: 0 }
+  }
+
+  // Get unique dates, sorted newest first
+  const uniqueDates = [...new Set(entryDates)].sort().reverse()
+  const totalDays = uniqueDates.length
+
+  // Calculate current streak (counting back from today)
+  let currentStreak = 0
+  const today = getLocalDateString()
+  const yesterday = getLocalDateString(
+    new Date(Date.now() - 86400000)
+  )
+
+  // Current streak starts from today or yesterday
+  const startsFrom = uniqueDates[0] === today || uniqueDates[0] === yesterday
+
+  if (startsFrom) {
+    currentStreak = 1
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const prevDate = new Date(uniqueDates[i - 1])
+      const currDate = new Date(uniqueDates[i])
+      const diffDays = Math.round(
+        (prevDate.getTime() - currDate.getTime()) / 86400000
+      )
+
+      if (diffDays === 1) {
+        currentStreak++
+      } else {
+        break
+      }
+    }
+  }
+
+  // Calculate longest streak
+  let longestStreak = 1
+  let tempStreak = 1
+
+  // Sort oldest first for longest streak calculation
+  const sortedAsc = [...uniqueDates].reverse()
+
+  for (let i = 1; i < sortedAsc.length; i++) {
+    const prevDate = new Date(sortedAsc[i - 1])
+    const currDate = new Date(sortedAsc[i])
+    const diffDays = Math.round(
+      (currDate.getTime() - prevDate.getTime()) / 86400000
+    )
+
+    if (diffDays === 1) {
+      tempStreak++
+      longestStreak = Math.max(longestStreak, tempStreak)
+    } else {
+      tempStreak = 1
+    }
+  }
+
+  return { currentStreak, longestStreak, totalDays }
+}
+```
+
+### Edge cases to understand
+
+- **Today counts:** If the user journaled today, the current streak includes today
+- **Yesterday counts:** If the user hasn't journaled today but did yesterday, the streak is still alive (they might journal later today)
+- **Multiple entries per day:** We use `new Set()` to deduplicate — two entries on the same day still count as one streak day
+- **86400000:** That's the number of milliseconds in a day (24 × 60 × 60 × 1000)
+
+:::warning Timezone Pitfall
+`new Date('2025-03-15')` parses as midnight UTC, which might be March 14 in your local timezone. Our `getLocalDateString` function avoids this by using local date components. Always use it when creating date strings.
 :::
+
+---
+
+## Step 4: Build the Heatmap Component
+
+```tsx title="src/components/CalendarHeatmap.tsx"
+import { useMemo } from 'react'
+import { getLocalDateString, getWeeksAgo, getDaysInRange } from '../lib/dates'
+
+interface CalendarHeatmapProps {
+  entryDates: string[]   // Array of "YYYY-MM-DD" strings
+  weeks?: number
+}
+
+const DAY_LABELS = ['Mon', '', 'Wed', '', 'Fri', '', 'Sun']
+
+export default function CalendarHeatmap({ entryDates, weeks = 12 }: CalendarHeatmapProps) {
+  const { grid, months } = useMemo(() => {
+    // Count entries per day
+    const dateCounts = new Map<string, number>()
+    for (const date of entryDates) {
+      dateCounts.set(date, (dateCounts.get(date) ?? 0) + 1)
+    }
+
+    // Generate the date grid
+    const startDate = getWeeksAgo(weeks)
+    const endDate = new Date()
+    const allDays = getDaysInRange(startDate, endDate)
+
+    // Build the grid (7 rows × N columns)
+    const grid: { date: string; count: number }[][] = Array.from(
+      { length: 7 },
+      () => []
+    )
+
+    for (const day of allDays) {
+      const date = new Date(day + 'T12:00:00') // noon to avoid timezone issues
+      const dayOfWeek = date.getDay()
+      // Convert Sunday=0 to Monday-first: Mon=0, Tue=1, ..., Sun=6
+      const row = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+
+      grid[row].push({
+        date: day,
+        count: dateCounts.get(day) ?? 0,
+      })
+    }
+
+    // Extract month labels
+    const months: { label: string; column: number }[] = []
+    let lastMonth = ''
+    for (let col = 0; col < grid[0].length; col++) {
+      const date = new Date(grid[0][col].date + 'T12:00:00')
+      const month = date.toLocaleDateString('en-US', { month: 'short' })
+      if (month !== lastMonth) {
+        months.push({ label: month, column: col })
+        lastMonth = month
+      }
+    }
+
+    return { grid, months }
+  }, [entryDates, weeks])
+
+  const getColor = (count: number): string => {
+    if (count === 0) return 'bg-amber-100'
+    if (count === 1) return 'bg-amber-300'
+    if (count === 2) return 'bg-amber-500'
+    return 'bg-amber-700'
+  }
+
+  const today = getLocalDateString()
+
+  return (
+    <div className="w-full">
+      {/* Month labels */}
+      <div className="flex ml-8 mb-1 text-xs text-amber-500">
+        {months.map(({ label, column }) => (
+          <span
+            key={`${label}-${column}`}
+            style={{ marginLeft: column === 0 ? 0 : undefined, position: 'relative', left: `${column * 14}px` }}
+            className="absolute"
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+
+      <div className="flex gap-0.5 mt-5">
+        {/* Day labels */}
+        <div className="flex flex-col gap-0.5 mr-1">
+          {DAY_LABELS.map((label, i) => (
+            <div key={i} className="h-3 w-6 text-[10px] text-amber-500 flex items-center justify-end pr-1">
+              {label}
+            </div>
+          ))}
+        </div>
+
+        {/* Grid */}
+        <div className="flex gap-0.5 overflow-x-auto">
+          {grid[0].map((_, colIndex) => (
+            <div key={colIndex} className="flex flex-col gap-0.5">
+              {grid.map((row, rowIndex) => {
+                const cell = row[colIndex]
+                if (!cell) return <div key={rowIndex} className="w-3 h-3" />
+
+                return (
+                  <div
+                    key={rowIndex}
+                    className={`w-3 h-3 rounded-sm ${getColor(cell.count)} ${
+                      cell.date === today ? 'ring-1 ring-amber-600' : ''
+                    }`}
+                    title={`${cell.date}: ${cell.count} ${cell.count === 1 ? 'entry' : 'entries'}`}
+                  />
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center justify-end gap-1 mt-2 text-[10px] text-amber-500">
+        <span>Less</span>
+        <div className="w-3 h-3 rounded-sm bg-amber-100" />
+        <div className="w-3 h-3 rounded-sm bg-amber-300" />
+        <div className="w-3 h-3 rounded-sm bg-amber-500" />
+        <div className="w-3 h-3 rounded-sm bg-amber-700" />
+        <span>More</span>
+      </div>
+    </div>
+  )
+}
+```
+
+### How the grid works
+
+1. **Generate all dates** in the range (last 12 weeks to today)
+2. **Count entries per date** using a `Map` — O(1) lookups for each cell
+3. **Build a 7×N grid** where rows are days of the week and columns are weeks
+4. **Color each cell** based on the count: no entries = lightest, 3+ entries = darkest
+5. **Highlight today** with a ring to show the user where they are
+
+The `title` attribute on each cell gives a tooltip on hover (desktop) showing the exact date and count.
+
+<ClaudeCodePrompt
+  prompt="I built a calendar heatmap component from scratch using CSS Grid and a date utility. The dates come from Firestore entries. Can you review my date handling for timezone issues? I'm using 'T12:00:00' when parsing dates to avoid midnight UTC problems."
+  context="The 'T12:00:00' trick ensures that even with timezone offsets up to ±12 hours, the date stays on the correct day."
+  tip="Timezone bugs are subtle and often don't show up in development. Ask Claude Code to stress-test your date logic."
+/>
+
+---
+
+## Step 5: Update the Profile Page
+
+Replace the simple Profile with stats and the heatmap:
+
+```tsx title="src/pages/Profile.tsx"
+import { User as UserIcon, LogOut, Mail, Flame, Trophy, Calendar } from 'lucide-react'
+import type { User } from 'firebase/auth'
+import type { Entry } from '../lib/types'
+import CalendarHeatmap from '../components/CalendarHeatmap'
+import { calculateStreaks } from '../lib/streaks'
+import { useMemo } from 'react'
+
+interface ProfileProps {
+  user: User
+  entries: Entry[]
+  onLogout: () => Promise<void>
+}
+
+export default function Profile({ user, entries, onLogout }: ProfileProps) {
+  const entryDates = useMemo(
+    () => entries.map((e) => e.date),
+    [entries]
+  )
+
+  const { currentStreak, longestStreak, totalDays } = useMemo(
+    () => calculateStreaks(entryDates),
+    [entryDates]
+  )
+
+  return (
+    <div className="flex flex-col p-4 gap-5 overflow-y-auto">
+      {/* User info */}
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0">
+          <UserIcon className="w-7 h-7 text-amber-600" />
+        </div>
+        <div>
+          <div className="flex items-center gap-1.5 text-amber-600 text-sm">
+            <Mail className="w-3.5 h-3.5" />
+            {user.email}
+          </div>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white rounded-xl border border-amber-200 p-3 text-center">
+          <Flame className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+          <p className="text-2xl font-bold text-amber-900">{currentStreak}</p>
+          <p className="text-xs text-amber-500">Current Streak</p>
+        </div>
+        <div className="bg-white rounded-xl border border-amber-200 p-3 text-center">
+          <Trophy className="w-5 h-5 text-yellow-500 mx-auto mb-1" />
+          <p className="text-2xl font-bold text-amber-900">{longestStreak}</p>
+          <p className="text-xs text-amber-500">Best Streak</p>
+        </div>
+        <div className="bg-white rounded-xl border border-amber-200 p-3 text-center">
+          <Calendar className="w-5 h-5 text-amber-500 mx-auto mb-1" />
+          <p className="text-2xl font-bold text-amber-900">{totalDays}</p>
+          <p className="text-xs text-amber-500">Days Active</p>
+        </div>
+      </div>
+
+      {/* Heatmap */}
+      <div className="bg-white rounded-xl border border-amber-200 p-4">
+        <h3 className="text-sm font-semibold text-amber-900 mb-3">Activity</h3>
+        <CalendarHeatmap entryDates={entryDates} />
+      </div>
+
+      {/* Entry count */}
+      <div className="bg-white rounded-xl border border-amber-200 p-4 text-center">
+        <p className="text-3xl font-bold text-amber-900">{entries.length}</p>
+        <p className="text-sm text-amber-600">
+          total {entries.length === 1 ? 'entry' : 'entries'} in your jar
+        </p>
+      </div>
+
+      {/* Logout */}
+      <button
+        onClick={onLogout}
+        className="flex items-center justify-center gap-2 px-6 py-3 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+      >
+        <LogOut className="w-5 h-5" />
+        Log Out
+      </button>
+    </div>
+  )
+}
+```
+
+### Update App.tsx to pass entries to Profile
+
+```tsx title="App.tsx (update Profile rendering)"
+{activeTab === 'profile' && (
+  <Profile
+    user={user}
+    entries={entries}
+    onLogout={logout}
+  />
+)}
+```
+
+---
+
+## Step 6: Test the Heatmap and Streaks
+
+```bash
+npm run dev
+```
+
+1. **Create several entries on different days** (you can change your system clock to test, or just test with today's entries)
+2. **Go to Profile** — you should see:
+   - Three stats cards (Current Streak, Best Streak, Days Active)
+   - A calendar heatmap with colored cells for days you have entries
+   - Today's cell highlighted with a ring
+3. **Hover over heatmap cells** (on desktop) — tooltips show the date and entry count
+4. **Create more entries** — the heatmap and stats should update in real-time
+
+### Testing streaks
+
+- Create entries today → current streak should be 1
+- The streak logic also checks yesterday, so if you created entries yesterday too, the streak would be 2
+- Days with multiple entries still count as 1 streak day
+
+---
+
+## Step 7: Commit Your Progress
+
+```bash
+git add .
+git commit -m "Add calendar heatmap, streak tracking, and stats to Profile page"
+git push
+```
+
+---
+
+<FileTree title="Updated project structure">
+
+```
+gratitude-jar/
+├── src/
+│   ├── components/
+│   │   ├── Header.tsx
+│   │   ├── BottomNav.tsx
+│   │   ├── EntryCard.tsx
+│   │   ├── EntrySkeleton.tsx
+│   │   ├── EmptyState.tsx
+│   │   ├── Toast.tsx
+│   │   └── CalendarHeatmap.tsx   ← NEW
+│   ├── hooks/
+│   │   ├── useAuth.ts
+│   │   ├── useEntries.ts
+│   │   └── useToast.ts
+│   ├── lib/
+│   │   ├── firebase.ts
+│   │   ├── firestore.ts
+│   │   ├── storage.ts
+│   │   ├── image.ts
+│   │   ├── types.ts
+│   │   ├── dates.ts             ← UPDATED (range helpers)
+│   │   └── streaks.ts           ← NEW
+│   ├── pages/
+│   │   ├── AuthScreen.tsx
+│   │   ├── Feed.tsx
+│   │   ├── Create.tsx
+│   │   ├── Onboarding.tsx
+│   │   └── Profile.tsx          ← UPDATED (stats + heatmap)
+│   ├── App.tsx                  ← UPDATED (pass entries to Profile)
+│   ├── index.css
+│   └── main.tsx
+└── ...
+```
+
+</FileTree>
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Heatmap cells are all the same color",
+    solution: <p>Check that your entries have correct <code>date</code> fields in <code>"YYYY-MM-DD"</code> format. Open the browser console and log the <code>entryDates</code> array to see what values are being passed to the heatmap.</p>
+  },
+  {
+    error: "Streaks show 0 even though I have entries",
+    solution: <p>The current streak requires entries from today or yesterday. If your entries are older than yesterday, the current streak will be 0 (but longest streak should still show). Create a new entry today and check again.</p>
+  },
+  {
+    error: "Heatmap grid is misaligned or has gaps",
+    solution: <p>The grid depends on the start date aligning to a Monday. Check that <code>getWeeksAgo</code> correctly adjusts to the nearest Monday. Also verify that all 7 rows have the same number of columns.</p>
+  },
+  {
+    error: "Date is off by one day in the heatmap",
+    solution: <p>This is the timezone bug. Make sure you're parsing date strings with <code>'T12:00:00'</code> appended (noon) to avoid midnight UTC rollover: <code>new Date(dateStr + 'T12:00:00')</code>.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={10}>
+- The **Profile page** shows Current Streak, Best Streak, and Days Active stats
+- A **calendar heatmap** visualizes the last 12 weeks of activity
+- Cells are **color-coded** based on number of entries per day
+- **Today's cell** is highlighted with a ring
+- Hovering a cell shows a **tooltip** with the date and entry count
+- Stats **update in real-time** when entries are created or deleted
+- The web app is now **feature-complete** for Part 3
+</ChapterCheckpoint>
+
+---
+
+## Part 3 Complete!
+
+Congratulations — you've built a fully functional web app. Let's recap everything you've built across Chapters 4-10:
+
+| Feature | Chapter |
+|---|---|
+| Mobile-first app shell with navigation | Chapter 4 |
+| CRUD for text and photo entries | Chapter 5 |
+| Real-time Firestore persistence | Chapter 6 |
+| Photo uploads with compression | Chapter 7 |
+| User authentication | Chapter 8 |
+| Polish: skeletons, toasts, onboarding | Chapter 9 |
+| Calendar heatmap and streaks | Chapter 10 |
+
+In Part 4, we take this web app and turn it into a real iOS app using Capacitor. Same code, native superpowers.
 
 <TwitterCallout />
 

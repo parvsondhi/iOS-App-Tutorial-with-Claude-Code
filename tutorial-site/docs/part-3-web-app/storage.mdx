@@ -4,26 +4,581 @@ title: "Chapter 7: Firebase Storage — Photo Uploads"
 description: Upload and display photos using Firebase Storage with image compression.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import FileTree from '@site/src/components/FileTree';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 7: Firebase Storage — Photo Uploads
 
 > Time to make photo entries real. Upload images, store them in the cloud, and display them in the feed.
 
+Right now, photo entries use `URL.createObjectURL()` — a temporary URL that only works in the current browser session. Close the tab and the photo is gone. In this chapter, we'll upload images to Firebase Storage, get permanent download URLs, and store those in Firestore.
+
 ---
 
 ## What You'll Build
 
-- Firebase Storage setup and security rules
-- Image upload with `uploadBytes()` and `getDownloadURL()`
-- Image compression before upload
-- Photo entries displaying in the feed
+- An image upload service using Firebase Storage
+- Client-side image compression before upload (save bandwidth and storage)
+- Upload progress indicator
+- Integration between Storage (files) and Firestore (metadata)
+- Photo entries that persist and display correctly after refresh
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## What You'll Learn
+
+- How Firebase Storage works (buckets, references, upload tasks)
+- The `File` API and `Canvas` API for image compression
+- Upload progress tracking with `uploadBytesResumable`
+- The relationship between Storage URLs and Firestore documents
+- Async/await patterns for multi-step operations
+
+---
+
+## Step 1: Understand the Upload Flow
+
+When a user creates a photo entry, here's what happens:
+
+```
+User selects photo
+    ↓
+Compress image (Canvas API)
+    ↓
+Upload to Firebase Storage → returns downloadURL
+    ↓
+Save entry to Firestore with downloadURL as content
+    ↓
+onSnapshot fires → entry appears in feed with the photo
+```
+
+The key insight: **Storage holds the file, Firestore holds the metadata**. The `content` field in a photo entry is a URL pointing to the file in Storage.
+
+---
+
+## Step 2: Build the Image Compression Utility
+
+Phone cameras take photos at 3000x4000 pixels or more. Uploading those full-size images wastes bandwidth and makes the feed slow. We'll compress before uploading:
+
+```ts title="src/lib/image.ts"
+const MAX_WIDTH = 1200
+const MAX_HEIGHT = 1200
+const QUALITY = 0.8
+
+export async function compressImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      // Calculate new dimensions
+      let { width, height } = img
+
+      if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+        const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height)
+        width = Math.round(width * ratio)
+        height = Math.round(height * ratio)
+      }
+
+      // Draw to canvas at new size
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Could not get canvas context'))
+        return
+      }
+
+      ctx.drawImage(img, 0, 0, width, height)
+
+      // Convert to blob
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob)
+          } else {
+            reject(new Error('Could not compress image'))
+          }
+        },
+        'image/jpeg',
+        QUALITY
+      )
+    }
+
+    img.onerror = () => reject(new Error('Could not load image'))
+    img.src = URL.createObjectURL(file)
+  })
+}
+```
+
+### How this works
+
+1. **Load the image** into an `Image` element
+2. **Calculate new dimensions** — if either dimension exceeds 1200px, scale proportionally
+3. **Draw to a Canvas** at the new size — the browser handles the resampling
+4. **Export as JPEG blob** at 80% quality — typically reduces file size by 60-80%
+
+A 4MB photo from a phone camera becomes ~200-400KB. That's the difference between a 3-second upload and a fraction-of-a-second upload.
+
+:::tip Why JPEG?
+We convert everything to JPEG because it has the best size-to-quality ratio for photos. PNGs are better for screenshots and graphics with sharp edges, but for photos, JPEG wins. The 0.8 quality setting is the sweet spot — indistinguishable from the original to the naked eye.
 :::
+
+---
+
+## Step 3: Build the Storage Upload Service
+
+Create a service for uploading files to Firebase Storage:
+
+```ts title="src/lib/storage.ts"
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+} from 'firebase/storage'
+import { storage } from './firebase'
+import { compressImage } from './image'
+
+type UploadProgress = {
+  progress: number // 0-100
+  downloadURL?: string
+}
+
+export async function uploadPhoto(
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<string> {
+  // Compress the image first
+  const compressed = await compressImage(file)
+
+  // Create a unique filename
+  const filename = `entries/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+  const storageRef = ref(storage, filename)
+
+  // Upload with progress tracking
+  return new Promise((resolve, reject) => {
+    const uploadTask = uploadBytesResumable(storageRef, compressed, {
+      contentType: 'image/jpeg',
+    })
+
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const progress = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        )
+        onProgress?.(progress)
+      },
+      (error) => {
+        reject(error)
+      },
+      async () => {
+        // Upload complete — get the download URL
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+        resolve(downloadURL)
+      }
+    )
+  })
+}
+
+export async function deletePhoto(url: string): Promise<void> {
+  try {
+    const storageRef = ref(storage, url)
+    await deleteObject(storageRef)
+  } catch (err) {
+    // If the file doesn't exist, that's fine
+    console.warn('Could not delete photo:', err)
+  }
+}
+```
+
+### Breaking this down
+
+**`uploadBytesResumable`** — Unlike the simpler `uploadBytes`, this function supports progress tracking through the `state_changed` event. Every time a chunk uploads, we calculate the percentage and call `onProgress`.
+
+**The filename pattern:** `entries/1710523200000-k4f9x2.jpg` — a timestamp plus random characters ensures uniqueness. We put everything in an `entries/` folder to keep Storage organized.
+
+**`getDownloadURL`** — After the upload completes, this returns a permanent HTTPS URL that anyone can use to view the image. This is what we store in Firestore.
+
+**`deletePhoto`** — When a user deletes a photo entry, we should also delete the file from Storage. We wrap this in a try-catch because if the file is already gone, we don't want to crash.
+
+---
+
+## Step 4: Update the Create Page for Real Uploads
+
+Replace the file input's local preview logic with actual uploads:
+
+```tsx title="src/pages/Create.tsx"
+import { useState } from 'react'
+import { PlusCircle, Type, Image, X, Loader2 } from 'lucide-react'
+import { getLocalDateString } from '../lib/dates'
+import { uploadPhoto } from '../lib/storage'
+import type { NewEntry } from '../lib/types'
+
+interface CreateProps {
+  onAddEntry: (entry: NewEntry) => void
+  onClose: () => void
+}
+
+export default function Create({ onAddEntry, onClose }: CreateProps) {
+  const [entryType, setEntryType] = useState<'text' | 'photo'>('text')
+  const [content, setContent] = useState('')
+  const [caption, setCaption] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setPhotoFile(file)
+      setPhotoPreview(URL.createObjectURL(file))
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (entryType === 'text' && !content.trim()) return
+    if (entryType === 'photo' && !photoFile) return
+
+    try {
+      let finalContent = content.trim()
+
+      if (entryType === 'photo' && photoFile) {
+        setUploading(true)
+        finalContent = await uploadPhoto(photoFile, setUploadProgress)
+      }
+
+      const newEntry: NewEntry = {
+        type: entryType,
+        content: finalContent,
+        caption: entryType === 'photo' ? caption.trim() || undefined : undefined,
+        date: getLocalDateString(),
+      }
+
+      await onAddEntry(newEntry)
+
+      // Cleanup
+      setContent('')
+      setCaption('')
+      setPhotoFile(null)
+      setPhotoPreview(null)
+      setUploading(false)
+      setUploadProgress(0)
+      onClose()
+    } catch (err) {
+      console.error('Failed to create entry:', err)
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200">
+        <h2 className="text-lg font-semibold text-amber-900">New Entry</h2>
+        <button
+          onClick={onClose}
+          className="p-1 text-amber-500 hover:text-amber-700 transition-colors"
+          disabled={uploading}
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 p-4 gap-4">
+        {/* Type toggle */}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setEntryType('text')}
+            disabled={uploading}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              entryType === 'text'
+                ? 'bg-amber-600 text-white'
+                : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+            }`}
+          >
+            <Type className="w-4 h-4" />
+            Text
+          </button>
+          <button
+            type="button"
+            onClick={() => setEntryType('photo')}
+            disabled={uploading}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              entryType === 'photo'
+                ? 'bg-amber-600 text-white'
+                : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+            }`}
+          >
+            <Image className="w-4 h-4" />
+            Photo
+          </button>
+        </div>
+
+        {/* Content */}
+        {entryType === 'text' ? (
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="What are you grateful for today?"
+            disabled={uploading}
+            className="flex-1 min-h-[150px] p-3 rounded-lg border border-amber-200 bg-white text-amber-900 placeholder-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none disabled:opacity-50"
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div className="flex-1 min-h-[150px] flex items-center justify-center border-2 border-dashed border-amber-300 rounded-lg bg-amber-50">
+              {photoPreview ? (
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="max-h-[200px] rounded-lg object-cover"
+                />
+              ) : (
+                <label className="flex flex-col items-center cursor-pointer text-amber-500">
+                  <Image className="w-10 h-10 mb-2" />
+                  <span className="text-sm">Tap to choose a photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoSelect}
+                  />
+                </label>
+              )}
+            </div>
+            <input
+              type="text"
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder="Add a caption (optional)"
+              disabled={uploading}
+              className="p-3 rounded-lg border border-amber-200 bg-white text-amber-900 placeholder-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
+            />
+          </div>
+        )}
+
+        {/* Upload progress */}
+        {uploading && (
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-5 h-5 text-amber-600 animate-spin" />
+            <div className="flex-1 bg-amber-100 rounded-full h-2">
+              <div
+                className="bg-amber-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+            <span className="text-sm text-amber-600 w-10 text-right">{uploadProgress}%</span>
+          </div>
+        )}
+
+        {/* Submit button */}
+        <button
+          type="submit"
+          disabled={
+            uploading ||
+            (entryType === 'text' && !content.trim()) ||
+            (entryType === 'photo' && !photoFile)
+          }
+          className="flex items-center justify-center gap-2 py-3 px-4 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <PlusCircle className="w-5 h-5" />
+              Save Entry
+            </>
+          )}
+        </button>
+      </form>
+    </div>
+  )
+}
+```
+
+### Key changes from Chapter 5
+
+1. **`photoFile` state** — stores the actual `File` object for uploading (not just a preview URL)
+2. **`uploading` state** — disables the form during upload to prevent double submissions
+3. **`uploadProgress` state** — drives the progress bar
+4. **`handleSubmit` is now `async`** — it awaits the upload before creating the Firestore entry
+5. **Buttons are disabled during upload** — prevents the user from navigating away mid-upload
+
+<ClaudeCodePrompt
+  prompt="I'm uploading images to Firebase Storage and need to show upload progress. I'm using uploadBytesResumable with a state_changed listener. The progress bar jumps from 0% to 100% instantly for small files. Is there a way to make it smoother?"
+  tip="Small files upload so fast that the progress events don't have time to fire. For a smoother UX, you could add a minimum animation duration."
+/>
+
+---
+
+## Step 5: Clean Up Storage on Delete
+
+When a user deletes a photo entry, we should also delete the image from Storage. Update the Firestore service:
+
+```ts title="src/lib/firestore.ts (add to deleteEntry)"
+import { deletePhoto } from './storage'
+
+// Update the deleteEntry function
+export async function deleteEntry(id: string, entry?: Entry): Promise<void> {
+  const docRef = doc(db, ENTRIES_COLLECTION, id)
+  await deleteDoc(docRef)
+
+  // Clean up the photo from Storage if it's a photo entry
+  if (entry?.type === 'photo' && entry.content) {
+    await deletePhoto(entry.content)
+  }
+}
+```
+
+And update the `useEntries` hook's `removeEntry`:
+
+```ts title="src/hooks/useEntries.ts (update removeEntry)"
+const removeEntry = async (id: string) => {
+  try {
+    // Find the entry to check if it has a photo to clean up
+    const entry = entries.find((e) => e.id === id)
+    await deleteEntry(id, entry)
+  } catch (err) {
+    console.error('Failed to delete entry:', err)
+    setError('Failed to delete entry. Please try again.')
+  }
+}
+```
+
+---
+
+## Step 6: Set Up Storage Security Rules
+
+In the Firebase console, go to **Storage → Rules** and update:
+
+```
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /entries/{filename} {
+      // Allow reads for everyone (photos need to be viewable)
+      allow read: if true;
+
+      // Allow writes (we'll restrict to authenticated users in Chapter 8)
+      allow write: if true;
+
+      // Limit file size to 10MB
+      allow write: if request.resource.size < 10 * 1024 * 1024;
+    }
+  }
+}
+```
+
+---
+
+## Step 7: Test Photo Uploads
+
+```bash
+npm run dev
+```
+
+1. **Create a photo entry** — select an image, add a caption, save
+2. **Check the progress bar** — you should see it fill up during upload
+3. **Refresh the page** — the photo should still display (it's loading from Firebase Storage now!)
+4. **Check Firebase console** → Storage — you should see the uploaded file in the `entries/` folder
+5. **Delete a photo entry** — the file should also disappear from Storage
+
+### What to look for in the console
+
+In the browser's Network tab, you should see:
+- An upload request to `firebasestorage.googleapis.com`
+- Image requests loading from a `firebasestorage.googleapis.com` URL
+
+This confirms that photos are being uploaded to and served from Firebase Storage.
+
+---
+
+## Step 8: Commit Your Progress
+
+```bash
+git add .
+git commit -m "Add photo uploads with Firebase Storage, compression, and progress tracking"
+git push
+```
+
+---
+
+<FileTree title="Updated project structure">
+
+```
+gratitude-jar/
+├── src/
+│   ├── components/
+│   │   ├── Header.tsx
+│   │   ├── BottomNav.tsx
+│   │   └── EntryCard.tsx
+│   ├── hooks/
+│   │   └── useEntries.ts
+│   ├── lib/
+│   │   ├── firebase.ts
+│   │   ├── firestore.ts       ← UPDATED (delete cleans up photos)
+│   │   ├── storage.ts         ← NEW
+│   │   ├── image.ts           ← NEW
+│   │   ├── types.ts
+│   │   └── dates.ts
+│   ├── pages/
+│   │   ├── Feed.tsx
+│   │   ├── Create.tsx          ← UPDATED (real uploads)
+│   │   └── Profile.tsx
+│   ├── App.tsx
+│   ├── index.css
+│   └── main.tsx
+└── ...
+```
+
+</FileTree>
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Firebase Storage: User does not have permission to access",
+    solution: <p>Update your Storage security rules in the Firebase console. Make sure the rules allow read and write under the <code>/entries/{'{filename}'}</code> path. Publish the rules after editing.</p>
+  },
+  {
+    error: "Upload fails with 'net::ERR_CONNECTION_REFUSED'",
+    solution: <p>Check that your <code>.env</code> file has the correct <code>VITE_FIREBASE_STORAGE_BUCKET</code> value. It should look like <code>gratitude-jar-xxxxx.appspot.com</code>. Restart the dev server after changing <code>.env</code>.</p>
+  },
+  {
+    error: "Image displays broken/corrupted after upload",
+    solution: <p>Make sure the <code>contentType</code> is set to <code>'image/jpeg'</code> in the upload metadata. Without it, Firebase may serve the file with the wrong MIME type and the browser won't render it as an image.</p>
+  },
+  {
+    error: "Canvas.toBlob returns null",
+    solution: <p>Some browsers have issues with the Canvas API on very large images. Try reducing <code>MAX_WIDTH</code> and <code>MAX_HEIGHT</code> to 800. Also make sure the image loaded successfully before drawing to canvas — check the <code>img.onerror</code> handler.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={7}>
+- **Photo entries persist** across page refreshes (loaded from Firebase Storage)
+- You can see uploaded files in **Firebase Console → Storage → entries/**
+- The **upload progress bar** shows during photo uploads
+- Images are **compressed** before upload (check file size in Storage — should be under 500KB)
+- **Deleting a photo entry** also removes the file from Storage
+- Text entries still work exactly as before
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+Your app now has persistent text and photo entries with real-time sync. But anyone can access anyone's data. In the next chapter, we add authentication — login, signup, and private data.
 
 <TwitterCallout />
 

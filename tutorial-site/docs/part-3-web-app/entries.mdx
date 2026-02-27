@@ -4,26 +4,724 @@ title: "Chapter 5: Core Feature — Entries"
 description: Build the entry creation form, feed display, and edit/delete functionality.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import FileTree from '@site/src/components/FileTree';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 5: Core Feature — Entries
 
-> The heart of the app. Create, read, edit, and delete journal entries.
+> The heart of the app. By the end of this chapter, users can create, view, edit, and delete journal entries.
+
+Right now your app has a nice shell but no functionality. Tap "New" and you see a placeholder. That changes now. We're building the full CRUD (Create, Read, Update, Delete) cycle for journal entries — the core of GratitudeJar.
 
 ---
 
 ## What You'll Build
 
-- Entry creation form with text/photo toggle
-- Scrollable entry feed with mixed card types
-- Edit and delete flows
-- Local state management with React hooks
+- An entry creation form with text and photo toggle
+- Entry cards that display in a scrollable feed
+- Edit mode for updating existing entries
+- Delete with confirmation
+- Local state management with React hooks (we'll connect Firebase in Chapter 6)
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## What You'll Learn
+
+- Controlled form inputs in React
+- Lifting state up to share data between components
+- Conditional rendering for different entry types
+- The `Date` API for formatting timestamps
+- Array manipulation with `filter`, `map`, and spread syntax
+
+---
+
+## Step 1: Plan the Data Flow
+
+Before writing code, let's think about how data flows through our components:
+
+```
+App (owns entries[] state)
+├── Header
+├── Feed (receives entries, edit/delete handlers)
+│   └── EntryCard (renders a single entry)
+├── Create (receives addEntry handler)
+│   └── EntryForm (form inputs, calls addEntry on submit)
+└── BottomNav
+```
+
+**Key decisions:**
+1. **State lives in `App.tsx`** — the entries array lives at the top and flows down as props
+2. **For now, entries live in memory** — refresh the page and they're gone. Chapter 6 adds Firebase persistence.
+3. **We'll use the `Entry` type from `types.ts`** — the same data model we designed in Chapter 1
+
+---
+
+## Step 2: Update the Types
+
+Our `Entry` type needs a small tweak. Since we're working with local state before Firebase, we'll use a plain `Date` instead of a Firebase `Timestamp` for `createdAt`:
+
+```ts title="src/lib/types.ts"
+import { Timestamp } from 'firebase/firestore'
+
+export type Entry = {
+  id: string
+  type: 'text' | 'photo'
+  content: string
+  caption?: string
+  date: string          // "YYYY-MM-DD"
+  createdAt: Timestamp
+}
+
+export type LocalEntry = {
+  id: string
+  type: 'text' | 'photo'
+  content: string
+  caption?: string
+  date: string
+  createdAt: Date
+}
+
+export type NewEntry = Omit<Entry, 'id' | 'createdAt'>
+```
+
+`LocalEntry` is what we'll use for in-memory state. When we add Firebase in Chapter 6, we'll convert between `LocalEntry` and `Entry`.
+
+---
+
+## Step 3: Create a Helper for Dates
+
+We'll format dates throughout the app, so let's create a small utility:
+
+```ts title="src/lib/dates.ts"
+export function getLocalDateString(date: Date = new Date()): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export function formatDisplayDate(dateString: string): string {
+  const [year, month, day] = dateString.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+```
+
+### Why not just use `new Date().toISOString().slice(0, 10)`?
+
+Timezones. If it's 11 PM in New York, `toISOString()` returns the next day's date because it converts to UTC. Our `getLocalDateString` uses the user's local time, which is what they expect when they log a journal entry.
+
+:::tip Timezone Bugs Are Sneaky
+This is one of the most common bugs in apps that deal with dates. A user writes an entry at 11 PM on March 15th, but the app stores it as March 16th. We'll revisit this in Chapter 10 when we build the calendar heatmap.
 :::
+
+---
+
+## Step 4: Build the Entry Form
+
+The Create page needs a real form. Replace the placeholder:
+
+```tsx title="src/pages/Create.tsx"
+import { useState } from 'react'
+import { PlusCircle, Type, Image, X } from 'lucide-react'
+import { getLocalDateString } from '../lib/dates'
+import type { LocalEntry } from '../lib/types'
+
+interface CreateProps {
+  onAddEntry: (entry: LocalEntry) => void
+  onClose: () => void
+}
+
+export default function Create({ onAddEntry, onClose }: CreateProps) {
+  const [entryType, setEntryType] = useState<'text' | 'photo'>('text')
+  const [content, setContent] = useState('')
+  const [caption, setCaption] = useState('')
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!content.trim()) return
+
+    const newEntry: LocalEntry = {
+      id: crypto.randomUUID(),
+      type: entryType,
+      content: content.trim(),
+      caption: entryType === 'photo' ? caption.trim() || undefined : undefined,
+      date: getLocalDateString(),
+      createdAt: new Date(),
+    }
+
+    onAddEntry(newEntry)
+    setContent('')
+    setCaption('')
+    onClose()
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Form header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200">
+        <h2 className="text-lg font-semibold text-amber-900">New Entry</h2>
+        <button
+          onClick={onClose}
+          className="p-1 text-amber-500 hover:text-amber-700 transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 p-4 gap-4">
+        {/* Type toggle */}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setEntryType('text')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              entryType === 'text'
+                ? 'bg-amber-600 text-white'
+                : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+            }`}
+          >
+            <Type className="w-4 h-4" />
+            Text
+          </button>
+          <button
+            type="button"
+            onClick={() => setEntryType('photo')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              entryType === 'photo'
+                ? 'bg-amber-600 text-white'
+                : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+            }`}
+          >
+            <Image className="w-4 h-4" />
+            Photo
+          </button>
+        </div>
+
+        {/* Content input */}
+        {entryType === 'text' ? (
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="What are you grateful for today?"
+            className="flex-1 min-h-[150px] p-3 rounded-lg border border-amber-200 bg-white text-amber-900 placeholder-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div className="flex-1 min-h-[150px] flex items-center justify-center border-2 border-dashed border-amber-300 rounded-lg bg-amber-50">
+              {content ? (
+                <img
+                  src={content}
+                  alt="Preview"
+                  className="max-h-[200px] rounded-lg object-cover"
+                />
+              ) : (
+                <label className="flex flex-col items-center cursor-pointer text-amber-500">
+                  <Image className="w-10 h-10 mb-2" />
+                  <span className="text-sm">Tap to choose a photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const url = URL.createObjectURL(file)
+                        setContent(url)
+                      }
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+            <input
+              type="text"
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder="Add a caption (optional)"
+              className="p-3 rounded-lg border border-amber-200 bg-white text-amber-900 placeholder-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
+        )}
+
+        {/* Submit button */}
+        <button
+          type="submit"
+          disabled={!content.trim()}
+          className="flex items-center justify-center gap-2 py-3 px-4 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <PlusCircle className="w-5 h-5" />
+          Save Entry
+        </button>
+      </form>
+    </div>
+  )
+}
+```
+
+### Breaking this down
+
+**Controlled inputs:** Every input's value is tied to state (`content`, `caption`). When the user types, `onChange` updates state, which re-renders the input with the new value. This is the standard React pattern for forms.
+
+**`crypto.randomUUID()`:** Generates a unique ID for each entry. This is a browser API — no library needed. When we switch to Firebase, Firestore will generate IDs instead.
+
+**`URL.createObjectURL(file)`:** Creates a temporary local URL for the selected file so we can preview it. This URL only works in the current browser session — we'll upload to Firebase Storage in Chapter 7 for permanent storage.
+
+**The disabled button:** `disabled={!content.trim()}` prevents submitting an empty entry. The `disabled:opacity-50` Tailwind class visually dims the button.
+
+---
+
+## Step 5: Build the Entry Card
+
+Each entry in the feed needs a card component:
+
+```tsx title="src/components/EntryCard.tsx"
+import { useState } from 'react'
+import { Edit3, Trash2, Check, X } from 'lucide-react'
+import { formatDisplayDate } from '../lib/dates'
+import type { LocalEntry } from '../lib/types'
+
+interface EntryCardProps {
+  entry: LocalEntry
+  onEdit: (id: string, content: string, caption?: string) => void
+  onDelete: (id: string) => void
+}
+
+export default function EntryCard({ entry, onEdit, onDelete }: EntryCardProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editContent, setEditContent] = useState(entry.content)
+  const [editCaption, setEditCaption] = useState(entry.caption ?? '')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  const handleSave = () => {
+    if (!editContent.trim()) return
+    onEdit(
+      entry.id,
+      editContent.trim(),
+      entry.type === 'photo' ? editCaption.trim() || undefined : undefined
+    )
+    setIsEditing(false)
+  }
+
+  const handleCancel = () => {
+    setEditContent(entry.content)
+    setEditCaption(entry.caption ?? '')
+    setIsEditing(false)
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-amber-200 overflow-hidden shadow-sm">
+      {/* Card header */}
+      <div className="flex items-center justify-between px-4 py-2 bg-amber-50 border-b border-amber-100">
+        <span className="text-sm text-amber-600">
+          {formatDisplayDate(entry.date)}
+        </span>
+        <div className="flex gap-1">
+          {!isEditing && (
+            <>
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-1 text-amber-400 hover:text-amber-600 transition-colors"
+                aria-label="Edit entry"
+              >
+                <Edit3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="p-1 text-amber-400 hover:text-red-500 transition-colors"
+                aria-label="Delete entry"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Card body */}
+      <div className="p-4">
+        {entry.type === 'photo' && (
+          <img
+            src={entry.content}
+            alt={entry.caption || 'Photo entry'}
+            className="w-full h-48 object-cover rounded-lg mb-3"
+          />
+        )}
+
+        {isEditing ? (
+          <div className="flex flex-col gap-2">
+            {entry.type === 'text' ? (
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="p-2 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none min-h-[80px]"
+              />
+            ) : (
+              <input
+                type="text"
+                value={editCaption}
+                onChange={(e) => setEditCaption(e.target.value)}
+                placeholder="Edit caption"
+                className="p-2 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            )}
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={handleCancel}
+                className="flex items-center gap-1 px-3 py-1 text-sm text-amber-600 hover:text-amber-800 transition-colors"
+              >
+                <X className="w-3 h-3" /> Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="flex items-center gap-1 px-3 py-1 text-sm bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+              >
+                <Check className="w-3 h-3" /> Save
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {entry.type === 'text' && (
+              <p className="text-amber-900 whitespace-pre-wrap">{entry.content}</p>
+            )}
+            {entry.type === 'photo' && entry.caption && (
+              <p className="text-amber-700 text-sm">{entry.caption}</p>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Delete confirmation */}
+      {showDeleteConfirm && (
+        <div className="px-4 py-3 bg-red-50 border-t border-red-200 flex items-center justify-between">
+          <span className="text-sm text-red-700">Delete this entry?</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowDeleteConfirm(false)}
+              className="px-3 py-1 text-sm text-red-600 hover:text-red-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => onDelete(entry.id)}
+              className="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+### Key patterns in this component
+
+**Inline editing:** Instead of navigating to a separate edit page, we toggle into edit mode directly on the card. This is a common mobile UX pattern — it's faster and keeps the user in context.
+
+**Delete confirmation:** Never delete without confirming. The `showDeleteConfirm` state reveals a red warning bar. This prevents accidental deletions — especially important on mobile where taps can be imprecise.
+
+**`whitespace-pre-wrap`:** This Tailwind class preserves line breaks that the user typed. Without it, a multi-line entry would render as a single paragraph.
+
+**`aria-label`:** Screen readers need text for icon-only buttons. The `aria-label` provides that. Accessibility matters even in tutorials.
+
+---
+
+## Step 6: Update the Feed Page
+
+Replace the Feed placeholder with a real entry list:
+
+```tsx title="src/pages/Feed.tsx"
+import { BookOpen } from 'lucide-react'
+import EntryCard from '../components/EntryCard'
+import type { LocalEntry } from '../lib/types'
+
+interface FeedProps {
+  entries: LocalEntry[]
+  onEdit: (id: string, content: string, caption?: string) => void
+  onDelete: (id: string) => void
+}
+
+export default function Feed({ entries, onEdit, onDelete }: FeedProps) {
+  if (entries.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center px-4">
+        <BookOpen className="w-16 h-16 text-amber-300 mb-4" />
+        <h2 className="text-xl font-semibold text-amber-900 mb-2">Your Journal</h2>
+        <p className="text-amber-600">
+          No entries yet. Tap the <strong>+</strong> button to create your first one.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-4 p-4 overflow-y-auto">
+      {entries.map((entry) => (
+        <EntryCard
+          key={entry.id}
+          entry={entry}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      ))}
+    </div>
+  )
+}
+```
+
+### The empty state
+
+When there are no entries, we show a helpful message instead of a blank screen. This is the simplest form of an "empty state" — we'll make it much nicer in Chapter 9.
+
+### The `key` prop
+
+React requires a unique `key` when rendering lists. We use `entry.id` because each entry has a unique identifier. Never use array index as a key — if entries get reordered or deleted, React can't track which is which.
+
+---
+
+## Step 7: Wire Everything Together in App.tsx
+
+Now the big moment — connect all the pieces:
+
+```tsx title="src/App.tsx"
+import { useState } from 'react'
+import Header from './components/Header'
+import BottomNav from './components/BottomNav'
+import Feed from './pages/Feed'
+import Create from './pages/Create'
+import Profile from './pages/Profile'
+import type { LocalEntry } from './lib/types'
+
+type Tab = 'feed' | 'create' | 'profile'
+
+function App() {
+  const [activeTab, setActiveTab] = useState<Tab>('feed')
+  const [entries, setEntries] = useState<LocalEntry[]>([])
+
+  const handleAddEntry = (entry: LocalEntry) => {
+    setEntries((prev) => [entry, ...prev])
+  }
+
+  const handleEditEntry = (id: string, content: string, caption?: string) => {
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === id ? { ...entry, content, caption } : entry
+      )
+    )
+  }
+
+  const handleDeleteEntry = (id: string) => {
+    setEntries((prev) => prev.filter((entry) => entry.id !== id))
+  }
+
+  return (
+    <div className="min-h-screen bg-amber-50">
+      <Header />
+
+      <main className="max-w-lg mx-auto pt-14 pb-20 min-h-screen">
+        <div className="h-[calc(100vh-8.5rem)] flex flex-col">
+          {activeTab === 'feed' && (
+            <Feed
+              entries={entries}
+              onEdit={handleEditEntry}
+              onDelete={handleDeleteEntry}
+            />
+          )}
+          {activeTab === 'create' && (
+            <Create
+              onAddEntry={handleAddEntry}
+              onClose={() => setActiveTab('feed')}
+            />
+          )}
+          {activeTab === 'profile' && <Profile />}
+        </div>
+      </main>
+
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+    </div>
+  )
+}
+
+export default App
+```
+
+### How state flows
+
+Let's trace what happens when a user creates an entry:
+
+1. User taps the "New" tab → `setActiveTab('create')` → Create page renders
+2. User types a message and taps "Save Entry"
+3. `Create` calls `onAddEntry(newEntry)` → which is `handleAddEntry` in App
+4. `handleAddEntry` calls `setEntries((prev) => [entry, ...prev])` — adds the entry to the front of the array
+5. `Create` calls `onClose()` → which is `setActiveTab('feed')` → Feed page renders
+6. Feed receives the updated `entries` array → the new entry appears at the top
+
+**The spread operator `[entry, ...prev]`** creates a new array with the new entry first, followed by all previous entries. This gives us newest-first ordering.
+
+**`prev.map(...)` for editing** creates a new array where the matching entry is replaced. The `...entry` spread copies all fields, then `content` and `caption` override the specific fields being edited.
+
+**`prev.filter(...)` for deleting** creates a new array that excludes the entry with the matching id.
+
+<ClaudeCodePrompt
+  prompt="I have a React app where entries are stored in useState as an array. I'm using map() for editing and filter() for deleting. Can you explain why I shouldn't mutate the array directly (like using push or splice)?"
+  context="Understanding immutable state updates is crucial for React. Mutation bugs are the #1 cause of 'my component won't re-render' issues."
+  tip="If React state concepts like immutability feel confusing, ask Claude Code to explain with visual examples."
+/>
+
+---
+
+## Step 8: Test the Full CRUD Flow
+
+Start the dev server:
+
+```bash
+npm run dev
+```
+
+Walk through each operation:
+
+### Create
+1. Tap the **New** tab
+2. Type "Grateful for sunny weather" in the text area
+3. Tap **Save Entry**
+4. You should be redirected to Feed, and the entry should appear
+
+### Read
+1. The entry card shows the date and your text
+2. Create 2-3 more entries — they should stack newest-first
+
+### Update
+1. Tap the **pencil icon** on any entry card
+2. The text becomes editable
+3. Change the text and tap **Save**
+4. The card updates with the new content
+
+### Delete
+1. Tap the **trash icon** on any entry card
+2. A red confirmation bar appears at the bottom of the card
+3. Tap **Cancel** — nothing happens
+4. Tap **Delete** — the entry disappears
+
+### Photo entries
+1. Tap **New**, then select **Photo**
+2. Choose an image file from your device
+3. Add a caption and save
+4. The feed shows the image with the caption below it
+
+---
+
+## Step 9: Commit Your Progress
+
+```bash
+git add .
+git commit -m "Add CRUD for entries: create form, entry cards, feed display, edit, delete"
+git push
+```
+
+---
+
+## Understanding What We Built
+
+```
+Data Flow:
+                    ┌─────────────┐
+                    │   App.tsx    │
+                    │             │
+                    │  entries[]  │ ← single source of truth
+                    │             │
+                    └──┬───┬──┬──┘
+                       │   │  │
+            ┌──────────┘   │  └──────────┐
+            ▼              ▼             ▼
+        ┌──────┐     ┌─────────┐    ┌─────────┐
+        │ Feed │     │ Create  │    │ Profile │
+        │      │     │         │    │         │
+        │ map  │     │ form →  │    │ (later) │
+        │  ↓   │     │ addEntry│    │         │
+        │Cards │     └─────────┘    └─────────┘
+        └──────┘
+```
+
+**What's missing?** Persistence. Refresh the page and all entries vanish. That's expected — we're using React state, which only lives in memory. In the next chapter, we connect Firebase Firestore to make entries permanent.
+
+<FileTree title="Updated project structure">
+
+```
+gratitude-jar/
+├── src/
+│   ├── components/
+│   │   ├── Header.tsx
+│   │   ├── BottomNav.tsx
+│   │   └── EntryCard.tsx       ← NEW
+│   ├── hooks/
+│   ├── lib/
+│   │   ├── firebase.ts
+│   │   ├── types.ts            ← UPDATED (added LocalEntry)
+│   │   └── dates.ts            ← NEW
+│   ├── pages/
+│   │   ├── Feed.tsx            ← UPDATED (real entry list)
+│   │   ├── Create.tsx          ← UPDATED (entry form)
+│   │   └── Profile.tsx
+│   ├── App.tsx                 ← UPDATED (entries state + CRUD)
+│   ├── index.css
+│   └── main.tsx
+├── .env
+├── .gitignore
+├── index.html
+├── package.json
+└── vite.config.ts
+```
+
+</FileTree>
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Entries appear but disappear on page refresh",
+    solution: <p>That's expected! Entries are stored in React state (memory) for now. They'll persist after we connect Firebase Firestore in Chapter 6.</p>
+  },
+  {
+    error: "Photo preview doesn't show after selecting a file",
+    solution: <p>Make sure you're reading the file with <code>URL.createObjectURL(file)</code>. Check that the <code>onChange</code> handler on the file input is correctly reading <code>e.target.files?.[0]</code>.</p>
+  },
+  {
+    error: "TypeScript error: Property 'caption' is missing",
+    solution: <p>Make sure <code>caption</code> is marked as optional with <code>?</code> in both the <code>Entry</code> and <code>LocalEntry</code> types: <code>caption?: string</code>.</p>
+  },
+  {
+    error: "Edit mode doesn't save changes",
+    solution: <p>Check that <code>handleEditEntry</code> in App.tsx uses <code>prev.map()</code> to return a new array. The spread <code>{`{...entry, content, caption}`}</code> must come after the spread to override the old values.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={5}>
+- You can **create text entries** and they appear in the Feed
+- You can **create photo entries** with an image preview and optional caption
+- You can **edit** any entry by tapping the pencil icon
+- You can **delete** any entry with a confirmation step
+- Entries display in **newest-first order**
+- The empty state shows a helpful message when there are no entries
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+Your app now has real functionality — but the data disappears on refresh. In the next chapter, we connect Firebase Firestore to persist entries in the cloud with real-time syncing.
 
 <TwitterCallout />
 
