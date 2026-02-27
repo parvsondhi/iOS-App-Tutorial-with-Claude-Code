@@ -22,8 +22,8 @@ By the end of this chapter, you'll have a running React + TypeScript project wit
 
 - Scaffold a new project with `npm create vite@latest`
 - Install React, TypeScript, Tailwind CSS v4, Firebase, and Lucide React
-- Set up the folder structure
-- Write your TypeScript interfaces (`types.ts`)
+- Have Claude Code configure Tailwind, clean up starter files, and set up the project structure
+- Define your TypeScript interfaces (`types.ts`)
 - Create a Firebase project and get your config keys
 - See your first `npm run dev` output
 
@@ -91,93 +91,37 @@ Capacitor and its plugins are only needed when we wrap the web app for iOS in Pa
 
 ## Step 3: Configure Tailwind CSS v4
 
-Tailwind CSS v4 uses a new Vite plugin instead of the old PostCSS setup. It's much simpler.
+Tailwind CSS v4 uses a new Vite plugin instead of the old PostCSS setup. It's much simpler — and Claude Code can handle the entire configuration for you.
 
-### Add the plugin to `vite.config.ts`
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
+  prompt="Configure Tailwind CSS v4 in my Vite project. Add the @tailwindcss/vite plugin to vite.config.ts, replace src/index.css with just the Tailwind import, and remove src/App.css since we'll use Tailwind for all styling. Also remove the App.css import from App.tsx."
+  context="Tailwind v4 uses a Vite plugin instead of the old PostCSS config. This is simpler and faster."
+  expectedOutput="Claude Code will update vite.config.ts to include the tailwindcss() plugin, replace the contents of src/index.css with a single @import 'tailwindcss' line, delete src/App.css, and remove the App.css import from App.tsx."
+  tip="After Claude Code makes these changes, restart your dev server (Ctrl+C then npm run dev) for the Tailwind plugin to take effect."
+/>
 
-Open `vite.config.ts` and update it:
+### What Claude Code just did
 
-```ts title="vite.config.ts"
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-
-export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
-})
-```
-
-### Replace the CSS
-
-Open `src/index.css` and replace **everything** in it with:
-
-```css title="src/index.css"
-@import "tailwindcss";
-```
-
-That single line imports all of Tailwind's utility classes. Tailwind v4 handles the rest automatically.
-
-### Delete the old CSS
-
-Remove `src/App.css` — we won't need component-specific CSS files. Tailwind handles all our styling.
-
-```bash
-rm src/App.css
-```
-
-Also open `src/App.tsx` and remove the line that imports `App.css`:
-
-```tsx
-// DELETE this line from App.tsx:
-import './App.css'
-```
+- **`vite.config.ts`** — Added `tailwindcss()` to the plugins array alongside the existing `react()` plugin. This tells Vite to process Tailwind classes automatically.
+- **`src/index.css`** — Replaced all the default CSS with a single `@import "tailwindcss"` line. That one import gives you access to every Tailwind utility class.
+- **`src/App.css`** — Deleted entirely. We won't use component-specific CSS files — Tailwind handles all our styling through utility classes directly in the JSX.
+- **`src/App.tsx`** — Removed the `import './App.css'` line since the file no longer exists.
 
 ---
 
 ## Step 4: Clean Up the Starter Files
 
-Vite's template comes with demo content we don't need. Let's clear it out.
+Vite's template comes with demo content we don't need. Let's have Claude Code clear it out and set up our starting point.
 
-### Replace `src/App.tsx`
-
-Replace the entire file with a minimal starting point:
-
-```tsx title="src/App.tsx"
-function App() {
-  return (
-    <div className="min-h-screen bg-amber-50 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-amber-900 mb-2">
-          GratitudeJar
-        </h1>
-        <p className="text-amber-700">
-          Your app is running. Let's build something.
-        </p>
-      </div>
-    </div>
-  )
-}
-
-export default App
-```
-
-### Delete unused files
-
-```bash
-rm src/assets/react.svg
-rm public/vite.svg
-```
-
-### Update the page title
-
-Open `index.html` and change the `<title>` tag:
-
-```html
-<title>GratitudeJar</title>
-```
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
+  prompt="Clean up the Vite starter files for our GratitudeJar app. Replace src/App.tsx with a minimal component that shows 'GratitudeJar' centered on an amber background using Tailwind. Delete the unused react.svg and vite.svg files. Update the page title in index.html to 'GratitudeJar'."
+  context="We're replacing Vite's demo content with a clean starting point for our app."
+  expectedOutput="Claude Code will rewrite src/App.tsx with a simple centered layout using Tailwind's amber color scheme, delete src/assets/react.svg and public/vite.svg, and change the <title> in index.html to 'GratitudeJar'."
+/>
 
 ### Test it
 
@@ -191,11 +135,15 @@ You should see a warm amber page with "GratitudeJar" centered on the screen. If 
 
 ## Step 5: Set Up the Folder Structure
 
-A clear folder structure keeps you organized as the app grows. Create the following folders inside `src/`:
+A clear folder structure keeps you organized as the app grows. Let Claude Code create the folders we'll need.
 
-```bash
-mkdir -p src/components src/pages src/lib src/hooks
-```
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
+  prompt="Create the folder structure for our app: src/components/, src/pages/, src/lib/, and src/hooks/. These will hold our reusable components, page views, utilities, and custom React hooks."
+  context="Organizing code into folders from the start prevents a messy project later."
+  expectedOutput="Claude Code will create four new directories inside src/: components/, pages/, lib/, and hooks/."
+/>
 
 <FileTree title="src/ folder structure">
 
@@ -224,26 +172,19 @@ src/
 
 ## Step 6: Create the TypeScript Types
 
-In Chapter 1, we designed the `Entry` data model. Now let's make it real. Create a new file:
+In Chapter 1, we designed the `Entry` data model. Now let's make it real.
 
-```ts title="src/lib/types.ts"
-import { Timestamp } from 'firebase/firestore'
-
-export type Entry = {
-  id: string
-  type: 'text' | 'photo'
-  content: string
-  caption?: string
-  date: string          // "YYYY-MM-DD"
-  createdAt: Timestamp
-}
-
-export type NewEntry = Omit<Entry, 'id' | 'createdAt'>
-```
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 6"
+  prompt="Create a TypeScript types file at src/lib/types.ts for our GratitudeJar app. Define an Entry type with: id (string), type ('text' | 'photo'), content (string), caption (optional string), date (string in YYYY-MM-DD format), and createdAt (Firebase Timestamp). Also create a NewEntry type that omits id and createdAt since those are generated by Firebase."
+  context="TypeScript types define the shape of your data. They catch bugs at compile time instead of at runtime."
+  expectedOutput="Claude Code will create src/lib/types.ts with an Entry type containing all six fields and a NewEntry type using TypeScript's Omit utility type."
+/>
 
 ### What's `NewEntry`?
 
-When creating a new entry, we don't have an `id` yet (Firestore generates it) and `createdAt` is set server-side. `Omit<Entry, 'id' | 'createdAt'>` creates a type that has all of `Entry`'s fields *except* those two. TypeScript will enforce this — if you accidentally try to set `id` on a `NewEntry`, it'll show an error.
+When creating a new entry, we don't have an `id` yet (Firestore generates it) and `createdAt` is set server-side. The `Omit<Entry, 'id' | 'createdAt'>` utility creates a type that has all of `Entry`'s fields *except* those two. TypeScript will enforce this — if you accidentally try to set `id` on a `NewEntry`, it'll show an error.
 
 <ClaudeCodePrompt
   prompt="Explain the TypeScript Omit utility type. I'm using Omit<Entry, 'id' | 'createdAt'> to create a NewEntry type. How does this work?"
@@ -340,29 +281,16 @@ dist
 
 ### Create the Firebase config file
 
-Now create the file that initializes Firebase in your app:
+Now let Claude Code create the file that initializes Firebase in your app.
 
-```ts title="src/lib/firebase.ts"
-import { initializeApp } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
-import { getStorage } from 'firebase/storage'
-import { getAuth } from 'firebase/auth'
-
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-}
-
-const app = initializeApp(firebaseConfig)
-
-export const db = getFirestore(app)
-export const storage = getStorage(app)
-export const auth = getAuth(app)
-```
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 8"
+  prompt="Create the Firebase configuration file at src/lib/firebase.ts. It should initialize Firebase using environment variables (VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_STORAGE_BUCKET, VITE_FIREBASE_MESSAGING_SENDER_ID, VITE_FIREBASE_APP_ID) and export the db (Firestore), storage, and auth instances."
+  context="This file is the single source of truth for Firebase in your app. Every other file that needs Firebase will import from here."
+  expectedOutput="Claude Code will create src/lib/firebase.ts that imports Firebase modules, reads config from import.meta.env variables, calls initializeApp(), and exports db, storage, and auth."
+  tip="Make sure your .env file is saved before running this — Claude Code may try to verify the environment variables exist."
+/>
 
 This file is the single source of truth for Firebase in your app. Every other file that needs Firebase will import from here.
 
