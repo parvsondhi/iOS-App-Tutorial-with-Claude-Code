@@ -4,26 +4,284 @@ title: "Chapter 18: The Update Cycle"
 description: Learn the workflow for making changes, rebuilding, and shipping updates to TestFlight.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 18: The Update Cycle
 
 > Your app is live on TestFlight. Now learn how to iterate and ship updates.
 
+Your first build is on TestFlight. Testers are using it. Feedback is coming in. Now you need a reliable workflow for making changes and shipping updates. This chapter teaches the update cycle you'll use for every improvement.
+
 ---
 
 ## What You'll Learn
 
-- The change → build → sync → archive → upload workflow
-- Bumping build numbers
-- Gathering and acting on TestFlight feedback
+- The complete change → build → sync → archive → upload workflow
 - When to bump the version number vs the build number
+- How to gather and act on TestFlight feedback
+- Common update patterns and how to handle them
+- Using Claude Code to iterate on features quickly
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
-:::
+## The Update Workflow
+
+Every update follows the same five steps:
+
+```
+1. Make changes to your web app code
+         ↓
+2. Build the production bundle
+         ↓
+3. Sync to the iOS project
+         ↓
+4. Archive in Xcode
+         ↓
+5. Upload to App Store Connect
+```
+
+### The commands
+
+```bash
+# Step 1: Make your code changes (edit files, test locally)
+npm run dev          # Test in browser first
+
+# Step 2-3: Build and sync
+npm run build        # Create production bundle
+npx cap sync         # Copy to iOS project
+
+# Step 4-5: Archive and upload (in Xcode)
+# Product → Archive → Distribute App → Upload
+```
+
+That's it. Five steps, every time. The consistency is the point — you shouldn't have to think about the process, just the changes.
+
+---
+
+## Step 1: Version Numbers — When to Bump What
+
+### Build number (must change every upload)
+
+The build number is the internal counter. It must increase with every upload to App Store Connect. You set it in Xcode → General → Build.
+
+```
+Build 1 → Build 2 → Build 3 → Build 4
+```
+
+**Rule:** Increment this every single time you upload. No exceptions.
+
+### Version number (change when users should notice)
+
+The version number is what users see. Bump it when there's something meaningful to communicate.
+
+| Change type | Version bump | Example |
+|---|---|---|
+| Bug fix | Patch (1.0.0 → 1.0.1) | Fixed crash when saving empty entry |
+| New feature | Minor (1.0.0 → 1.1.0) | Added dark mode |
+| Major redesign | Major (1.0.0 → 2.0.0) | Complete UI overhaul |
+
+### During TestFlight beta
+
+During beta testing, you're iterating fast. A simple approach:
+- Keep the version at `1.0.0` for all beta builds
+- Increment only the build number: Build 1, 2, 3, 4...
+- Bump to `1.0.0` (final) when you're ready for App Store submission
+
+---
+
+## Step 2: Gathering TestFlight Feedback
+
+### Built-in feedback
+
+TestFlight has built-in feedback tools:
+- Testers can **take a screenshot** and annotate it
+- Testers can **submit written feedback** with device info attached
+- Crash reports are collected automatically
+
+Find feedback in: **App Store Connect → TestFlight → Feedback**
+
+### What to look for
+
+| Signal | Action |
+|---|---|
+| Multiple testers report the same bug | Fix it immediately |
+| Tester suggests a feature | Add to a backlog (don't scope-creep during beta) |
+| Crash report | Fix before adding new features |
+| "I don't understand how to..." | UX needs improvement — the app should be self-explanatory |
+| No feedback at all | Ask testers directly — silence often means they forgot to test |
+
+### Asking for specific feedback
+
+Don't just say "let me know what you think." Give testers specific tasks:
+
+```
+For Build 3, please test:
+1. Create an entry with a photo from your camera (not library)
+2. Shake your phone — does the haptic feel right?
+3. Check if your streak count is accurate
+4. Try logging out and back in
+```
+
+---
+
+## Step 3: Common Update Patterns
+
+### Bug fix cycle
+
+```bash
+# 1. Fix the bug in your code
+# 2. Test locally
+npm run dev
+
+# 3. Build and sync
+npm run build && npx cap sync
+
+# 4. Bump build number in Xcode (e.g., 1 → 2)
+# 5. Archive: Product → Archive
+# 6. Upload: Distribute App → Upload
+```
+
+### Adding a new feature with Claude Code
+
+<ClaudeCodePrompt
+  prompt="I want to add [describe your feature] to my GratitudeJar app. Here's the current architecture: React + TypeScript frontend, Firebase backend (Auth, Firestore, Storage), Capacitor for iOS. The app has a tab-based navigation with Feed, Create, and Profile tabs. Can you help me implement this?"
+  tip="When iterating on your app after the tutorial, give Claude Code context about your architecture so it generates code that fits your existing patterns."
+/>
+
+After Claude Code generates the code:
+
+```bash
+# Test locally first
+npm run dev
+
+# When it works, build for iOS
+npm run build && npx cap sync
+
+# Test in Simulator
+# npx cap open ios → Cmd + R
+
+# If good, bump build number and upload
+# Product → Archive → Distribute App → Upload
+```
+
+### Changing Firebase security rules
+
+Security rule changes don't require a new app build — they're server-side. But you should still test that the app works correctly with the new rules before pushing them to production.
+
+### Updating dependencies
+
+```bash
+# Update a specific package
+npm update package-name
+
+# Or update all packages
+npm update
+
+# Test everything still works
+npm run dev
+npm run build
+
+# If good, sync and upload
+npx cap sync
+# Archive and upload in Xcode
+```
+
+---
+
+## Step 4: The Quick Reference Card
+
+Save this — you'll use it every time:
+
+```
+┌─────────────────────────────────────────┐
+│          GratitudeJar Update Cycle       │
+├─────────────────────────────────────────┤
+│                                          │
+│  1. Make changes to src/                 │
+│  2. npm run dev        (test locally)    │
+│  3. npm run build      (production)      │
+│  4. npx cap sync       (copy to iOS)     │
+│  5. Xcode: bump build number             │
+│  6. Product → Archive                    │
+│  7. Distribute App → Upload              │
+│  8. Wait for processing (~10 min)        │
+│  9. Testers auto-update via TestFlight   │
+│                                          │
+└─────────────────────────────────────────┘
+```
+
+### Auto-updates for testers
+
+When you upload a new build, testers who have **Automatic Updates** enabled in TestFlight will get the new version automatically. Others will see a notification in the TestFlight app.
+
+---
+
+## Step 5: When Things Go Wrong
+
+### Build fails in Xcode after code changes
+
+```bash
+# Clean and rebuild
+npx cap sync
+# In Xcode: Product → Clean Build Folder (Cmd + Shift + K)
+# Then: Product → Archive
+```
+
+### Upload rejected by App Store Connect
+
+Common reasons:
+- **Build number not incremented** — bump it and re-upload
+- **Missing icons** — make sure the app icon is in the asset catalog
+- **Invalid binary** — usually a signing issue; check Signing & Capabilities
+
+### App crashes on tester's device but not yours
+
+1. Check crash reports in App Store Connect → TestFlight → Crashes
+2. The crash report shows the stack trace and device info
+3. Test on the same iOS version if possible (use Simulator)
+
+<ClaudeCodePrompt
+  prompt="I got a crash report from TestFlight. Here's the stack trace: [paste the stack trace]. The crash happens on iOS 17.2 when the user [describe the action]. Can you help me diagnose and fix it?"
+  tip="Paste crash reports directly into Claude Code — it can usually identify the issue from the stack trace and suggest a fix."
+/>
+
+---
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Xcode says 'This build already exists' when uploading",
+    solution: <p>You didn't increment the build number. Go to the App target → General → Build, increase the number by 1, then archive and upload again.</p>
+  },
+  {
+    error: "New build doesn't appear in TestFlight after upload",
+    solution: <p>Builds take 5-30 minutes to process. Check App Store Connect → TestFlight for the processing status. If it's been over an hour, try uploading again with an incremented build number.</p>
+  },
+  {
+    error: "Tester has the old version after I uploaded a new build",
+    solution: <p>Testers need to either have automatic updates enabled in TestFlight or manually tap <strong>Update</strong> in the TestFlight app. Send them a message letting them know a new build is available.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={18}>
+- You understand the **5-step update cycle**: change → build → sync → archive → upload
+- You know when to bump the **version number** vs the **build number**
+- You can **gather and interpret** TestFlight feedback
+- You know how to use **Claude Code** to iterate on features quickly
+- You've successfully uploaded a **second build** to TestFlight (practice the cycle!)
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+You've mastered the update cycle. In the final chapter, we'll cover the last step — submitting your app to the App Store for public release.
 
 <TwitterCallout />
 
