@@ -70,7 +70,13 @@ Show app                    Show login screen
 
 ## Step 2: Build the `useAuth` Hook
 
-The auth hook manages the current user state and exposes login/signup/logout functions:
+Send this prompt to Claude Code to generate the auth hook, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Create a custom React hook at src/hooks/useAuth.ts for Firebase authentication. Use onAuthStateChanged as a real-time listener in useEffect (with cleanup). Track user (User | null) and loading state. Expose signup (createUserWithEmailAndPassword), login (signInWithEmailAndPassword), and logout (signOut) functions."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```ts title="src/hooks/useAuth.ts"
 import { useState, useEffect } from 'react'
@@ -132,7 +138,13 @@ Firebase stores the auth token in `localStorage`. When the user closes the brows
 
 ## Step 3: Build the Auth Screen
 
-Create a combined login/signup screen:
+Send this prompt to Claude Code to generate the auth screen, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Create a combined login/signup screen at src/pages/AuthScreen.tsx. It should have: email and password inputs with Mail and Lock icons from lucide-react, a toggle between Login and Sign Up modes, form validation (check empty fields, password min 6 chars), error handling that translates Firebase error codes to human-readable messages (auth/user-not-found → 'Invalid email or password', auth/email-already-in-use → 'An account with this email already exists'), and a submitting state with Loader2 spinner. Use the same amber theme. Props: onLogin and onSignup callbacks."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```tsx title="src/pages/AuthScreen.tsx"
 import { useState } from 'react'
@@ -286,7 +298,13 @@ Notice we use the same message for "user not found" and "wrong password" — thi
 
 ## Step 4: Update the Profile Page
 
-Replace the placeholder Profile page with user info and logout:
+Send this prompt to Claude Code to update the Profile page, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Update src/pages/Profile.tsx to show the logged-in user's info. Accept user (Firebase User type), onLogout callback, and entryCount as props. Show a circular avatar with UserIcon, the user's email with a Mail icon, an entry count stat card, and a red LogOut button."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```tsx title="src/pages/Profile.tsx"
 import { User as UserIcon, LogOut, Mail } from 'lucide-react'
@@ -340,6 +358,12 @@ export default function Profile({ user, onLogout, entryCount }: ProfileProps) {
 ## Step 5: Scope Firestore Queries to the User
 
 Right now, everyone sees everyone's entries. We need to add a `userId` field to entries and filter by it.
+
+Send this prompt to Claude Code to make entries user-specific, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Make entries user-specific. Update src/lib/types.ts to add a userId field to Entry and exclude it from NewEntry. Update src/lib/firestore.ts: createEntry should accept userId and include it in the document, subscribeToEntries should accept userId and add where('userId', '==', userId) to the query. Update src/hooks/useEntries.ts to accept userId parameter, reset entries when userId is null, and pass userId to createEntry and subscribeToEntries. Add userId to the useEffect dependency array."
+/>
 
 ### Update the types
 
@@ -516,7 +540,13 @@ Notice the `[userId]` dependency in `useEffect`. When the user logs in or switch
 
 ## Step 6: Wire Auth into App.tsx
 
-Now connect everything at the top level:
+Send this prompt to Claude Code to integrate authentication into the app, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Update src/App.tsx to integrate authentication. Use useAuth() hook alongside useEntries(user?.uid ?? null). Add three render states: 1) if authLoading, show a full-screen spinner, 2) if no user, show AuthScreen with login/signup callbacks, 3) if user exists, show the full app. Pass the user object to Profile along with logout and entryCount."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```tsx title="src/App.tsx"
 import { useState } from 'react'

@@ -59,7 +59,15 @@ Legend:  [ ] = no entries  [░] = 1 entry  [██] = 2+ entries
 
 ## Step 2: Build the Date Utilities
 
-We need helpers to work with date ranges and group entries by day:
+We need helpers to work with date ranges and group entries by day.
+
+Send this prompt to Claude Code to generate the date utilities, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Add two new functions to src/lib/dates.ts: getDaysInRange(startDate, endDate) that returns an array of 'YYYY-MM-DD' strings for every day in the range, and getWeeksAgo(weeks) that returns a Date object for N weeks ago adjusted to start on Monday."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```ts title="src/lib/dates.ts (add these functions)"
 export function getDaysInRange(startDate: Date, endDate: Date): string[] {
@@ -89,7 +97,15 @@ export function getWeeksAgo(weeks: number): Date {
 
 ## Step 3: Build the Streak Calculator
 
-Streaks need careful date math. A streak is broken when a calendar day is skipped:
+Streaks need careful date math. A streak is broken when a calendar day is skipped.
+
+Send this prompt to Claude Code to generate the streak calculator, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Create a streak calculator at src/lib/streaks.ts. The calculateStreaks function takes an array of date strings ('YYYY-MM-DD') and returns currentStreak, longestStreak, and totalDays. Current streak counts consecutive days backward from today/yesterday. Use Set for deduplication. Handle edge cases: multiple entries per day count as one streak day, and if the user hasn't posted today but posted yesterday, the streak is still alive."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```ts title="src/lib/streaks.ts"
 import { getLocalDateString } from './dates'
@@ -174,6 +190,14 @@ export function calculateStreaks(entryDates: string[]): {
 ---
 
 ## Step 4: Build the Heatmap Component
+
+Send this prompt to Claude Code to generate the heatmap component, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Create a GitHub-style calendar heatmap at src/components/CalendarHeatmap.tsx showing the last 12 weeks. Accept entryDates (array of 'YYYY-MM-DD' strings). Use useMemo to: count entries per day with a Map, generate a 7-row grid (Mon-Sun) × N columns (weeks), and extract month labels. Color cells with amber shades based on count (0=amber-100, 1=amber-300, 2=amber-500, 3+=amber-700). Highlight today with a ring. Add day labels (Mon, Wed, Fri) and a Less/More legend."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```tsx title="src/components/CalendarHeatmap.tsx"
 import { useMemo } from 'react'
@@ -323,7 +347,13 @@ The `title` attribute on each cell gives a tooltip on hover (desktop) showing th
 
 ## Step 5: Update the Profile Page
 
-Replace the simple Profile with stats and the heatmap:
+Send this prompt to Claude Code to update the Profile page with stats and the heatmap, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Update src/pages/Profile.tsx to show stats and the heatmap. Change props to accept entries (Entry[]) instead of entryCount. Use useMemo to extract entryDates and calculate streaks. Show three stat cards in a grid: Current Streak (Flame icon), Best Streak (Trophy icon), Days Active (Calendar icon). Add the CalendarHeatmap component in a card. Update App.tsx to pass entries instead of entries.length to Profile."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```tsx title="src/pages/Profile.tsx"
 import { User as UserIcon, LogOut, Mail, Flame, Trophy, Calendar } from 'lucide-react'

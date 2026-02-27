@@ -77,7 +77,14 @@ These values are `0` on devices without a notch (or in the browser) and ~47px on
 
 ## Step 2: Apply Safe Area Insets
 
-Update the fixed elements — header and bottom nav — to respect safe areas:
+Send this prompt to Claude Code to apply safe area insets to your fixed elements, then compare the result with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Update the fixed-position elements in our app to respect iOS safe area insets. In Header.tsx, add paddingTop: 'env(safe-area-inset-top)' as an inline style. In BottomNav.tsx, add paddingBottom: 'env(safe-area-inset-bottom)' as an inline style. In App.tsx, update the main content area padding to account for the larger header and nav using calc() with the safe area variables."
+  tip="The env(safe-area-inset-*) CSS variables return 0 on devices without a notch, so this code works safely everywhere without platform detection."
+/>
+
+Here's the reference for each file update:
 
 ```tsx title="src/components/Header.tsx (add safe area padding)"
 <header className="fixed top-0 left-0 right-0 z-50 bg-amber-50 border-b border-amber-200"
@@ -117,7 +124,14 @@ npm install @capacitor/status-bar
 npx cap sync
 ```
 
-Configure the status bar in your app's entry point:
+Send this prompt to Claude Code to configure the status bar, then compare the result with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Configure the iOS status bar in src/main.tsx. Import Capacitor and the StatusBar plugin from @capacitor/status-bar. After the imports, add a native platform check that sets the status bar style to Style.Light (dark text for our light theme) and sets the background color to '#fffbeb' (amber-50)."
+  tip="Style.Light means dark text — it refers to the background being light, not the text color. This trips up many developers."
+/>
+
+Here's the reference for the status bar configuration:
 
 ```ts title="src/main.tsx (add status bar config)"
 import React from 'react'
@@ -153,7 +167,14 @@ Our app uses a light amber background, so dark status bar text (`Style.Light`) i
 
 ## Step 4: Fix Keyboard Behavior
 
-When a text input is focused on iOS, the keyboard slides up. In a web view, this can push the entire page or cover the input. We need to handle this:
+When a text input is focused on iOS, the keyboard slides up. In a web view, this can push the entire page or cover the input. Send this prompt to Claude Code to fix keyboard behavior, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Fix iOS keyboard behavior in our Capacitor app. Update capacitor.config.ts to add an ios block with scrollEnabled: true and contentInset: 'automatic' so the web view resizes when the keyboard appears. Also add CSS rules to src/index.css: set scroll-margin-bottom: 120px on focused inputs/textareas so they scroll into view, and set font-size: 16px on all input, textarea, and select elements to prevent iOS auto-zoom on focus."
+  tip="The 16px font-size rule is critical — iOS Safari auto-zooms the page when focusing inputs smaller than 16px, creating a terrible user experience."
+/>
+
+Here's the reference for the keyboard configuration:
 
 ```ts title="capacitor.config.ts (add keyboard config)"
 import type { CapacitorConfig } from '@capacitor/cli'
@@ -202,7 +223,14 @@ iOS Safari automatically zooms the page when an input with a font size smaller t
 
 ## Step 5: Touch Target Sizes
 
-Apple's Human Interface Guidelines require minimum touch targets of **44×44 points**. Some of our buttons (especially icon-only ones) might be too small. Audit and fix:
+Apple's Human Interface Guidelines require minimum touch targets of **44×44 points**. Some of our buttons (especially icon-only ones) might be too small. Send this prompt to Claude Code to fix touch targets, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Audit and fix touch target sizes across our app to meet Apple's 44x44 minimum. Add a CSS rule to src/index.css that sets min-height: 44px and min-width: 44px on all button, a, and [role='button'] elements. Also review icon-only buttons — ensure they use at least p-2.5 padding with w-6 h-6 icons to reach the 44px minimum."
+  tip="Apple will reject apps with touch targets smaller than 44x44 points. This global CSS rule is a safety net, but always verify visually in the Simulator."
+/>
+
+Here's the reference for touch target sizing:
 
 ```tsx title="General rule for icon buttons"
 {/* Too small — 32×32 */}
@@ -354,7 +382,14 @@ Before moving to Part 5 (TestFlight), walk through this checklist:
 
 ## Step 10: Production Build
 
-Before moving to TestFlight, let's make a production build. Remove the dev server config:
+Before moving to TestFlight, let's make a production build. Send this prompt to Claude Code to prepare the production config, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Update capacitor.config.ts for production by removing the server block (url and cleartext). Keep the appId, appName, webDir, and the ios block with scrollEnabled and contentInset. The app should now load from the bundled dist/ files instead of connecting to a dev server."
+  tip="Forgetting to remove the server block is the most common TestFlight mistake — the app tries to connect to localhost and shows a blank screen for your testers."
+/>
+
+Here's the reference for the production configuration:
 
 ```ts title="capacitor.config.ts (production)"
 import type { CapacitorConfig } from '@capacitor/cli'

@@ -62,7 +62,15 @@ Most beginners only build the Content state. A polished app handles all three gr
 
 ## Step 2: Build Skeleton Loading Cards
 
-Skeleton screens show the shape of content before it loads. Research shows users perceive them as faster than spinners because they hint at what's coming:
+Skeleton screens show the shape of content before it loads. Research shows users perceive them as faster than spinners because they hint at what's coming.
+
+Send this prompt to Claude Code to generate the skeleton component, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Create a skeleton loading card component at src/components/EntrySkeleton.tsx that mimics the shape of an EntryCard. Use Tailwind's animate-pulse class with amber-colored placeholder rectangles for the header area (date and action buttons) and body area (three lines of varying width). Then update Feed.tsx to show three EntrySkeleton cards instead of the spinner during loading."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```tsx title="src/components/EntrySkeleton.tsx"
 export default function EntrySkeleton() {
@@ -113,7 +121,15 @@ Three skeleton cards give the impression of a populated feed loading. It's a sma
 
 ## Step 3: Build a Rich Empty State
 
-When there are no entries, we should do more than say "no entries." We should explain what the app does and nudge the user toward creating their first entry:
+When there are no entries, we should do more than say "no entries." We should explain what the app does and nudge the user toward creating their first entry.
+
+Send this prompt to Claude Code to generate the empty state component, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Create a rich empty state component at src/components/EmptyState.tsx. Show a large Flower icon in a circular amber background, 'Your jar is empty' heading, an encouraging description about capturing gratitude, and a 'Create Your First Entry' button with PlusCircle icon. Accept an onCreateFirst callback prop. Update Feed.tsx to use EmptyState when entries.length === 0, and pass onNavigateToCreate from App.tsx."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```tsx title="src/components/EmptyState.tsx"
 import { Flower, PlusCircle } from 'lucide-react'
@@ -190,7 +206,15 @@ And pass the navigation handler from App:
 
 ## Step 4: Build a Toast Notification System
 
-Toasts are non-blocking messages that slide in, show feedback, and auto-dismiss. They're perfect for "Entry saved!" and "Failed to delete" messages:
+Toasts are non-blocking messages that slide in, show feedback, and auto-dismiss. They're perfect for "Entry saved!" and "Failed to delete" messages.
+
+Send this prompt to Claude Code to generate the toast system, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Build a toast notification system: 1) Create src/components/Toast.tsx with ToastMessage type (id, type success/error, message) and a Toast component that renders toasts as slide-down cards with CheckCircle/AlertCircle icons and auto-dismiss after 3 seconds. 2) Create src/hooks/useToast.ts with showToast and dismissToast functions. 3) Wire toasts into App.tsx — wrap addEntry to show 'Entry saved!' on success. Also add a slide-down CSS animation to src/index.css."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```tsx title="src/components/Toast.tsx"
 import { useState, useEffect, useCallback } from 'react'
@@ -339,7 +363,15 @@ Now when a user creates an entry, a green "Entry saved!" toast slides down from 
 
 ## Step 5: Build the Onboarding Screen
 
-First-time users should see a welcome screen that explains what the app does:
+First-time users should see a welcome screen that explains what the app does.
+
+Send this prompt to Claude Code to generate the onboarding screen, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Create an onboarding screen at src/pages/Onboarding.tsx with three slides: Welcome (Flower icon), Write & Snap (BookOpen icon), Shake to Discover (Sparkles icon). Include dot indicators, Next/Get Started buttons, and a Skip option. Accept an onComplete callback. In App.tsx, use localStorage to track if onboarding has been shown (key: 'gratitude-jar-onboarded'), and show Onboarding before the auth check if it hasn't."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```tsx title="src/pages/Onboarding.tsx"
 import { useState } from 'react'
@@ -458,7 +490,15 @@ The onboarding only appears once. After the user taps "Get Started," we store a 
 
 ## Step 6: Add Relative Timestamps to Cards
 
-Let's show a more human-friendly time on entry cards — "Just now", "2 hours ago", "Yesterday":
+Let's show a more human-friendly time on entry cards — "Just now", "2 hours ago", "Yesterday".
+
+Send this prompt to Claude Code to generate the relative time function, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Add a getRelativeTime function to src/lib/dates.ts that takes a Date and returns a human-friendly string: 'Just now' (under 1 min), '5m ago', '2h ago', 'Yesterday', '3d ago', or falls back to formatDisplayDate for older dates."
+/>
+
+Here's the reference implementation — compare what Claude Code generated with this:
 
 ```ts title="src/lib/dates.ts (add relative time function)"
 export function getRelativeTime(date: Date): string {
