@@ -71,6 +71,15 @@ The algorithm:
 
 ## Step 3: Build the Shake Detection Hook
 
+Send this prompt to Claude Code to create the shake detection hook, then compare the result with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Create a custom React hook at src/hooks/useShakeDetection.ts that uses Capacitor's Motion plugin to detect phone shakes. Accept options for threshold (default 30), cooldownMs (default 1000), and an onShake callback. Calculate total acceleration from x/y/z values, trigger onShake when it exceeds the threshold, and enforce a cooldown between triggers. Only listen on native platforms (Capacitor.isNativePlatform()). Use useCallback for the handler and useRef for timing to avoid unnecessary re-renders."
+  tip="The threshold of 30 filters out normal movement (10-15) while catching deliberate shakes (25-40+). The cooldown prevents one shake from triggering multiple events."
+/>
+
+Here's the reference for the shake detection hook:
+
 ```ts title="src/hooks/useShakeDetection.ts"
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { Motion } from '@capacitor/motion'
@@ -146,7 +155,14 @@ export function useShakeDetection({ threshold = 30, cooldownMs = 1000, onShake }
 
 ## Step 4: Build the Shake Reveal Overlay
 
-When a shake is detected, we show a full-screen card with a random entry:
+When a shake is detected, we show a full-screen card with a random entry. Send this prompt to Claude Code to create the overlay component and its animations, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Create a ShakeReveal component at src/components/ShakeReveal.tsx that shows a full-screen overlay with a random journal entry. Accept props: entry (Entry type), onDismiss, and onShakeAgain. Show a dark backdrop with fade-in animation. The card should have a bounce-in animation, an amber header with Sparkles icon saying 'From Your Jar', display the entry content (text with quotes or photo with caption), show the formatted date, and include a 'Shake Again' button with RotateCcw icon. Dismiss on backdrop click or Escape key. Also add the CSS keyframe animations for fade-in and bounce-in to src/index.css."
+  tip="The bounce-in animation uses a spring-like cubic bezier curve — the card overshoots slightly and settles, which feels playful for a 'jar reveal' moment."
+/>
+
+Here's the reference for the ShakeReveal component:
 
 ```tsx title="src/components/ShakeReveal.tsx"
 import { useEffect } from 'react'
@@ -274,7 +290,14 @@ The `bounce-in` animation uses a spring-like cubic bezier curve. The card starts
 
 ## Step 5: Wire Shake into App.tsx
 
-Connect the shake detection to the reveal overlay:
+Now connect the shake detection to the reveal overlay. Send this prompt to Claude Code, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Update src/App.tsx to integrate the shake-to-discover feature. Add a shakeEntry state (Entry | null). Create a handleShake callback that picks a random entry from the entries array, fires hapticHeavy, and sets the shakeEntry. Use the useShakeDetection hook with this callback. Add a handleShakeAgain function that picks a new random entry. Render the ShakeReveal overlay when shakeEntry is set, with onDismiss clearing shakeEntry and onShakeAgain wired to handleShakeAgain."
+  tip="The guard 'if (shakeEntry) return' in handleShake prevents new shakes while a reveal is already showing."
+/>
+
+Here's the reference for the shake integration:
 
 ```tsx title="src/App.tsx (add shake logic)"
 import { useState, useCallback } from 'react'
@@ -329,7 +352,14 @@ function App() {
 
 ## Step 6: Add a Web Fallback Button
 
-Shaking doesn't work in the browser or Simulator. Add a button for development and web users:
+Shaking doesn't work in the browser or Simulator. Send this prompt to Claude Code to add a fallback button, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Update src/components/Header.tsx to add a shake fallback button for web and Simulator testing. Add onShake and hasEntries props. When both are provided, show a Sparkles icon button in the header that triggers onShake on click. Then update App.tsx to pass handleShake and entries.length > 0 to the Header component."
+  tip="This sparkles button in the header gives web users and Simulator testers a way to trigger the same reveal as a physical shake."
+/>
+
+Here's the reference for the Header update:
 
 ```tsx title="src/components/Header.tsx (add shake button)"
 import { Flower, Sparkles } from 'lucide-react'

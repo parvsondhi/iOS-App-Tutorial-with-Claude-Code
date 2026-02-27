@@ -80,7 +80,14 @@ If you forget these strings and try to use the camera, iOS will **crash your app
 
 ## Step 3: Build the Camera Service
 
-Create a service that wraps Capacitor's camera plugin with a web fallback:
+Send this prompt to Claude Code to create the camera service, then compare the result with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Create a camera service at src/lib/camera.ts that wraps Capacitor's Camera plugin with a web fallback. Export takePhoto() and pickFromLibrary() functions that return {dataUrl, blob}. On native (Capacitor.isNativePlatform()), use Camera.getPhoto with quality 80, max 1200x1200, DataUrl result type. On web, fall back to a programmatic file input. Include helper functions dataUrlToBlob and fileToDataUrl."
+  tip="Platform detection with Capacitor.isNativePlatform() is the key pattern — your app works everywhere but uses native APIs when available."
+/>
+
+Here's the reference for the camera service:
 
 ```ts title="src/lib/camera.ts"
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
@@ -204,7 +211,14 @@ This means your app never breaks — it just has fewer features on the web.
 
 ## Step 4: Build the Haptics Service
 
-Haptic feedback makes interactions feel physical. A light tap when switching tabs, a medium impact when saving, a warning vibration when deleting:
+Haptic feedback makes interactions feel physical. Send this prompt to Claude Code to create the haptics service, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Create a haptics service at src/lib/haptics.ts that wraps Capacitor's Haptics plugin. Export functions: hapticLight, hapticMedium, hapticHeavy (impact styles), and hapticSuccess, hapticWarning, hapticError (notification types). Each function should check Capacitor.isNativePlatform() and silently return on web — never throw errors."
+  tip="The native guard is critical — calling haptics on the web would throw an error. This pattern makes every haptic call safe on any platform."
+/>
+
+Here's the reference for the haptics service:
 
 ```ts title="src/lib/haptics.ts"
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
@@ -260,7 +274,14 @@ The `if (!isNative) return` guard is critical — calling haptics on the web wou
 
 ## Step 5: Update the Create Page for Native Camera
 
-Replace the file input in Create.tsx with our camera service:
+Send this prompt to Claude Code to update the Create page with native camera support, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Update src/pages/Create.tsx to use the native camera service instead of a file input. Replace the photo picker section with two buttons: 'Take Photo' (calls takePhoto, shows Camera icon) and 'Library' (calls pickFromLibrary, shows Image icon). Add a photoBlob state for the upload. Add hapticLight before camera actions and hapticSuccess after saving."
+  tip="The two-button pattern (Take Photo + Library) matches how native iOS apps handle photo input."
+/>
+
+Here's the reference for the updated photo section:
 
 ```tsx title="src/pages/Create.tsx (photo section update)"
 import { takePhoto, pickFromLibrary } from '../lib/camera'
@@ -337,7 +358,14 @@ if (entryType === 'photo' && photoBlob) {
 
 ## Step 6: Add Haptics Throughout the App
 
-Sprinkle haptic feedback on key interactions:
+Send this prompt to Claude Code to add haptic feedback across the app, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Add haptic feedback to key interactions throughout the app: hapticLight on tab switches in BottomNav.tsx, hapticWarning when showing delete confirmation in EntryCard.tsx, and hapticSuccess after saving an entry in Create.tsx."
+  tip="Don't overdo haptics — only add them to meaningful state changes like navigation, saving, and destructive actions."
+/>
+
+Here's the reference for each file update:
 
 ```tsx title="src/components/BottomNav.tsx (add haptic to tab switches)"
 import { hapticLight } from '../lib/haptics'

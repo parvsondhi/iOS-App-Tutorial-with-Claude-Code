@@ -109,7 +109,14 @@ This creates an `ios/` folder in your project containing a full Xcode project. Y
 
 ## Step 3: Configure Capacitor
 
-Open the generated config file and update it:
+Send this prompt to Claude Code to configure Capacitor, then compare the result with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Update capacitor.config.ts with our app settings. Set appId to 'com.yourname.gratitudejar', appName to 'GratitudeJar', webDir to 'dist'. Add a server block with url 'http://localhost:5173' and cleartext true for development hot-reload."
+  tip="The server block enables live reload during development — you'll remove it before shipping to TestFlight."
+/>
+
+Here's the reference for what your config should look like:
 
 ```ts title="capacitor.config.ts"
 import type { CapacitorConfig } from '@capacitor/cli'
@@ -253,7 +260,14 @@ You don't need to become an Xcode expert, but understanding the basics helps:
 
 ## Step 7: Add the Live Reload Script
 
-For an even smoother dev experience, add a script to your `package.json`:
+For an even smoother dev experience, send this prompt to Claude Code to add convenience scripts, then compare with the reference below:
+
+<ClaudeCodePrompt
+  prompt="Add convenience scripts to package.json for the Capacitor workflow: 'cap:sync' runs 'cap sync', 'cap:open' runs 'cap open ios', and 'ios:dev' runs both in sequence."
+  tip="These scripts simplify the Capacitor dev loop so you don't have to remember the full commands."
+/>
+
+Here's the reference for what your scripts section should look like:
 
 ```json title="package.json (add to scripts)"
 {

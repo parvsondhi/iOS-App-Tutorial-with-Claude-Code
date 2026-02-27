@@ -60,7 +60,18 @@ The key insight: **Storage holds the file, Firestore holds the metadata**. The `
 
 ## Step 2: Build the Image Compression Utility
 
-Phone cameras take photos at 3000x4000 pixels or more. Uploading those full-size images wastes bandwidth and makes the feed slow. We'll compress before uploading:
+Phone cameras take photos at 3000x4000 pixels or more. Uploading those full-size images wastes bandwidth and makes the feed slow. Let Claude Code build the compression utility:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 2"
+  prompt="Create an image compression utility at src/lib/image.ts. The compressImage function should take a File, load it into an Image element, resize it proportionally to max 1200x1200, draw it to a Canvas, and export as JPEG at 80% quality. This reduces 4MB phone photos to ~200-400KB."
+  context="Compressing images client-side before uploading saves bandwidth, reduces storage costs, and makes the feed load faster."
+  expectedOutput="A new file src/lib/image.ts with a compressImage function that takes a File and returns a Promise<Blob>."
+  tip="The function uses the Canvas API — if Claude Code's version looks different from the reference, that's fine as long as it resizes and compresses."
+/>
+
+Here's the reference implementation. Compare it with what Claude Code generated:
 
 ```ts title="src/lib/image.ts"
 const MAX_WIDTH = 1200
@@ -130,7 +141,18 @@ We convert everything to JPEG because it has the best size-to-quality ratio for 
 
 ## Step 3: Build the Storage Upload Service
 
-Create a service for uploading files to Firebase Storage:
+Let Claude Code build the upload service, then compare with the reference below:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
+  prompt="Create a Firebase Storage upload service at src/lib/storage.ts with two functions: uploadPhoto (compresses the image first, uploads using uploadBytesResumable with progress tracking via state_changed event, returns the permanent download URL) and deletePhoto (deletes a file from Storage by URL, with try-catch since missing files are fine). Use a filename pattern of entries/timestamp-random.jpg."
+  context="uploadBytesResumable supports progress tracking, unlike the simpler uploadBytes. The filename pattern entries/timestamp-random.jpg keeps Storage organized and avoids collisions."
+  expectedOutput="A new file src/lib/storage.ts with uploadPhoto (returns Promise<string> for the download URL) and deletePhoto functions."
+  tip="If Claude Code imports compressImage from ./image, that's correct — the two services work together."
+/>
+
+Here's the reference implementation. Compare it with what Claude Code generated:
 
 ```ts title="src/lib/storage.ts"
 import {
@@ -209,7 +231,18 @@ export async function deletePhoto(url: string): Promise<void> {
 
 ## Step 4: Update the Create Page for Real Uploads
 
-Replace the file input's local preview logic with actual uploads:
+Replace the file input's local preview logic with actual uploads. Let Claude Code build it:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
+  prompt="Update src/pages/Create.tsx to use real Firebase Storage uploads instead of local previews. Add photoFile, uploading, and uploadProgress state. The handleSubmit should: for photo entries, call uploadPhoto with the file and progress callback, then create the Firestore entry with the download URL as content. Show a progress bar during upload and disable the form."
+  context="This connects Create.tsx to Firebase Storage — photo entries go from temporary local URLs to permanent cloud-hosted images."
+  expectedOutput="An updated Create.tsx that imports uploadPhoto from ../lib/storage, tracks upload progress, shows a progress bar, and disables the form during upload."
+  tip="If Claude Code keeps the old URL.createObjectURL logic for the preview, that's correct — the preview is local, but the final content URL comes from Firebase Storage."
+/>
+
+Here's the reference implementation. Compare it with what Claude Code generated:
 
 ```tsx title="src/pages/Create.tsx"
 import { useState } from 'react'
@@ -422,7 +455,18 @@ export default function Create({ onAddEntry, onClose }: CreateProps) {
 
 ## Step 5: Clean Up Storage on Delete
 
-When a user deletes a photo entry, we should also delete the image from Storage. Update the Firestore service:
+When a user deletes a photo entry, we should also delete the image from Storage. Let Claude Code update both files:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
+  prompt="Update src/lib/firestore.ts deleteEntry function to also clean up photos from Storage. Accept an optional entry parameter, and if it's a photo entry, call deletePhoto with the content URL. Update the useEntries hook's removeEntry to find the entry and pass it to deleteEntry."
+  context="Without this cleanup, deleted photo entries leave orphaned files in Storage — wasting space and money over time."
+  expectedOutput="Updated firestore.ts with deleteEntry accepting an optional entry parameter and calling deletePhoto for photo entries, plus updated useEntries.ts removeEntry that finds the entry before deleting."
+  tip="If Claude Code puts the deletePhoto call before deleteDoc, suggest moving it after — delete the database record first, then clean up the file."
+/>
+
+Here's the reference implementation. Compare it with what Claude Code generated:
 
 ```ts title="src/lib/firestore.ts (add to deleteEntry)"
 import { deletePhoto } from './storage'
