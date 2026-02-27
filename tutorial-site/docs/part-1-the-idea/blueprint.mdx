@@ -25,6 +25,22 @@ By the end of this chapter, you'll have a clear picture of what you're building,
 
 ---
 
+## Start with a Prompt
+
+Before we get into the details, let's ask Claude Code to help us plan. Send this prompt to kick off the entire project:
+
+<ClaudeCodePrompt
+  variant="build"
+  step={1}
+  prompt="I want to build a journal app called GratitudeJar. It should support text entries, photo entries, and a shake-to-discover feature. Help me scope the MVP — what features should be in v1 vs cut for later? Also suggest a data model in TypeScript."
+  expectedOutput="Claude Code will produce an MVP feature list split into 'in' and 'out' categories, plus a TypeScript type definition for your Entry data model. You'll use both throughout this tutorial."
+  tip="This is how real developers start projects — by describing the idea and letting AI help structure the plan. Read through what Claude Code suggests and compare it with the plan below."
+/>
+
+Now let's walk through the blueprint in detail. You'll see that what Claude Code suggested lines up closely with the plan we've laid out here.
+
+---
+
 ## The App: GratitudeJar
 
 Let's start with what we're building and why.
@@ -160,15 +176,28 @@ When you shake the phone, a card animates into view showing a random past entry.
 ```
 
 <ClaudeCodePrompt
-  prompt="I'm building a journal app called GratitudeJar with text entries, photo entries, and a shake-to-discover feature. Help me think through the wireframes — what screens do I need and what should the user flow look like?"
-  tip="Claude Code is great at helping you think through UX flows before you write any code. Describe your app concept and ask it to help you plan."
+  variant="build"
+  step={2}
+  prompt="I'm building a journal app called GratitudeJar with text entries, photo entries, and a shake-to-discover feature. Help me think through the wireframes — what screens do I need and what should the user flow look like? Describe each screen layout in detail."
+  expectedOutput="Claude Code will describe the screens your app needs (entry feed, create entry, shake result, login) and the navigation flow between them. Compare its suggestions with the wireframes above."
+  tip="Even if you're not a designer, Claude Code can help you think through user flows before you write any code. This is a skill professional developers use every day."
 />
 
 ---
 
 ## Data Model
 
-Before writing any code, we design the data model. This is the shape of the data your app will store.
+Before writing any code, we design the data model. This is the shape of the data your app will store. Let's ask Claude Code to help design it:
+
+<ClaudeCodePrompt
+  variant="build"
+  step={3}
+  prompt="Design a TypeScript data model for GratitudeJar. Each journal entry can be text or photo. Text entries have a body. Photo entries have an image URL and an optional caption. I need fields for date grouping and reliable sort order using Firebase server timestamps. Show me the type definition with comments explaining each field."
+  expectedOutput="Claude Code will generate a TypeScript type similar to the one below. It should include fields for id, type, content, optional caption, date, and a Firebase Timestamp for ordering."
+  tip="Asking Claude Code to design your data model teaches you how to think about data structure. Read through each field it suggests and make sure you understand why it's there."
+/>
+
+Here is what the data model should look like. If Claude Code's output is close to this, you're on track:
 
 ```ts
 type Entry = {
@@ -181,7 +210,7 @@ type Entry = {
 }
 ```
 
-### Why these fields?
+### Here's what Claude Code created and why
 
 - **`id`** — Every entry needs a unique identifier. Firestore generates these automatically.
 - **`type`** — Tells us how to render the entry. Text entries show the content as text. Photo entries show the content as an image URL.
@@ -191,8 +220,8 @@ type Entry = {
 - **`createdAt`** — Firebase's server-side timestamp. This ensures entries sort correctly even if the user's phone clock is wrong.
 
 <ClaudeCodePrompt
-  prompt="Review this TypeScript data model for a journal app. The Entry type has id, type (text or photo), content, optional caption, date string, and createdAt Timestamp. Are there any edge cases or improvements I should consider?"
-  tip="Getting a second opinion on your data model before building on top of it can save hours of refactoring later."
+  prompt="Review the Entry type we just created. Are there any edge cases or improvements I should consider before I start building on top of it?"
+  tip="Getting a second opinion on your data model before building on top of it can save hours of refactoring later. This is a great habit to build."
 />
 
 ---

@@ -19,11 +19,11 @@ By the end of this chapter, you'll have a fully working development environment 
 
 ## What You'll Install
 
-- **Node.js 18+** and npm
-- **VS Code** with recommended extensions
 - **Xcode 15+** (this is a big download — start it early)
+- **Claude Code** — your AI coding partner that writes the code for this entire tutorial
+- **Node.js 18+** and npm
 - **Git** for version control
-- **Claude Code** (optional but recommended)
+- **VS Code** with recommended extensions
 
 ---
 
@@ -63,7 +63,43 @@ Even though we won't use Xcode until Part 4, installing it now saves you from a 
 
 ---
 
-## Step 2: Install Node.js
+## Step 2: Install Claude Code
+
+While Xcode downloads, install Claude Code. This is the AI coding partner you'll use throughout this entire tutorial — it writes the actual code for your app based on prompts you send it.
+
+### Install via npm
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+:::note
+If you don't have npm yet, skip ahead to Step 3 (Install Node.js) first, then come back here.
+:::
+
+### Set up authentication
+
+After installing, run `claude` in your terminal to set up authentication:
+
+```bash
+claude
+```
+
+Follow the prompts to connect your Anthropic account. Once you see the Claude Code prompt, you're ready.
+
+### Verify
+
+```bash
+claude --version
+```
+
+:::tip Why install Claude Code now?
+Every chapter in this tutorial gives you prompts to send to Claude Code. It writes the code; you review what it created and learn from it. Installing it now means you're ready for the very first build prompt in the next step.
+:::
+
+---
+
+## Step 3: Install Node.js
 
 Node.js is the runtime that powers React, Vite, and all our command-line tools. We recommend **Node.js 20 LTS** (Long Term Support).
 
@@ -99,7 +135,7 @@ npm -v
 
 ---
 
-## Step 3: Install Git
+## Step 4: Install Git
 
 Git tracks changes to your code. You'll use it to save progress at the end of every chapter.
 
@@ -130,7 +166,7 @@ Use the same email you use for GitHub — this links your commits to your accoun
 
 ---
 
-## Step 4: Install VS Code
+## Step 5: Install VS Code
 
 VS Code is our recommended code editor. It's free, fast, and has excellent extensions for everything we're using.
 
@@ -180,7 +216,7 @@ Or add this to your `.vscode/settings.json`:
 
 ---
 
-## Step 5: Create a GitHub Account and Repository
+## Step 6: Create a GitHub Account and Repository
 
 We'll use GitHub to store our code and eventually connect it to Vercel for deployment.
 
@@ -216,31 +252,19 @@ ssh -T git@github.com
 
 ---
 
-## Step 6: Install Claude Code (Optional)
+## Step 7: Verify Everything with Claude Code
 
-Claude Code is an AI coding assistant that runs in your terminal. Throughout this tutorial, you'll see optional Claude Code prompts showing how AI can help you code faster.
-
-```bash
-npm install -g @anthropic-ai/claude-code
-```
-
-After installing, run `claude` in your terminal to set up authentication.
+Now that everything is installed, let's use Claude Code to check your entire setup at once. This is your first real build prompt — send it to Claude Code in your terminal:
 
 <ClaudeCodePrompt
-  prompt="Check my development environment. I need Node.js 18+, Git, and VS Code installed for a React + Firebase + Capacitor project. Tell me if anything is missing."
-  context="You can use Claude Code to verify your setup before moving on."
-  tip="This is a great first interaction with Claude Code — it can check versions and spot issues you might miss."
+  variant="build"
+  step={1}
+  prompt="Check my development environment. I need Node.js 18+, Git, Xcode, and VS Code for a React + Firebase + Capacitor iOS app project. Tell me what's installed and what's missing."
+  expectedOutput="Claude Code will run version checks for each tool and report what's installed, what version you have, and flag anything that's missing or out of date."
+  tip="This is your first real interaction with Claude Code. Get used to this workflow: you send a prompt, Claude Code does the work, you review the result. This is how the entire tutorial works."
 />
 
-:::info Claude Code Is Optional
-Every Claude Code prompt in this tutorial shows you an **optional** way to accelerate your workflow. The tutorial works perfectly fine without it. Think of it as having a knowledgeable colleague available to ask questions.
-:::
-
----
-
-## Step 7: Verify Everything
-
-Let's make sure all our tools are installed and working. Run each of these commands:
+You can also verify manually by running each of these commands:
 
 ```bash
 # Node.js and npm
@@ -257,7 +281,7 @@ xcodebuild -version  # Xcode 15.x or higher
 # VS Code (if you installed the code command)
 code --version   # 1.x.x
 
-# Claude Code (if installed)
+# Claude Code
 claude --version
 ```
 
@@ -287,12 +311,12 @@ If any command fails, go back to the relevant step above and troubleshoot.
 ## Checkpoint
 
 <ChapterCheckpoint chapter={2}>
+- You have **Xcode 15+** installed (or it's downloading)
+- You have **Claude Code** installed and authenticated
 - You have **Node.js 18+** installed and `node -v` works
 - You have **Git** configured with your name and email
 - You have **VS Code** with the recommended extensions
-- You have **Xcode 15+** installed (or it's downloading)
 - You have a **GitHub repository** created for your project
-- (Optional) You have **Claude Code** installed
 </ChapterCheckpoint>
 
 ---

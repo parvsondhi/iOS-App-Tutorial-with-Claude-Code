@@ -36,9 +36,10 @@ By the end of this tutorial, you'll have a fully functional iOS app with:
 
 You should follow this tutorial if you:
 
+- Have **never written code before** but want to build something real
 - Know basic **HTML, CSS, and JavaScript** (or are actively learning)
 - Have **never built an iOS app** before
-- Want to **build something real**, not another counter or todo app
+- **Want to learn by doing, guided by AI** — each step gives you a prompt, Claude Code writes the code, and you learn from what it creates
 - Are willing to work through challenges — this tutorial covers the hard parts too
 
 You do **not** need prior experience with React, Firebase, Capacitor, TypeScript, or Xcode. We teach everything from scratch.
@@ -57,13 +58,13 @@ You do **not** need prior experience with React, Firebase, Capacitor, TypeScript
 | **Apple Developer Account** | Required for TestFlight. Costs $99/year. Sign up early — approval can take 24-48 hours. |
 | **A code editor** | We recommend VS Code, but any editor works. |
 | **Git** | For version control and accessing checkpoint branches. |
+| **Claude Code** | Your AI coding partner for this entire tutorial. It writes the code; you learn from it. Free to try. |
 
 ### Nice to Have (Not Required)
 
 | Tool | Why |
 |---|---|
 | **An iPhone** | For testing camera and shake features. The iOS Simulator works for most chapters. |
-| **Claude Code** | AI-assisted development at every step. Free to try. |
 
 ---
 
@@ -73,23 +74,34 @@ You do **not** need prior experience with React, Firebase, Capacitor, TypeScript
 
 This tutorial is designed to be followed **in order**, from Chapter 1 through Chapter 19. Each chapter builds on the previous one.
 
-### One concept at a time
+### Prompt-driven development
 
-Every step introduces **one new idea**. We explain the "why" before showing the "how." Code blocks are complete — you can copy and paste them directly.
+Every step gives you a **prompt to send to Claude Code**. Claude Code writes the code, and we explain what it created and why. You learn by reviewing real code that Claude Code generated for your project — not by copying and pasting from a wall of text.
 
 ### Checkpoints
 
 At the end of every chapter, you'll see a **checkpoint** — a screenshot of what your app should look like, a checklist of what should be working, and a link to the companion repo branch so you can compare your code.
 
-### Claude Code integration
+### Claude Code is your coding partner
 
-Throughout the tutorial, you'll see **Claude Code prompts** showing how to use AI to accelerate your development. These are optional but recommended — they demonstrate a real-world workflow where AI handles boilerplate while you focus on understanding.
+Claude Code is the **primary way you'll build this app**. Instead of manually typing out hundreds of lines of code, you send a prompt describing what you need, and Claude Code generates the actual code for your project. The prompts in this tutorial are carefully designed to produce the right code at each step.
 
 <ClaudeCodePrompt
   prompt="What does the onSnapshot function do in Firestore? Explain it like I'm a beginner."
-  context="This is an example of how Claude Code prompts appear throughout the tutorial."
+  context="This is an example of how Claude Code prompts appear throughout the tutorial. Build prompts generate code; question prompts help you understand concepts."
   tip="You can ask Claude Code to explain any concept you encounter. It's like having a senior developer sitting next to you."
 />
+
+### The prompt-driven workflow
+
+Here is how every chapter works:
+
+1. **You send a prompt** — Each step includes a prompt you copy and send to Claude Code in your terminal
+2. **Claude Code writes the code** — It creates or modifies files in your project based on the prompt
+3. **You review what it created** — We walk through the generated code and explain what each part does and why
+4. **You learn from it** — By reading real, working code in context, you build understanding naturally
+
+Terminal commands (like `npm install` or `git commit`) are still things you run yourself. But the app code? That comes from Claude Code.
 
 ### Time estimate
 
