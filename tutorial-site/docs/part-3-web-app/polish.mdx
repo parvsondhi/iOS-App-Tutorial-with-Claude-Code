@@ -4,26 +4,583 @@ title: "Chapter 9: Polish — States & Onboarding"
 description: Add empty states, loading states, error handling, and an onboarding experience.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import FileTree from '@site/src/components/FileTree';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 9: Polish — States & Onboarding
 
 > Your app works, but it doesn't feel finished yet. This chapter makes it feel real.
 
+The difference between a project and a product is polish. Right now, loading feels abrupt, errors are confusing, and first-time users have no idea what the app does. We'll fix all of that with empty states, loading skeletons, toast notifications, and a welcome screen.
+
 ---
 
 ## What You'll Build
 
-- Empty states for when there are no entries
-- Loading states and skeleton screens
-- Error messages users actually understand
-- A landing/onboarding screen for first-time users
+- Skeleton loading screens (instead of a blank spinner)
+- Rich empty states with illustrations and calls-to-action
+- A toast notification system for success/error feedback
+- An onboarding screen for first-time users
+- Smooth transitions between states
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
-:::
+## What You'll Learn
+
+- The three states every screen must handle: loading, empty, and content
+- Skeleton screens and why they feel faster than spinners
+- How to build a toast notification system without a library
+- `localStorage` for tracking first-visit status
+- CSS animations with Tailwind
+
+---
+
+## Step 1: The Three States
+
+Every screen in your app can be in one of three states:
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Loading    │     │    Empty    │     │   Content    │
+│             │     │             │     │             │
+│  ░░░░░░░░   │     │   📖        │     │  ┌───────┐  │
+│  ░░░░░      │     │   No entries │     │  │ Entry │  │
+│  ░░░░░░░░   │     │   yet...    │     │  └───────┘  │
+│  ░░░░░      │     │   [Create]  │     │  ┌───────┐  │
+│             │     │             │     │  │ Entry │  │
+└─────────────┘     └─────────────┘     └─────────────┘
+     ↓                    ↓                    ↓
+  Data loading      No data found       Data available
+```
+
+Most beginners only build the Content state. A polished app handles all three gracefully.
+
+---
+
+## Step 2: Build Skeleton Loading Cards
+
+Skeleton screens show the shape of content before it loads. Research shows users perceive them as faster than spinners because they hint at what's coming:
+
+```tsx title="src/components/EntrySkeleton.tsx"
+export default function EntrySkeleton() {
+  return (
+    <div className="bg-white rounded-xl border border-amber-200 overflow-hidden animate-pulse">
+      {/* Header skeleton */}
+      <div className="flex items-center justify-between px-4 py-2 bg-amber-50 border-b border-amber-100">
+        <div className="h-4 w-24 bg-amber-200 rounded" />
+        <div className="flex gap-1">
+          <div className="h-4 w-4 bg-amber-200 rounded" />
+          <div className="h-4 w-4 bg-amber-200 rounded" />
+        </div>
+      </div>
+
+      {/* Body skeleton */}
+      <div className="p-4 space-y-2">
+        <div className="h-4 w-full bg-amber-100 rounded" />
+        <div className="h-4 w-3/4 bg-amber-100 rounded" />
+        <div className="h-4 w-1/2 bg-amber-100 rounded" />
+      </div>
+    </div>
+  )
+}
+```
+
+The key is `animate-pulse` — a Tailwind class that adds a subtle pulsing opacity animation. The skeleton mimics the exact shape of an `EntryCard` — same border radius, same padding, same section layout.
+
+### Use skeletons in the Feed
+
+```tsx title="src/pages/Feed.tsx (loading state update)"
+import EntrySkeleton from '../components/EntrySkeleton'
+
+// Replace the spinner loading state with:
+if (loading) {
+  return (
+    <div className="flex flex-col gap-4 p-4">
+      <EntrySkeleton />
+      <EntrySkeleton />
+      <EntrySkeleton />
+    </div>
+  )
+}
+```
+
+Three skeleton cards give the impression of a populated feed loading. It's a small change that makes the app feel significantly more professional.
+
+---
+
+## Step 3: Build a Rich Empty State
+
+When there are no entries, we should do more than say "no entries." We should explain what the app does and nudge the user toward creating their first entry:
+
+```tsx title="src/components/EmptyState.tsx"
+import { Flower, PlusCircle } from 'lucide-react'
+
+interface EmptyStateProps {
+  onCreateFirst: () => void
+}
+
+export default function EmptyState({ onCreateFirst }: EmptyStateProps) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center px-6">
+      {/* Illustration */}
+      <div className="w-24 h-24 rounded-full bg-amber-100 flex items-center justify-center mb-6">
+        <Flower className="w-12 h-12 text-amber-400" />
+      </div>
+
+      <h2 className="text-xl font-semibold text-amber-900 mb-2">
+        Your jar is empty
+      </h2>
+
+      <p className="text-amber-600 mb-6 max-w-xs">
+        Start capturing moments of gratitude. Write a thought or snap a photo —
+        your future self will thank you.
+      </p>
+
+      <button
+        onClick={onCreateFirst}
+        className="flex items-center gap-2 px-6 py-3 bg-amber-600 text-white rounded-full font-medium hover:bg-amber-700 transition-colors shadow-md"
+      >
+        <PlusCircle className="w-5 h-5" />
+        Create Your First Entry
+      </button>
+    </div>
+  )
+}
+```
+
+Update the Feed to use it:
+
+```tsx title="src/pages/Feed.tsx (empty state update)"
+import EmptyState from '../components/EmptyState'
+
+interface FeedProps {
+  entries: Entry[]
+  loading: boolean
+  error: string | null
+  onEdit: (id: string, content: string, caption?: string) => void
+  onDelete: (id: string) => void
+  onNavigateToCreate: () => void
+}
+
+// In the empty state check:
+if (entries.length === 0) {
+  return <EmptyState onCreateFirst={onNavigateToCreate} />
+}
+```
+
+And pass the navigation handler from App:
+
+```tsx title="App.tsx (update Feed rendering)"
+{activeTab === 'feed' && (
+  <Feed
+    entries={entries}
+    loading={entriesLoading}
+    error={error}
+    onEdit={editEntry}
+    onDelete={removeEntry}
+    onNavigateToCreate={() => setActiveTab('create')}
+  />
+)}
+```
+
+---
+
+## Step 4: Build a Toast Notification System
+
+Toasts are non-blocking messages that slide in, show feedback, and auto-dismiss. They're perfect for "Entry saved!" and "Failed to delete" messages:
+
+```tsx title="src/components/Toast.tsx"
+import { useState, useEffect, useCallback } from 'react'
+import { CheckCircle, AlertCircle, X } from 'lucide-react'
+
+export type ToastType = 'success' | 'error'
+
+interface ToastMessage {
+  id: string
+  type: ToastType
+  message: string
+}
+
+interface ToastProps {
+  toasts: ToastMessage[]
+  onDismiss: (id: string) => void
+}
+
+export default function Toast({ toasts, onDismiss }: ToastProps) {
+  return (
+    <div className="fixed top-16 left-0 right-0 z-50 flex flex-col items-center gap-2 px-4 pointer-events-none">
+      {toasts.map((toast) => (
+        <ToastItem key={toast.id} toast={toast} onDismiss={onDismiss} />
+      ))}
+    </div>
+  )
+}
+
+function ToastItem({
+  toast,
+  onDismiss,
+}: {
+  toast: ToastMessage
+  onDismiss: (id: string) => void
+}) {
+  useEffect(() => {
+    const timer = setTimeout(() => onDismiss(toast.id), 3000)
+    return () => clearTimeout(timer)
+  }, [toast.id, onDismiss])
+
+  const bgColor = toast.type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+  const textColor = toast.type === 'success' ? 'text-green-700' : 'text-red-700'
+  const Icon = toast.type === 'success' ? CheckCircle : AlertCircle
+
+  return (
+    <div
+      className={`pointer-events-auto flex items-center gap-2 px-4 py-3 rounded-lg border shadow-lg max-w-sm w-full animate-slide-down ${bgColor}`}
+    >
+      <Icon className={`w-5 h-5 flex-shrink-0 ${textColor}`} />
+      <span className={`text-sm flex-1 ${textColor}`}>{toast.message}</span>
+      <button
+        onClick={() => onDismiss(toast.id)}
+        className={`p-1 ${textColor} opacity-60 hover:opacity-100`}
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  )
+}
+```
+
+### Add the slide-down animation
+
+Add this to your `src/index.css`:
+
+```css title="src/index.css"
+@import "tailwindcss";
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.2s ease-out;
+}
+```
+
+### Create a `useToast` hook
+
+```ts title="src/hooks/useToast.ts"
+import { useState, useCallback } from 'react'
+import type { ToastType } from '../components/Toast'
+
+interface ToastMessage {
+  id: string
+  type: ToastType
+  message: string
+}
+
+export function useToast() {
+  const [toasts, setToasts] = useState<ToastMessage[]>([])
+
+  const showToast = useCallback((type: ToastType, message: string) => {
+    const id = crypto.randomUUID()
+    setToasts((prev) => [...prev, { id, type, message }])
+  }, [])
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
+  }, [])
+
+  return { toasts, showToast, dismissToast }
+}
+```
+
+### Wire toasts into App.tsx
+
+```tsx title="App.tsx (add toast support)"
+import Toast from './components/Toast'
+import { useToast } from './hooks/useToast'
+
+function App() {
+  // ... existing state ...
+  const { toasts, showToast, dismissToast } = useToast()
+
+  // Wrap addEntry to show feedback:
+  const handleAddEntry = async (entry: NewEntry) => {
+    try {
+      await addEntry(entry)
+      showToast('success', 'Entry saved!')
+    } catch {
+      showToast('error', 'Failed to save entry. Please try again.')
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-amber-50">
+      <Toast toasts={toasts} onDismiss={dismissToast} />
+      <Header />
+      {/* ... rest of the app */}
+    </div>
+  )
+}
+```
+
+Now when a user creates an entry, a green "Entry saved!" toast slides down from the top and auto-dismisses after 3 seconds.
+
+---
+
+## Step 5: Build the Onboarding Screen
+
+First-time users should see a welcome screen that explains what the app does:
+
+```tsx title="src/pages/Onboarding.tsx"
+import { useState } from 'react'
+import { Flower, BookOpen, Sparkles, ArrowRight } from 'lucide-react'
+
+interface OnboardingProps {
+  onComplete: () => void
+}
+
+const slides = [
+  {
+    icon: Flower,
+    title: 'Welcome to GratitudeJar',
+    description: 'A simple journal for capturing moments of gratitude — one thought or photo at a time.',
+  },
+  {
+    icon: BookOpen,
+    title: 'Write & Snap',
+    description: 'Create text entries when you want to reflect, or snap photos of things that make you smile.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Shake to Discover',
+    description: 'Shake your phone to rediscover a random past memory. It\'s like reaching into a jar of happy moments.',
+  },
+]
+
+export default function Onboarding({ onComplete }: OnboardingProps) {
+  const [currentSlide, setCurrentSlide] = useState(0)
+
+  const isLastSlide = currentSlide === slides.length - 1
+
+  const handleNext = () => {
+    if (isLastSlide) {
+      onComplete()
+    } else {
+      setCurrentSlide((prev) => prev + 1)
+    }
+  }
+
+  const slide = slides[currentSlide]
+  const Icon = slide.icon
+
+  return (
+    <div className="min-h-screen bg-amber-50 flex flex-col items-center justify-center px-6">
+      {/* Slide content */}
+      <div className="text-center mb-12">
+        <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-6">
+          <Icon className="w-10 h-10 text-amber-600" />
+        </div>
+        <h1 className="text-2xl font-bold text-amber-900 mb-3">{slide.title}</h1>
+        <p className="text-amber-600 max-w-xs mx-auto">{slide.description}</p>
+      </div>
+
+      {/* Dots */}
+      <div className="flex gap-2 mb-8">
+        {slides.map((_, i) => (
+          <div
+            key={i}
+            className={`w-2 h-2 rounded-full transition-colors ${
+              i === currentSlide ? 'bg-amber-600' : 'bg-amber-200'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Button */}
+      <button
+        onClick={handleNext}
+        className="flex items-center gap-2 px-8 py-3 bg-amber-600 text-white rounded-full font-medium hover:bg-amber-700 transition-colors"
+      >
+        {isLastSlide ? 'Get Started' : 'Next'}
+        <ArrowRight className="w-5 h-5" />
+      </button>
+
+      {/* Skip */}
+      {!isLastSlide && (
+        <button
+          onClick={onComplete}
+          className="mt-4 text-sm text-amber-500 hover:text-amber-700"
+        >
+          Skip
+        </button>
+      )}
+    </div>
+  )
+}
+```
+
+### Track first visit with localStorage
+
+```ts title="App.tsx (add onboarding logic)"
+const [showOnboarding, setShowOnboarding] = useState(() => {
+  return !localStorage.getItem('gratitude-jar-onboarded')
+})
+
+const handleOnboardingComplete = () => {
+  localStorage.setItem('gratitude-jar-onboarded', 'true')
+  setShowOnboarding(false)
+}
+
+// In the render, before the auth check:
+if (showOnboarding) {
+  return <Onboarding onComplete={handleOnboardingComplete} />
+}
+```
+
+The onboarding only appears once. After the user taps "Get Started," we store a flag in `localStorage` so it never shows again.
+
+<ClaudeCodePrompt
+  prompt="I built a 3-slide onboarding screen with dots navigation and a skip button. It uses useState for the current slide. Should I add swipe gestures for mobile?"
+  tip="Swipe gestures are a nice touch for mobile onboarding. Claude Code can help you implement touch event handlers."
+/>
+
+---
+
+## Step 6: Add Relative Timestamps to Cards
+
+Let's show a more human-friendly time on entry cards — "Just now", "2 hours ago", "Yesterday":
+
+```ts title="src/lib/dates.ts (add relative time function)"
+export function getRelativeTime(date: Date): string {
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return `${diffDays}d ago`
+
+  return formatDisplayDate(
+    getLocalDateString(date)
+  )
+}
+```
+
+---
+
+## Step 7: Test the Polish
+
+```bash
+npm run dev
+```
+
+1. **Clear localStorage** (DevTools → Application → Local Storage → Clear) and refresh — onboarding should appear
+2. **Tap through slides** or tap Next → "Get Started"
+3. **Sign up** → the feed should show skeleton loading briefly, then the empty state
+4. **Tap "Create Your First Entry"** → create an entry → green toast appears
+5. **Refresh** → onboarding shouldn't appear again
+6. **Entries should show relative timestamps** — "Just now" for recent ones
+
+---
+
+## Step 8: Commit Your Progress
+
+```bash
+git add .
+git commit -m "Add polish: skeleton loading, empty states, toasts, onboarding, relative timestamps"
+git push
+```
+
+---
+
+<FileTree title="Updated project structure">
+
+```
+gratitude-jar/
+├── src/
+│   ├── components/
+│   │   ├── Header.tsx
+│   │   ├── BottomNav.tsx
+│   │   ├── EntryCard.tsx
+│   │   ├── EntrySkeleton.tsx   ← NEW
+│   │   ├── EmptyState.tsx      ← NEW
+│   │   └── Toast.tsx           ← NEW
+│   ├── hooks/
+│   │   ├── useAuth.ts
+│   │   ├── useEntries.ts
+│   │   └── useToast.ts         ← NEW
+│   ├── lib/
+│   │   ├── firebase.ts
+│   │   ├── firestore.ts
+│   │   ├── storage.ts
+│   │   ├── image.ts
+│   │   ├── types.ts
+│   │   └── dates.ts            ← UPDATED (relative time)
+│   ├── pages/
+│   │   ├── AuthScreen.tsx
+│   │   ├── Feed.tsx            ← UPDATED (skeletons, empty state)
+│   │   ├── Create.tsx
+│   │   ├── Onboarding.tsx      ← NEW
+│   │   └── Profile.tsx
+│   ├── App.tsx                 ← UPDATED (toasts, onboarding)
+│   ├── index.css               ← UPDATED (slide-down animation)
+│   └── main.tsx
+└── ...
+```
+
+</FileTree>
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Onboarding shows every time I refresh",
+    solution: <p>Check that <code>localStorage.setItem('gratitude-jar-onboarded', 'true')</code> is being called in <code>handleOnboardingComplete</code>. Open DevTools → Application → Local Storage to verify the key exists.</p>
+  },
+  {
+    error: "Toast appears behind the header",
+    solution: <p>Make sure the Toast container has <code>z-50</code> (or higher) and <code>top-16</code> to position it below the header. Both the header and toast use fixed positioning, so z-index determines stacking order.</p>
+  },
+  {
+    error: "Skeleton cards flash briefly even when data loads fast",
+    solution: <p>That's normal for fast connections. If it bothers you, add a minimum delay of 300ms before showing content. But generally, a brief skeleton flash is better than no loading indicator at all.</p>
+  },
+  {
+    error: "animate-slide-down class has no effect",
+    solution: <p>Make sure you added the <code>@keyframes slide-down</code> and <code>.animate-slide-down</code> CSS to your <code>src/index.css</code> file <strong>after</strong> the <code>@import "tailwindcss"</code> line.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={9}>
+- **Skeleton loading** cards appear while entries are loading
+- **Empty state** shows a helpful message and "Create First Entry" button when the feed is empty
+- **Toast notifications** appear for success and error feedback
+- The **onboarding flow** shows for first-time users and doesn't appear again
+- **Relative timestamps** show "Just now", "2h ago", "Yesterday" on entry cards
+- All three states (loading, empty, content) are handled in the Feed
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+The app feels polished and complete. In the next chapter, we add the final web feature — a calendar heatmap and streak counter on the Profile page to visualize the journaling habit.
 
 <TwitterCallout />
 

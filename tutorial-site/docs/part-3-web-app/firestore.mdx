@@ -4,26 +4,647 @@ title: "Chapter 6: Firebase Backend — Firestore"
 description: Connect your app to Firestore for real-time data persistence and sync.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import FileTree from '@site/src/components/FileTree';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 6: Firebase Backend — Firestore
 
 > Your entries currently vanish when you refresh the page. Let's fix that with a real database.
 
+This is the chapter where your app becomes real. Instead of storing entries in memory, we'll save them in Firestore — Firebase's cloud database. Entries will persist across sessions, sync in real-time, and even work offline.
+
 ---
 
 ## What You'll Build
 
-- Firebase project setup (console walkthrough)
-- Firestore data structure and security rules
-- Real-time listeners with `onSnapshot()`
-- Offline persistence with IndexedDB
+- Firestore data structure with a `entries` collection
+- CRUD operations using the Firebase SDK
+- Real-time listeners with `onSnapshot()` for live updates
+- A custom `useEntries()` hook that encapsulates all Firestore logic
+- Offline persistence (works even without internet)
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## What You'll Learn
+
+- How NoSQL document databases work (Firestore's data model)
+- Real-time listeners vs. one-time fetches
+- Custom React hooks for data fetching
+- The cleanup pattern for subscriptions
+- Server timestamps vs. client timestamps
+
+---
+
+## Step 1: Understand Firestore's Data Model
+
+Firestore is a **NoSQL document database**. If you've used SQL databases (MySQL, PostgreSQL), forget tables and rows. Firestore uses **collections** and **documents**:
+
+```
+Firestore
+└── entries (collection)
+    ├── abc123 (document)
+    │   ├── type: "text"
+    │   ├── content: "Grateful for sunny weather"
+    │   ├── date: "2025-03-15"
+    │   └── createdAt: Timestamp
+    ├── def456 (document)
+    │   ├── type: "photo"
+    │   ├── content: "https://storage.googleapis.com/..."
+    │   ├── caption: "Sunset walk"
+    │   ├── date: "2025-03-14"
+    │   └── createdAt: Timestamp
+    └── ... more documents
+```
+
+**Key concepts:**
+- A **collection** is a group of documents (like a folder)
+- A **document** is a set of key-value pairs (like a JSON object)
+- Each document has a unique **ID** (auto-generated or custom)
+- Documents can't contain other collections at the same level (but can have subcollections — we won't need that)
+
+### Why Firestore over a SQL database?
+
+For this project, Firestore wins because:
+1. **No server needed** — it runs entirely client-side
+2. **Real-time sync** — changes appear instantly across devices
+3. **Offline support** — built-in, works automatically
+4. **Free tier** — generous enough for a personal app (50K reads/day, 20K writes/day)
+
+---
+
+## Step 2: Create the Firestore Service
+
+We'll create a dedicated file for all Firestore operations. This keeps Firebase logic out of our React components:
+
+```ts title="src/lib/firestore.ts"
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+} from 'firebase/firestore'
+import { db } from './firebase'
+import type { Entry, NewEntry } from './types'
+
+const ENTRIES_COLLECTION = 'entries'
+
+// Create
+export async function createEntry(entry: NewEntry): Promise<string> {
+  const docRef = await addDoc(collection(db, ENTRIES_COLLECTION), {
+    ...entry,
+    createdAt: serverTimestamp(),
+  })
+  return docRef.id
+}
+
+// Update
+export async function updateEntry(
+  id: string,
+  updates: Partial<Pick<Entry, 'content' | 'caption'>>
+): Promise<void> {
+  const docRef = doc(db, ENTRIES_COLLECTION, id)
+  await updateDoc(docRef, updates)
+}
+
+// Delete
+export async function deleteEntry(id: string): Promise<void> {
+  const docRef = doc(db, ENTRIES_COLLECTION, id)
+  await deleteDoc(docRef)
+}
+
+// Subscribe to real-time updates
+export function subscribeToEntries(
+  callback: (entries: Entry[]) => void,
+  onError: (error: Error) => void
+): () => void {
+  const q = query(
+    collection(db, ENTRIES_COLLECTION),
+    orderBy('createdAt', 'desc')
+  )
+
+  const unsubscribe = onSnapshot(
+    q,
+    (snapshot) => {
+      const entries: Entry[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Entry[]
+      callback(entries)
+    },
+    onError
+  )
+
+  return unsubscribe
+}
+```
+
+### Breaking down each function
+
+**`createEntry`** — Uses `addDoc` to add a new document to the `entries` collection. The `serverTimestamp()` is critical — it uses the server's clock instead of the user's device clock. This means entries always sort correctly even if someone's phone clock is wrong.
+
+**`updateEntry`** — Uses `updateDoc` to modify specific fields. The `Partial<Pick<Entry, 'content' | 'caption'>>` type means "an object with some or all of these fields." You can update just the content, just the caption, or both.
+
+**`deleteEntry`** — Uses `deleteDoc` to remove a document by its ID. Simple and permanent.
+
+**`subscribeToEntries`** — This is the interesting one. Instead of fetching data once, `onSnapshot` sets up a **real-time listener**. Every time any document in the collection changes — added, modified, or deleted — the callback fires with the updated list. The function returns an `unsubscribe` function that we'll call when the component unmounts.
+
+---
+
+## Step 3: Build the `useEntries` Custom Hook
+
+Custom hooks let us encapsulate complex logic and reuse it across components. Our `useEntries` hook will manage the Firestore subscription:
+
+```ts title="src/hooks/useEntries.ts"
+import { useState, useEffect } from 'react'
+import {
+  subscribeToEntries,
+  createEntry,
+  updateEntry,
+  deleteEntry,
+} from '../lib/firestore'
+import type { Entry, NewEntry } from '../lib/types'
+
+export function useEntries() {
+  const [entries, setEntries] = useState<Entry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const unsubscribe = subscribeToEntries(
+      (updatedEntries) => {
+        setEntries(updatedEntries)
+        setLoading(false)
+      },
+      (err) => {
+        console.error('Firestore subscription error:', err)
+        setError('Failed to load entries. Check your internet connection.')
+        setLoading(false)
+      }
+    )
+
+    // Cleanup: unsubscribe when the component unmounts
+    return unsubscribe
+  }, [])
+
+  const addEntry = async (entry: NewEntry) => {
+    try {
+      await createEntry(entry)
+      // No need to update local state — onSnapshot will handle it
+    } catch (err) {
+      console.error('Failed to create entry:', err)
+      setError('Failed to save entry. Please try again.')
+    }
+  }
+
+  const editEntry = async (id: string, content: string, caption?: string) => {
+    try {
+      await updateEntry(id, { content, caption })
+    } catch (err) {
+      console.error('Failed to update entry:', err)
+      setError('Failed to update entry. Please try again.')
+    }
+  }
+
+  const removeEntry = async (id: string) => {
+    try {
+      await deleteEntry(id)
+    } catch (err) {
+      console.error('Failed to delete entry:', err)
+      setError('Failed to delete entry. Please try again.')
+    }
+  }
+
+  return {
+    entries,
+    loading,
+    error,
+    addEntry,
+    editEntry,
+    removeEntry,
+  }
+}
+```
+
+### The subscription lifecycle
+
+```
+Component mounts
+    ↓
+useEffect runs
+    ↓
+subscribeToEntries() starts listening
+    ↓
+onSnapshot fires immediately with current data
+    ↓
+setEntries(data), setLoading(false)
+    ↓
+... app runs, user interacts ...
+    ↓
+Any change in Firestore → onSnapshot fires → setEntries(newData)
+    ↓
+Component unmounts
+    ↓
+return unsubscribe → listener is cleaned up
+```
+
+**Why return `unsubscribe`?** Without cleanup, the listener would keep running after the component unmounts — a memory leak. React's `useEffect` cleanup function is designed exactly for this.
+
+**Why don't CRUD operations update local state?** Because `onSnapshot` does it automatically. When we call `createEntry`, Firestore adds the document, which triggers `onSnapshot`, which calls `setEntries` with the updated list. One source of truth, no synchronization bugs.
+
+<ClaudeCodePrompt
+  prompt="Explain the useEffect cleanup pattern in React. My hook subscribes to Firestore with onSnapshot and returns the unsubscribe function. Why is this important and what happens if I don't clean up?"
+  context="Memory leaks from uncleaned subscriptions are one of the most common bugs in React apps that use real-time databases."
+  tip="If cleanup feels abstract, ask Claude Code to walk through what happens step-by-step when a component mounts and unmounts."
+/>
+
+---
+
+## Step 4: Update App.tsx to Use the Hook
+
+Now we replace the local state management with our Firestore-backed hook:
+
+```tsx title="src/App.tsx"
+import { useState } from 'react'
+import Header from './components/Header'
+import BottomNav from './components/BottomNav'
+import Feed from './pages/Feed'
+import Create from './pages/Create'
+import Profile from './pages/Profile'
+import { useEntries } from './hooks/useEntries'
+
+type Tab = 'feed' | 'create' | 'profile'
+
+function App() {
+  const [activeTab, setActiveTab] = useState<Tab>('feed')
+  const { entries, loading, error, addEntry, editEntry, removeEntry } = useEntries()
+
+  return (
+    <div className="min-h-screen bg-amber-50">
+      <Header />
+
+      <main className="max-w-lg mx-auto pt-14 pb-20 min-h-screen">
+        <div className="h-[calc(100vh-8.5rem)] flex flex-col">
+          {activeTab === 'feed' && (
+            <Feed
+              entries={entries}
+              loading={loading}
+              error={error}
+              onEdit={editEntry}
+              onDelete={removeEntry}
+            />
+          )}
+          {activeTab === 'create' && (
+            <Create
+              onAddEntry={addEntry}
+              onClose={() => setActiveTab('feed')}
+            />
+          )}
+          {activeTab === 'profile' && <Profile />}
+        </div>
+      </main>
+
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+    </div>
+  )
+}
+
+export default App
+```
+
+### What changed
+
+Compare this to the Chapter 5 version:
+
+| Before (Chapter 5) | After (Chapter 6) |
+|---|---|
+| `useState<LocalEntry[]>([])` | `useEntries()` hook |
+| `handleAddEntry` with local state | `addEntry` from Firestore |
+| `handleEditEntry` with `map()` | `editEntry` via Firestore |
+| `handleDeleteEntry` with `filter()` | `removeEntry` via Firestore |
+| Data lost on refresh | Data persists forever |
+
+The component is simpler now because all the data logic lives in the hook.
+
+---
+
+## Step 5: Update Feed and Create for Firebase Types
+
+The Feed and Create pages need small updates since we're now using the Firebase `Entry` type instead of `LocalEntry`.
+
+Update the Feed page to handle loading and error states:
+
+```tsx title="src/pages/Feed.tsx"
+import { BookOpen, Loader2, AlertCircle } from 'lucide-react'
+import EntryCard from '../components/EntryCard'
+import type { Entry } from '../lib/types'
+
+interface FeedProps {
+  entries: Entry[]
+  loading: boolean
+  error: string | null
+  onEdit: (id: string, content: string, caption?: string) => void
+  onDelete: (id: string) => void
+}
+
+export default function Feed({ entries, loading, error, onEdit, onDelete }: FeedProps) {
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+        <p className="mt-3 text-amber-600">Loading entries...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center px-4">
+        <AlertCircle className="w-12 h-12 text-red-400 mb-3" />
+        <p className="text-red-600">{error}</p>
+      </div>
+    )
+  }
+
+  if (entries.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center px-4">
+        <BookOpen className="w-16 h-16 text-amber-300 mb-4" />
+        <h2 className="text-xl font-semibold text-amber-900 mb-2">Your Journal</h2>
+        <p className="text-amber-600">
+          No entries yet. Tap the <strong>+</strong> button to create your first one.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-4 p-4 overflow-y-auto">
+      {entries.map((entry) => (
+        <EntryCard
+          key={entry.id}
+          entry={entry}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      ))}
+    </div>
+  )
+}
+```
+
+Update Create to use `NewEntry` instead of `LocalEntry`:
+
+```tsx title="src/pages/Create.tsx (key changes)"
+import type { NewEntry } from '../lib/types'
+
+interface CreateProps {
+  onAddEntry: (entry: NewEntry) => void
+  onClose: () => void
+}
+
+// In handleSubmit, create a NewEntry (no id, no createdAt):
+const newEntry: NewEntry = {
+  type: entryType,
+  content: content.trim(),
+  caption: entryType === 'photo' ? caption.trim() || undefined : undefined,
+  date: getLocalDateString(),
+}
+```
+
+The full Create component stays mostly the same — you're just removing the `id` and `createdAt` fields since Firestore handles those now.
+
+Update EntryCard to use `Entry` instead of `LocalEntry`:
+
+```tsx title="src/components/EntryCard.tsx (import change)"
+import type { Entry } from '../lib/types'
+
+interface EntryCardProps {
+  entry: Entry
+  onEdit: (id: string, content: string, caption?: string) => void
+  onDelete: (id: string) => void
+}
+```
+
+---
+
+## Step 6: Enable Offline Persistence
+
+Firestore has built-in offline support. When the user's device goes offline, reads come from a local cache and writes are queued until the connection returns.
+
+For web apps, we need to explicitly enable it. Update your Firebase config:
+
+```ts title="src/lib/firebase.ts"
+import { initializeApp } from 'firebase/app'
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
+import { getAuth } from 'firebase/auth'
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+}
+
+const app = initializeApp(firebaseConfig)
+
+export const db = getFirestore(app)
+export const storage = getStorage(app)
+export const auth = getAuth(app)
+
+// Enable offline persistence
+enableIndexedDbPersistence(db).catch((err) => {
+  if (err.code === 'failed-precondition') {
+    // Multiple tabs open — persistence can only be enabled in one tab
+    console.warn('Firestore persistence unavailable: multiple tabs open')
+  } else if (err.code === 'unimplemented') {
+    // Browser doesn't support IndexedDB
+    console.warn('Firestore persistence unavailable: browser not supported')
+  }
+})
+```
+
+### What this does
+
+Without persistence: user goes offline → reads fail, writes fail.
+
+With persistence: user goes offline → reads come from IndexedDB cache, writes are queued and automatically synced when the connection returns. The user might not even notice they were offline.
+
+:::caution Multi-Tab Limitation
+IndexedDB persistence can only be active in one browser tab at a time. If the user opens your app in two tabs, the second tab will log a warning but still work (it just won't have offline persistence). This is a Firestore limitation, not a bug in your code.
 :::
+
+---
+
+## Step 7: Set Up Security Rules
+
+Right now your Firestore is in test mode — anyone can read and write anything. Let's add basic security rules.
+
+In the Firebase console, go to **Firestore Database → Rules** and replace the default rules with:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /entries/{entryId} {
+      // For now, allow all reads and writes
+      // We'll lock this down with auth in Chapter 8
+      allow read, write: if true;
+    }
+  }
+}
+```
+
+This is still open, but it's scoped to only the `entries` collection instead of the entire database. We'll add proper authentication rules in Chapter 8.
+
+:::warning Test Mode Expires
+Firebase's default test mode rules expire after 30 days. If you see permission errors after a month, check your Firestore rules in the console.
+:::
+
+---
+
+## Step 8: Test Persistence
+
+Start the dev server:
+
+```bash
+npm run dev
+```
+
+Test the persistence:
+
+1. **Create an entry** — it should appear in the feed
+2. **Refresh the page** — the entry should still be there (this is the big moment!)
+3. **Create another entry** — both should be visible
+4. **Edit an entry** — refresh to confirm the edit persisted
+5. **Delete an entry** — refresh to confirm it's gone
+6. **Open the Firebase console** → Firestore Database — you should see your entries as documents
+
+### Check the Firebase console
+
+Navigate to **Firestore Database** in the Firebase console. You should see:
+
+```
+entries (collection)
+├── [auto-generated-id]
+│   ├── type: "text"
+│   ├── content: "Grateful for sunny weather"
+│   ├── date: "2025-03-15"
+│   └── createdAt: March 15, 2025 at 3:45:00 PM UTC
+└── [auto-generated-id]
+    └── ...
+```
+
+This is your data living in the cloud. It survives page refreshes, browser closures, and even device switches (once we add auth).
+
+---
+
+## Step 9: Commit Your Progress
+
+```bash
+git add .
+git commit -m "Connect Firestore: real-time sync, offline persistence, CRUD operations"
+git push
+```
+
+---
+
+## Understanding Real-Time Sync
+
+Here's what makes `onSnapshot` special compared to a regular fetch:
+
+```
+Traditional Fetch (REST API):
+  App starts → fetch('/entries') → display → done
+  Data changes? App doesn't know until next fetch.
+
+Real-Time Listener (onSnapshot):
+  App starts → subscribe → display
+                    ↓
+  Data changes → automatic update → display
+                    ↓
+  Data changes → automatic update → display
+                    ↓
+  App closes → unsubscribe
+```
+
+If you open two browser windows to your app and create an entry in one, it instantly appears in the other. That's real-time sync in action.
+
+<FileTree title="Updated project structure">
+
+```
+gratitude-jar/
+├── src/
+│   ├── components/
+│   │   ├── Header.tsx
+│   │   ├── BottomNav.tsx
+│   │   └── EntryCard.tsx
+│   ├── hooks/
+│   │   └── useEntries.ts      ← NEW
+│   ├── lib/
+│   │   ├── firebase.ts        ← UPDATED (offline persistence)
+│   │   ├── firestore.ts       ← NEW
+│   │   ├── types.ts
+│   │   └── dates.ts
+│   ├── pages/
+│   │   ├── Feed.tsx            ← UPDATED (loading/error states)
+│   │   ├── Create.tsx          ← UPDATED (uses NewEntry)
+│   │   └── Profile.tsx
+│   ├── App.tsx                 ← UPDATED (uses useEntries hook)
+│   ├── index.css
+│   └── main.tsx
+└── ...
+```
+
+</FileTree>
+
+<TroubleshootingAccordion items={[
+  {
+    error: "FirebaseError: Missing or insufficient permissions",
+    solution: <p>Your Firestore security rules are blocking the request. Go to Firebase Console → Firestore → Rules and make sure you have <code>allow read, write: if true;</code> for the <code>/entries/{'{entryId}'}</code> path. Remember to publish the rules after editing.</p>
+  },
+  {
+    error: "Entries load but new entries don't appear in real-time",
+    solution: <p>Make sure you're using <code>onSnapshot</code>, not <code>getDocs</code>. <code>getDocs</code> fetches once while <code>onSnapshot</code> sets up a real-time listener. Also check that the <code>useEffect</code> cleanup returns the <code>unsubscribe</code> function.</p>
+  },
+  {
+    error: "Entries appear in wrong order or without dates",
+    solution: <p>The <code>orderBy('createdAt', 'desc')</code> query requires entries to have a <code>createdAt</code> field. If you created entries before adding <code>serverTimestamp()</code>, those documents won't have that field. Delete them from the Firebase console and create new ones.</p>
+  },
+  {
+    error: "enableIndexedDbPersistence is not a function",
+    solution: <p>This API was deprecated in Firebase SDK v10+. If you're using a newer version, Firestore enables persistence automatically in web apps. You can safely remove the <code>enableIndexedDbPersistence</code> call.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={6}>
+- Entries **persist across page refreshes** — data lives in Firestore
+- The **Firebase console** shows your entries as documents
+- New entries appear **instantly** without needing to refresh
+- The Feed shows a **loading spinner** while data loads
+- Error states display a **clear error message** if Firestore fails
+- The `useEntries` hook encapsulates all Firestore logic
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+Your entries are persistent and synced in real-time. But photo entries are still using temporary local URLs. In the next chapter, we'll upload actual images to Firebase Storage so photo entries work permanently.
 
 <TwitterCallout />
 

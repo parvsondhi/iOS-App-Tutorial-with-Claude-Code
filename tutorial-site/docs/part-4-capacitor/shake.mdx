@@ -4,27 +4,475 @@ title: "Chapter 13: The Shake Interaction"
 description: Detect phone shakes and surface random journal entries with haptic feedback.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import FileTree from '@site/src/components/FileTree';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 13: The Shake Interaction
 
 > The hero moment. Shake the phone, feel the haptics, see a random memory appear.
 
+This is the feature that makes GratitudeJar special. The user shakes their phone, feels a heavy haptic thud, and a random past journal entry animates into view — like reaching into a physical jar and pulling out a memory. It combines motion detection, haptics, random selection, and animation into one delightful interaction.
+
 ---
 
 ## What You'll Build
 
-- DeviceMotion API for shake detection
-- Shake gesture algorithm in JavaScript
-- Random entry selection and animated card display
-- Haptic feedback on shake
-- Testing on a real device (this doesn't work in the Simulator)
+- A shake detection system using the Capacitor Motion plugin
+- A shake gesture algorithm that filters out noise
+- A full-screen overlay that shows a random entry with animation
+- Heavy haptic feedback on shake detection
+- A "Shake Again" action and dismiss gesture
+- A web fallback button for development and non-native contexts
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## What You'll Learn
+
+- The DeviceMotion API and accelerometer data
+- How to detect a shake gesture from raw motion data
+- CSS keyframe animations for the reveal effect
+- The `useCallback` and `useRef` hooks for event handling
+- Cooldown patterns to prevent rapid re-triggers
+
+---
+
+## Step 1: Install the Motion Plugin
+
+```bash
+npm install @capacitor/motion
+npx cap sync
+```
+
+The Motion plugin provides access to the device's accelerometer — the sensor that detects movement and orientation.
+
+---
+
+## Step 2: Understand Shake Detection
+
+A shake is a rapid back-and-forth motion. The accelerometer reports acceleration on three axes (x, y, z). We detect a shake by looking for acceleration that exceeds a threshold:
+
+```
+Normal movement:   x: 0.1, y: 0.2, z: 9.8  (gravity alone)
+Shake movement:    x: 15.3, y: -12.7, z: 22.1  (much larger values)
+```
+
+The algorithm:
+
+1. Read accelerometer values
+2. Calculate total acceleration: `√(x² + y² + z²)`
+3. Subtract gravity (~9.8): anything above a threshold is a shake
+4. Require multiple threshold-exceeding samples within a time window
+5. Trigger the shake event with a cooldown to prevent rapid re-triggers
+
+---
+
+## Step 3: Build the Shake Detection Hook
+
+```ts title="src/hooks/useShakeDetection.ts"
+import { useEffect, useRef, useCallback, useState } from 'react'
+import { Motion } from '@capacitor/motion'
+import { Capacitor } from '@capacitor/core'
+
+interface ShakeOptions {
+  threshold?: number       // Acceleration threshold (default: 30)
+  cooldownMs?: number     // Minimum ms between shakes (default: 1000)
+  onShake: () => void     // Callback when shake is detected
+}
+
+export function useShakeDetection({ threshold = 30, cooldownMs = 1000, onShake }: ShakeOptions) {
+  const lastShakeTime = useRef(0)
+  const [isListening, setIsListening] = useState(false)
+
+  const handleMotion = useCallback(
+    (event: { acceleration: { x: number; y: number; z: number } }) => {
+      const { x, y, z } = event.acceleration
+      const totalAcceleration = Math.sqrt(x * x + y * y + z * z)
+
+      if (totalAcceleration > threshold) {
+        const now = Date.now()
+        if (now - lastShakeTime.current > cooldownMs) {
+          lastShakeTime.current = now
+          onShake()
+        }
+      }
+    },
+    [threshold, cooldownMs, onShake]
+  )
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) {
+      return
+    }
+
+    let listenerHandle: any = null
+
+    const startListening = async () => {
+      try {
+        listenerHandle = await Motion.addListener('accel', handleMotion)
+        setIsListening(true)
+      } catch (err) {
+        console.error('Failed to start motion listener:', err)
+      }
+    }
+
+    startListening()
+
+    return () => {
+      if (listenerHandle) {
+        listenerHandle.remove()
+      }
+      setIsListening(false)
+    }
+  }, [handleMotion])
+
+  return { isListening }
+}
+```
+
+### Key design decisions
+
+**Threshold of 30:** Normal phone movement (walking, gesturing) produces accelerations of 10-15. A deliberate shake hits 25-40+. We use 30 to avoid false positives while being responsive enough to feel natural.
+
+**Cooldown of 1000ms:** Without a cooldown, a single shake gesture (back-forth-back) would trigger multiple events. The cooldown ensures one shake = one reveal, and gives the animation time to complete.
+
+**`useRef` for timing:** We use `useRef` instead of `useState` for `lastShakeTime` because we don't want re-renders when the timestamp updates. This is a performance pattern — refs are mutable without triggering renders.
+
+**`useCallback` for stability:** The motion listener is registered once in `useEffect`. If `handleMotion` changed on every render, we'd need to tear down and recreate the listener. `useCallback` keeps it stable.
+
+---
+
+## Step 4: Build the Shake Reveal Overlay
+
+When a shake is detected, we show a full-screen card with a random entry:
+
+```tsx title="src/components/ShakeReveal.tsx"
+import { useEffect } from 'react'
+import { X, Sparkles, RotateCcw } from 'lucide-react'
+import { formatDisplayDate } from '../lib/dates'
+import type { Entry } from '../lib/types'
+
+interface ShakeRevealProps {
+  entry: Entry
+  onDismiss: () => void
+  onShakeAgain: () => void
+}
+
+export default function ShakeReveal({ entry, onDismiss, onShakeAgain }: ShakeRevealProps) {
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onDismiss()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onDismiss])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-6 animate-fade-in"
+      onClick={onDismiss}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-bounce-in"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 bg-amber-50 border-b border-amber-100">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            <span className="font-semibold text-amber-900">From Your Jar</span>
+          </div>
+          <button
+            onClick={onDismiss}
+            className="p-1 text-amber-400 hover:text-amber-600 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Entry content */}
+        <div className="p-5">
+          {entry.type === 'photo' && (
+            <img
+              src={entry.content}
+              alt={entry.caption || 'Photo memory'}
+              className="w-full h-56 object-cover rounded-xl mb-4"
+            />
+          )}
+
+          {entry.type === 'text' && (
+            <p className="text-lg text-amber-900 whitespace-pre-wrap leading-relaxed mb-4">
+              "{entry.content}"
+            </p>
+          )}
+
+          {entry.type === 'photo' && entry.caption && (
+            <p className="text-amber-700 mb-4">{entry.caption}</p>
+          )}
+
+          <p className="text-sm text-amber-500">
+            {formatDisplayDate(entry.date)}
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="px-5 pb-5">
+          <button
+            onClick={onShakeAgain}
+            className="flex items-center justify-center gap-2 w-full py-3 bg-amber-100 text-amber-700 rounded-xl font-medium hover:bg-amber-200 transition-colors"
+          >
+            <RotateCcw className="w-5 h-5" />
+            Shake Again
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+### Add the animations to CSS
+
+```css title="src/index.css (add these animations)"
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(50px);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+```
+
+The `bounce-in` animation uses a spring-like cubic bezier curve. The card starts small, overshoots slightly, bounces back, and settles. It feels playful and rewarding — exactly the vibe we want for a "jar reveal" moment.
+
+---
+
+## Step 5: Wire Shake into App.tsx
+
+Connect the shake detection to the reveal overlay:
+
+```tsx title="src/App.tsx (add shake logic)"
+import { useState, useCallback } from 'react'
+import { useShakeDetection } from './hooks/useShakeDetection'
+import ShakeReveal from './components/ShakeReveal'
+import { hapticHeavy } from './lib/haptics'
+import type { Entry } from './lib/types'
+
+function App() {
+  // ... existing state ...
+  const [shakeEntry, setShakeEntry] = useState<Entry | null>(null)
+
+  const handleShake = useCallback(() => {
+    if (entries.length === 0) return
+    if (shakeEntry) return // Already showing a reveal
+
+    // Pick a random entry
+    const randomIndex = Math.floor(Math.random() * entries.length)
+    const randomEntry = entries[randomIndex]
+
+    hapticHeavy()
+    setShakeEntry(randomEntry)
+  }, [entries, shakeEntry])
+
+  useShakeDetection({ onShake: handleShake })
+
+  const handleShakeAgain = () => {
+    if (entries.length === 0) return
+    const randomIndex = Math.floor(Math.random() * entries.length)
+    setShakeEntry(entries[randomIndex])
+    hapticHeavy()
+  }
+
+  return (
+    <div className="min-h-screen bg-amber-50">
+      {/* ... existing UI ... */}
+
+      {/* Shake reveal overlay */}
+      {shakeEntry && (
+        <ShakeReveal
+          entry={shakeEntry}
+          onDismiss={() => setShakeEntry(null)}
+          onShakeAgain={handleShakeAgain}
+        />
+      )}
+    </div>
+  )
+}
+```
+
+---
+
+## Step 6: Add a Web Fallback Button
+
+Shaking doesn't work in the browser or Simulator. Add a button for development and web users:
+
+```tsx title="src/components/Header.tsx (add shake button)"
+import { Flower, Sparkles } from 'lucide-react'
+
+interface HeaderProps {
+  onShake?: () => void
+  hasEntries?: boolean
+}
+
+export default function Header({ onShake, hasEntries }: HeaderProps) {
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-amber-50 border-b border-amber-200">
+      <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Flower className="w-6 h-6 text-amber-600" />
+          <h1 className="text-lg font-bold text-amber-900">GratitudeJar</h1>
+        </div>
+        {onShake && hasEntries && (
+          <button
+            onClick={onShake}
+            className="p-2 text-amber-500 hover:text-amber-700 transition-colors"
+            title="Shake to discover a random memory"
+          >
+            <Sparkles className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+    </header>
+  )
+}
+```
+
+Then pass the handler from App:
+
+```tsx title="App.tsx (update Header)"
+<Header onShake={handleShake} hasEntries={entries.length > 0} />
+```
+
+Now there's a sparkles icon in the header. Tapping it triggers the same reveal as shaking — useful for testing and for web users who can't shake their browser.
+
+<ClaudeCodePrompt
+  prompt="I built a shake detection feature using Capacitor's Motion plugin. It works on real devices but I need a way to test it in the browser and Simulator. I added a button in the header as a fallback. Is there a better approach for testing motion-based features?"
+  tip="You can also simulate shake events in Xcode's Simulator via the Device menu → Shake Gesture. But the Capacitor Motion plugin doesn't always respond to the simulated shake."
+/>
+
+---
+
+## Step 7: Test the Shake Feature
+
+### On the web
+
+1. Start the dev server: `npm run dev`
+2. Create a few entries (you need at least one)
+3. Tap the **sparkles icon** in the header
+4. A card should animate in with a random entry
+5. Tap **Shake Again** — a different random entry should appear
+6. Tap the dark overlay or the X button to dismiss
+
+### On a physical device
+
+1. Build and deploy to a real iPhone (we'll cover this in Chapter 14)
+2. Physically shake the phone
+3. Feel the heavy haptic thud
+4. See the random entry card bounce in
+5. Shake again while the card is dismissed
+
+:::tip The Simulator Limitation
+The iOS Simulator can simulate a shake via **Hardware → Shake Gesture** (or `Cmd + Ctrl + Z`), but the Capacitor Motion plugin may not respond to simulated shakes. For reliable testing, use a physical device or the header button.
 :::
+
+---
+
+## Step 8: Commit Your Progress
+
+```bash
+git add .
+git commit -m "Add shake-to-discover: motion detection, random entry reveal, bounce animation"
+git push
+```
+
+---
+
+<FileTree title="Updated project structure">
+
+```
+gratitude-jar/
+├── src/
+│   ├── components/
+│   │   ├── Header.tsx          ← UPDATED (shake button)
+│   │   ├── ShakeReveal.tsx     ← NEW
+│   │   └── ...
+│   ├── hooks/
+│   │   ├── useShakeDetection.ts ← NEW
+│   │   └── ...
+│   ├── lib/
+│   │   └── ...
+│   ├── pages/
+│   │   └── ...
+│   ├── App.tsx                 ← UPDATED (shake state + handler)
+│   └── index.css               ← UPDATED (bounce-in animation)
+└── ...
+```
+
+</FileTree>
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Shake is detected too easily (false positives)",
+    solution: <p>Increase the <code>threshold</code> value in <code>useShakeDetection</code>. The default is 30 — try 35 or 40. If the user just walks with their phone, the acceleration is typically 10-20, so 35 should filter that out.</p>
+  },
+  {
+    error: "Shake is never detected (no response to shaking)",
+    solution: <p>Make sure you installed <code>@capacitor/motion</code> and ran <code>npx cap sync</code>. Also verify you're testing on a physical device — the Simulator's accelerometer simulation is unreliable with Capacitor.</p>
+  },
+  {
+    error: "Multiple reveals trigger from one shake",
+    solution: <p>Check the cooldown timing. The <code>cooldownMs</code> should be at least 1000ms. Also verify the <code>if (shakeEntry) return</code> guard in <code>handleShake</code> — it prevents new shakes while a reveal is already showing.</p>
+  },
+  {
+    error: "Animation doesn't play (card just appears)",
+    solution: <p>Make sure the <code>@keyframes bounce-in</code> and <code>.animate-bounce-in</code> CSS classes are in your <code>index.css</code>. Also check that the card div has the <code>animate-bounce-in</code> class name.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={13}>
+- **Shaking the phone** triggers a random entry reveal (physical device)
+- The **sparkles button** in the header works as a web/Simulator fallback
+- The reveal card has a **bounce-in animation** that feels playful
+- **Heavy haptic feedback** fires on shake detection
+- **"Shake Again"** picks a different random entry
+- Tapping the **overlay or X button** dismisses the reveal
+- The shake has a **cooldown** to prevent rapid re-triggers
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+The hero feature is built. In the next chapter, we handle the iOS-specific details — safe area insets for the notch, keyboard behavior, app icons, and splash screens. These are the details that make your app feel truly native.
 
 <TwitterCallout />
 

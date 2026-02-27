@@ -4,26 +4,482 @@ title: "Chapter 12: Native Plugins — Camera & Haptics"
 description: Take photos and add haptic feedback using Capacitor's native plugins.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import FileTree from '@site/src/components/FileTree';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 12: Native Plugins — Camera & Haptics
 
 > Access the real camera and haptic engine on iOS through JavaScript.
 
+This is where Capacitor earns its keep. In the browser, you get a basic file picker for photos. On native iOS, you get the full camera experience — viewfinder, photo library access, and permission prompts. We'll also add haptic feedback — the subtle vibrations that make iOS apps feel tactile and responsive.
+
 ---
 
 ## What You'll Build
 
-- Camera integration — take photos or pick from the library
-- Permission handling and `Info.plist` configuration
-- Feed the captured image into Firebase Storage upload
-- Haptic feedback — light, medium, and heavy vibrations
+- Camera integration — take photos directly or choose from the photo library
+- iOS permission handling with `Info.plist` configuration
+- A platform-aware photo picker (native camera on iOS, file input on web)
+- Haptic feedback on key interactions (creating entries, deleting, tab switching)
+- A `useHaptics` hook for reusable haptic triggers
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## What You'll Learn
+
+- How Capacitor plugins bridge JavaScript to native Swift code
+- iOS permission model and `Info.plist` usage strings
+- Platform detection (`Capacitor.isNativePlatform()`)
+- The Haptics API and its feedback types
+- Graceful degradation — features that work on native but don't break on web
+
+---
+
+## Step 1: Install the Plugins
+
+```bash
+npm install @capacitor/camera @capacitor/haptics
+npx cap sync
+```
+
+`cap sync` is important here — it copies the new native plugin code into the Xcode project and runs `pod install` to link the Swift libraries.
+
+---
+
+## Step 2: Configure iOS Permissions
+
+iOS requires you to explain **why** your app needs camera and photo library access. These strings appear in the system permission dialog.
+
+Open `ios/App/App/Info.plist` in Xcode (or a text editor) and add these entries:
+
+```xml title="ios/App/App/Info.plist (add inside the top-level <dict>)"
+<key>NSCameraUsageDescription</key>
+<string>GratitudeJar needs camera access to take photos for your journal entries.</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>GratitudeJar needs photo library access to add photos to your journal entries.</string>
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>GratitudeJar needs to save photos you take to your photo library.</string>
+```
+
+### What each permission does
+
+| Key | When it triggers |
+|---|---|
+| `NSCameraUsageDescription` | First time the app tries to open the camera |
+| `NSPhotoLibraryUsageDescription` | First time the app tries to read from the photo library |
+| `NSPhotoLibraryAddUsageDescription` | First time the app tries to save a photo to the library |
+
+:::warning Missing Permission Strings = App Crash
+If you forget these strings and try to use the camera, iOS will **crash your app** immediately. Apple is strict about this — every permission must have a human-readable reason. The App Store will also reject apps with missing usage descriptions.
 :::
+
+---
+
+## Step 3: Build the Camera Service
+
+Create a service that wraps Capacitor's camera plugin with a web fallback:
+
+```ts title="src/lib/camera.ts"
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
+import { Capacitor } from '@capacitor/core'
+
+export interface PhotoResult {
+  dataUrl: string    // Base64 image data URL
+  blob: Blob         // For uploading to Firebase Storage
+}
+
+export async function takePhoto(): Promise<PhotoResult> {
+  if (!Capacitor.isNativePlatform()) {
+    // Web fallback — use file input
+    return pickPhotoFromFileInput()
+  }
+
+  // Native — use the real camera
+  const photo = await Camera.getPhoto({
+    quality: 80,
+    allowEditing: false,
+    resultType: CameraResultType.DataUrl,
+    source: CameraSource.Camera,
+    width: 1200,
+    height: 1200,
+  })
+
+  if (!photo.dataUrl) {
+    throw new Error('No photo data received')
+  }
+
+  const blob = await dataUrlToBlob(photo.dataUrl)
+  return { dataUrl: photo.dataUrl, blob }
+}
+
+export async function pickFromLibrary(): Promise<PhotoResult> {
+  if (!Capacitor.isNativePlatform()) {
+    return pickPhotoFromFileInput()
+  }
+
+  const photo = await Camera.getPhoto({
+    quality: 80,
+    allowEditing: false,
+    resultType: CameraResultType.DataUrl,
+    source: CameraSource.Photos,
+    width: 1200,
+    height: 1200,
+  })
+
+  if (!photo.dataUrl) {
+    throw new Error('No photo data received')
+  }
+
+  const blob = await dataUrlToBlob(photo.dataUrl)
+  return { dataUrl: photo.dataUrl, blob }
+}
+
+// Web fallback using file input
+function pickPhotoFromFileInput(): Promise<PhotoResult> {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async () => {
+      const file = input.files?.[0]
+      if (!file) {
+        reject(new Error('No file selected'))
+        return
+      }
+
+      const dataUrl = await fileToDataUrl(file)
+      resolve({ dataUrl, blob: file })
+    }
+    input.click()
+  })
+}
+
+// Convert data URL to blob for upload
+async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
+  const response = await fetch(dataUrl)
+  return response.blob()
+}
+
+// Convert file to data URL for preview
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+```
+
+### The platform detection pattern
+
+```ts
+if (!Capacitor.isNativePlatform()) {
+  // Web fallback
+} else {
+  // Native iOS code
+}
+```
+
+This is the most important pattern in Capacitor development. Your app works on both web and iOS:
+
+- **On iOS:** Uses the real camera, shows the native photo picker
+- **On web:** Falls back to a standard file input dialog
+
+This means your app never breaks — it just has fewer features on the web.
+
+### Camera options explained
+
+| Option | Value | Why |
+|---|---|---|
+| `quality` | `80` | 80% JPEG quality — good balance of size and clarity |
+| `resultType` | `DataUrl` | Returns a base64 data URL we can preview and upload |
+| `source` | `Camera` or `Photos` | Camera opens the viewfinder; Photos opens the library |
+| `width`/`height` | `1200` | Max dimensions — Capacitor resizes automatically |
+
+---
+
+## Step 4: Build the Haptics Service
+
+Haptic feedback makes interactions feel physical. A light tap when switching tabs, a medium impact when saving, a warning vibration when deleting:
+
+```ts title="src/lib/haptics.ts"
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
+import { Capacitor } from '@capacitor/core'
+
+const isNative = Capacitor.isNativePlatform()
+
+export async function hapticLight() {
+  if (!isNative) return
+  await Haptics.impact({ style: ImpactStyle.Light })
+}
+
+export async function hapticMedium() {
+  if (!isNative) return
+  await Haptics.impact({ style: ImpactStyle.Medium })
+}
+
+export async function hapticHeavy() {
+  if (!isNative) return
+  await Haptics.impact({ style: ImpactStyle.Heavy })
+}
+
+export async function hapticSuccess() {
+  if (!isNative) return
+  await Haptics.notification({ type: NotificationType.Success })
+}
+
+export async function hapticWarning() {
+  if (!isNative) return
+  await Haptics.notification({ type: NotificationType.Warning })
+}
+
+export async function hapticError() {
+  if (!isNative) return
+  await Haptics.notification({ type: NotificationType.Error })
+}
+```
+
+### Haptic types on iOS
+
+| Type | Feels like | Use for |
+|---|---|---|
+| Impact Light | Gentle tap | Tab switches, toggles |
+| Impact Medium | Firm press | Saving, confirming |
+| Impact Heavy | Strong thud | Shake interaction reveal |
+| Notification Success | Double tap pattern | Entry saved, login success |
+| Notification Warning | Triple tap pattern | Delete confirmation |
+| Notification Error | Buzz pattern | Error, failed action |
+
+The `if (!isNative) return` guard is critical — calling haptics on the web would throw an error. This way, all haptic calls are safe on any platform.
+
+---
+
+## Step 5: Update the Create Page for Native Camera
+
+Replace the file input in Create.tsx with our camera service:
+
+```tsx title="src/pages/Create.tsx (photo section update)"
+import { takePhoto, pickFromLibrary } from '../lib/camera'
+import { hapticLight, hapticSuccess } from '../lib/haptics'
+import { Camera, Image } from 'lucide-react'
+
+// Replace the photo input section with:
+<div className="flex flex-col gap-3">
+  <div className="flex-1 min-h-[150px] flex items-center justify-center border-2 border-dashed border-amber-300 rounded-lg bg-amber-50">
+    {photoPreview ? (
+      <img
+        src={photoPreview}
+        alt="Preview"
+        className="max-h-[200px] rounded-lg object-cover"
+      />
+    ) : (
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await hapticLight()
+                const result = await takePhoto()
+                setPhotoPreview(result.dataUrl)
+                setPhotoBlob(result.blob)
+              } catch (err) {
+                console.error('Camera error:', err)
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700 transition-colors"
+          >
+            <Camera className="w-4 h-4" />
+            Take Photo
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await hapticLight()
+                const result = await pickFromLibrary()
+                setPhotoPreview(result.dataUrl)
+                setPhotoBlob(result.blob)
+              } catch (err) {
+                console.error('Photo library error:', err)
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm hover:bg-amber-200 transition-colors"
+          >
+            <Image className="w-4 h-4" />
+            Library
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
+</div>
+```
+
+You'll also need to add a `photoBlob` state and update the upload to use the blob directly instead of compressing a file:
+
+```tsx title="src/pages/Create.tsx (state additions)"
+const [photoBlob, setPhotoBlob] = useState<Blob | null>(null)
+
+// In handleSubmit, for photo uploads:
+if (entryType === 'photo' && photoBlob) {
+  setUploading(true)
+  // Upload the blob directly — it's already compressed by the camera plugin
+  finalContent = await uploadPhotoBlob(photoBlob, setUploadProgress)
+}
+```
+
+---
+
+## Step 6: Add Haptics Throughout the App
+
+Sprinkle haptic feedback on key interactions:
+
+```tsx title="src/components/BottomNav.tsx (add haptic to tab switches)"
+import { hapticLight } from '../lib/haptics'
+
+// Update the onClick handler:
+<button
+  key={id}
+  onClick={() => {
+    hapticLight()
+    onTabChange(id)
+  }}
+  // ... rest of the button
+>
+```
+
+```tsx title="src/components/EntryCard.tsx (add haptic to delete)"
+import { hapticWarning } from '../lib/haptics'
+
+// When showing delete confirmation:
+<button
+  onClick={() => {
+    hapticWarning()
+    setShowDeleteConfirm(true)
+  }}
+>
+```
+
+```tsx title="src/pages/Create.tsx (add haptic on save)"
+import { hapticSuccess } from '../lib/haptics'
+
+// After successful entry creation:
+await onAddEntry(newEntry)
+await hapticSuccess()
+```
+
+### The haptic philosophy
+
+Don't overdo haptics. Apple's Human Interface Guidelines recommend:
+
+- **DO:** Use haptics for meaningful state changes (save, delete, navigate)
+- **DON'T:** Use haptics for every tap or scroll
+- **DO:** Match haptic intensity to action importance (light for tabs, heavy for shake reveal)
+- **DON'T:** Use haptics as a substitute for visual feedback
+
+<ClaudeCodePrompt
+  prompt="I'm adding haptic feedback to my Capacitor iOS app. I have hapticLight for tab switches, hapticSuccess for saving entries, and hapticWarning for delete confirmation. Is there anything else that should have haptics in a journal app?"
+  tip="Claude Code can help you think through which interactions benefit from haptic feedback based on iOS design patterns."
+/>
+
+---
+
+## Step 7: Test on the Simulator
+
+```bash
+npx cap sync
+```
+
+Then build and run from Xcode. Test:
+
+1. **Camera button** — on the Simulator, it opens the photo library (the Simulator has no real camera). On a physical device, it opens the actual camera viewfinder.
+2. **Library button** — opens the photo picker with sample photos
+3. **Tab switching** — you should feel a subtle haptic tap (physical device only — the Simulator doesn't simulate haptics)
+4. **Save entry** — success haptic after saving
+5. **Delete confirmation** — warning haptic when the delete prompt appears
+
+:::tip Testing Haptics Requires a Physical Device
+The iOS Simulator doesn't support haptic feedback. To feel the haptics, you'll need to run the app on a real iPhone. We'll cover deploying to a physical device in Chapter 14.
+:::
+
+---
+
+## Step 8: Commit Your Progress
+
+```bash
+git add .
+git commit -m "Add native camera, photo library, and haptic feedback via Capacitor plugins"
+git push
+```
+
+---
+
+<FileTree title="Updated project structure">
+
+```
+gratitude-jar/
+├── ios/
+│   └── App/
+│       └── App/
+│           └── Info.plist      ← UPDATED (camera permissions)
+├── src/
+│   ├── lib/
+│   │   ├── camera.ts          ← NEW
+│   │   ├── haptics.ts         ← NEW
+│   │   └── ...
+│   ├── pages/
+│   │   └── Create.tsx         ← UPDATED (native camera)
+│   ├── components/
+│   │   ├── BottomNav.tsx      ← UPDATED (haptics on tab switch)
+│   │   └── EntryCard.tsx      ← UPDATED (haptics on delete)
+│   └── ...
+└── ...
+```
+
+</FileTree>
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Camera.getPhoto() throws 'User cancelled photos app'",
+    solution: <p>This is normal — it means the user tapped Cancel in the photo picker. Wrap the call in a try/catch and silently ignore cancellation errors. Check if <code>err.message</code> includes "cancel" or "cancelled".</p>
+  },
+  {
+    error: "App crashes on camera permission",
+    solution: <p>You're missing the <code>NSCameraUsageDescription</code> key in <code>Info.plist</code>. iOS crashes (not errors — crashes) when you access the camera without a usage description. Add the key, rebuild in Xcode.</p>
+  },
+  {
+    error: "Haptics don't work in the Simulator",
+    solution: <p>That's expected. The iOS Simulator doesn't have a haptic engine. Test haptics on a real device. The <code>if (!isNative) return</code> guard prevents errors on web.</p>
+  },
+  {
+    error: "'@capacitor/camera' has no exported member 'Camera'",
+    solution: <p>Run <code>npx cap sync</code> after installing the plugin. Also make sure you installed the correct package: <code>npm install @capacitor/camera</code> (not <code>@ionic/camera</code> or similar).</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={12}>
+- The **camera plugin** lets users take photos on native iOS
+- The **photo library picker** works for choosing existing photos
+- **Permission prompts** appear with clear usage descriptions
+- The app **falls back to file input** on the web (no crashes)
+- **Haptic feedback** fires on tab switches, entry creation, and delete
+- Haptics are **silent on web** — no errors, no broken behavior
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+You have camera and haptics working. In the next chapter, we build the hero feature — shake the phone to discover a random past memory. It's the interaction that makes GratitudeJar feel magical.
 
 <TwitterCallout />
 
