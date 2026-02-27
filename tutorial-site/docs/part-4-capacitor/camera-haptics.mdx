@@ -83,7 +83,11 @@ If you forget these strings and try to use the camera, iOS will **crash your app
 Send this prompt to Claude Code to create the camera service, then compare the result with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
   prompt="Create a camera service at src/lib/camera.ts that wraps Capacitor's Camera plugin with a web fallback. Export takePhoto() and pickFromLibrary() functions that return {dataUrl, blob}. On native (Capacitor.isNativePlatform()), use Camera.getPhoto with quality 80, max 1200x1200, DataUrl result type. On web, fall back to a programmatic file input. Include helper functions dataUrlToBlob and fileToDataUrl."
+  context="This service abstracts platform differences — native iOS gets the real camera, web gets a file picker, and the rest of the app doesn't need to care."
+  expectedOutput="Claude Code will create src/lib/camera.ts with takePhoto, pickFromLibrary, and web fallback functions."
   tip="Platform detection with Capacitor.isNativePlatform() is the key pattern — your app works everywhere but uses native APIs when available."
 />
 
@@ -214,7 +218,11 @@ This means your app never breaks — it just has fewer features on the web.
 Haptic feedback makes interactions feel physical. Send this prompt to Claude Code to create the haptics service, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
   prompt="Create a haptics service at src/lib/haptics.ts that wraps Capacitor's Haptics plugin. Export functions: hapticLight, hapticMedium, hapticHeavy (impact styles), and hapticSuccess, hapticWarning, hapticError (notification types). Each function should check Capacitor.isNativePlatform() and silently return on web — never throw errors."
+  context="Haptics make iOS interactions feel physical and tactile. The native guard ensures these calls are silent on web."
+  expectedOutput="Claude Code will create src/lib/haptics.ts with six exported functions, each with a native platform guard."
   tip="The native guard is critical — calling haptics on the web would throw an error. This pattern makes every haptic call safe on any platform."
 />
 
@@ -277,7 +285,11 @@ The `if (!isNative) return` guard is critical — calling haptics on the web wou
 Send this prompt to Claude Code to update the Create page with native camera support, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
   prompt="Update src/pages/Create.tsx to use the native camera service instead of a file input. Replace the photo picker section with two buttons: 'Take Photo' (calls takePhoto, shows Camera icon) and 'Library' (calls pickFromLibrary, shows Image icon). Add a photoBlob state for the upload. Add hapticLight before camera actions and hapticSuccess after saving."
+  context="Replacing the basic file input with native camera buttons that match how real iOS apps handle photo input."
+  expectedOutput="Claude Code will update Create.tsx with two camera action buttons, photoBlob state, and haptic feedback on interactions."
   tip="The two-button pattern (Take Photo + Library) matches how native iOS apps handle photo input."
 />
 
@@ -361,7 +373,11 @@ if (entryType === 'photo' && photoBlob) {
 Send this prompt to Claude Code to add haptic feedback across the app, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 6"
   prompt="Add haptic feedback to key interactions throughout the app: hapticLight on tab switches in BottomNav.tsx, hapticWarning when showing delete confirmation in EntryCard.tsx, and hapticSuccess after saving an entry in Create.tsx."
+  context="Strategic haptic placement on meaningful actions — not every tap, just the ones that benefit from physical feedback."
+  expectedOutput="Claude Code will update BottomNav.tsx, EntryCard.tsx, and Create.tsx with haptic calls at key interaction points."
   tip="Don't overdo haptics — only add them to meaningful state changes like navigation, saving, and destructive actions."
 />
 

@@ -4,11 +4,16 @@ title: "Chapter 16: App Store Connect Setup"
 description: Create your app record, add metadata, and prepare for TestFlight.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 16: App Store Connect Setup
 
 > App Store Connect is where your app lives on Apple's side. Let's set it up.
+
+App Store Connect is Apple's web portal for managing your apps. Before you can upload a build to TestFlight, you need to create an app record here. This chapter walks through every field.
 
 ---
 
@@ -18,14 +23,231 @@ import TwitterCallout from '@site/src/components/TwitterCallout';
 - Match your Bundle ID exactly
 - Fill in app name, subtitle, and description
 - Set categories and age rating
-- Create a privacy policy (quick method)
-- Take screenshots for the listing
+- Create a privacy policy
+- Prepare screenshots for the listing
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
-:::
+## Step 1: Create the App Record
+
+1. Go to [appstoreconnect.apple.com](https://appstoreconnect.apple.com)
+2. Sign in with your Apple ID
+3. Click **My Apps**
+4. Click the **+** button → **New App**
+5. Fill in the form:
+
+| Field | Value |
+|---|---|
+| **Platforms** | iOS |
+| **Name** | GratitudeJar |
+| **Primary Language** | English (U.S.) |
+| **Bundle ID** | Select `com.yourname.gratitudejar` from the dropdown |
+| **SKU** | `gratitudejar` (any unique identifier — not shown to users) |
+
+6. Click **Create**
+
+### If your Bundle ID doesn't appear in the dropdown
+
+This means Xcode hasn't registered it yet. Go back to Xcode, make sure automatic signing is enabled with your team, and build once (`Cmd + R`). The Bundle ID will be registered automatically. Then refresh App Store Connect.
+
+---
+
+## Step 2: App Information
+
+After creating the app, you'll land on the App Information page. Fill in:
+
+### App Name and Subtitle
+
+| Field | Value | Notes |
+|---|---|---|
+| **Name** | GratitudeJar | 30 characters max. Must be unique on the App Store |
+| **Subtitle** | Daily Gratitude Journal | 30 characters max. Appears below the name in search |
+
+### Category
+
+| Field | Value |
+|---|---|
+| **Primary Category** | Lifestyle |
+| **Secondary Category** | Health & Fitness (optional) |
+
+### Content Rights
+
+Select **"This app does not contain, show, or access third-party content"** (unless you've added content from other sources).
+
+### Age Rating
+
+Click **Edit** next to Age Rating and answer the questionnaire. For GratitudeJar:
+- No violence, gambling, horror, etc.
+- The result should be **4+** (suitable for all ages)
+
+---
+
+## Step 3: Privacy Policy
+
+Apple requires a privacy policy URL for all apps. Since GratitudeJar uses Firebase (which collects some data), you need one.
+
+<ClaudeCodePrompt
+  prompt="I need a simple privacy policy for my iOS app called GratitudeJar. It's a personal journal app that uses Firebase Authentication (email/password), Firestore (stores text entries), and Firebase Storage (stores photos). Data is private to each user. The app doesn't share data with third parties, doesn't use analytics, and doesn't show ads. Can you draft a privacy policy I can host?"
+  context="Apple requires a privacy policy URL for every app submitted to the App Store or TestFlight."
+  tip="Claude Code can draft a privacy policy tailored to your exact tech stack. You'll need to host it somewhere publicly accessible — a GitHub Pages site, Notion page, or even a Google Doc with link sharing works."
+/>
+
+### Where to host your privacy policy
+
+Pick the simplest option:
+1. **GitHub Pages** — Create a `privacy.md` in a public repo → enable Pages → link to it
+2. **Notion** — Write the policy → Share → Copy public link
+3. **Google Docs** — Write it → Share → Anyone with the link → Copy link
+
+Paste the URL into the **Privacy Policy URL** field in App Store Connect.
+
+---
+
+## Step 4: App Privacy (Data Collection)
+
+Apple's App Privacy section asks what data your app collects. Click **Get Started** and answer honestly:
+
+### Data types GratitudeJar collects
+
+| Data Type | Collected? | Purpose |
+|---|---|---|
+| **Email Address** | Yes | Account registration (Firebase Auth) |
+| **Photos** | Yes | User-uploaded journal photos |
+| **Other User Content** | Yes | Journal text entries |
+
+### For each data type, specify:
+
+- **Linked to identity?** Yes (entries are tied to the user's account)
+- **Used for tracking?** No
+- **Purpose:** App Functionality
+
+### Data types GratitudeJar does NOT collect
+
+- No analytics data
+- No location data
+- No contacts, health, or financial data
+- No third-party advertising data
+- No browsing history
+
+---
+
+## Step 5: Prepare Screenshots
+
+Apple requires screenshots for the App Store listing. Even for TestFlight, having screenshots makes your app look professional.
+
+### Required screenshot sizes
+
+| Device | Resolution | Required? |
+|---|---|---|
+| iPhone 6.7" (iPhone 15 Pro Max) | 1290 × 2796 | Yes |
+| iPhone 6.5" (iPhone 14 Plus) | 1284 × 2778 | Recommended |
+| iPhone 5.5" (iPhone 8 Plus) | 1242 × 2208 | Only if supporting older devices |
+
+### How to capture screenshots
+
+**Option A: Simulator screenshots**
+
+1. Run the app in the Simulator on an iPhone 15 Pro Max
+2. Navigate to the screen you want
+3. Press `Cmd + S` to save a screenshot to your Desktop
+4. Repeat for 3-5 key screens (Feed, Create entry, Profile with heatmap, Shake reveal)
+
+**Option B: Physical device screenshots**
+
+1. On your iPhone, navigate to the screen
+2. Press **Side Button + Volume Up** simultaneously
+3. Transfer photos to your Mac via AirDrop
+
+### Recommended screenshots (in order)
+
+1. **Feed** — showing a few entries
+2. **Create** — the entry creation screen
+3. **Shake reveal** — the random memory card
+4. **Profile** — heatmap and streak stats
+5. **Login** — the clean auth screen
+
+### Upload screenshots
+
+In App Store Connect → your app → **App Store** tab → scroll to **Screenshots**:
+1. Select the device size
+2. Drag and drop your screenshots
+3. Reorder them (first screenshot is most important — it's what users see first)
+
+---
+
+## Step 6: Version Information
+
+Under the **App Store** tab, fill in the version information:
+
+### Description
+
+Write a compelling app description (up to 4,000 characters):
+
+<ClaudeCodePrompt
+  prompt="Write an App Store description for GratitudeJar — a daily gratitude journal app for iOS. Key features: text and photo entries, shake-to-discover random past memories with haptic feedback, calendar heatmap showing journaling streaks, clean amber-themed UI. Keep it under 4000 characters, lead with the most compelling feature, and use short paragraphs that are easy to scan."
+  tip="The first 3 lines of your App Store description are visible without tapping 'More' — make them count."
+/>
+
+### Keywords
+
+Keywords help users find your app in search. You get 100 characters total, separated by commas:
+
+```
+gratitude,journal,diary,mindfulness,daily,reflection,wellness,mental health,habit,streak
+```
+
+### What's New
+
+For version 1.0, write something simple:
+
+```
+Initial release! Start your gratitude journaling practice today.
+```
+
+### Support URL
+
+You need a URL where users can get help. Options:
+- A simple GitHub repo with an Issues page
+- A contact email on a webpage
+- The same page as your privacy policy with a "Contact" section
+
+---
+
+<TroubleshootingAccordion items={[
+  {
+    error: "App name 'GratitudeJar' is already taken on the App Store",
+    solution: <p>App names must be unique on the App Store. Try variations: "GratitudeJar - Daily Journal", "My GratitudeJar", or a completely different name. The name in App Store Connect doesn't need to match the name in your app — it's the marketing name.</p>
+  },
+  {
+    error: "Bundle ID doesn't appear in the dropdown when creating the app",
+    solution: <p>Build your app once in Xcode with automatic signing enabled. This registers the Bundle ID with Apple. Then refresh App Store Connect. It may take a few minutes to appear.</p>
+  },
+  {
+    error: "'Missing required fields' when saving",
+    solution: <p>App Store Connect requires several fields before you can save: Name, Bundle ID, SKU, and Primary Language at minimum. Make sure all required fields (marked with asterisks) are filled in.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={16}>
+- An **app record** exists in App Store Connect for GratitudeJar
+- The **Bundle ID** matches your Xcode project exactly
+- **App name**, subtitle, and category are filled in
+- An **age rating** questionnaire is completed (4+)
+- A **privacy policy** URL is provided
+- **App Privacy** data collection details are filled in
+- At least 3 **screenshots** are prepared (can upload later)
+- A **description** and **keywords** are drafted
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+The app record exists in App Store Connect. In the next chapter, we'll build, archive, and upload the actual app to TestFlight — then invite testers to try it on their iPhones.
 
 <TwitterCallout />
 

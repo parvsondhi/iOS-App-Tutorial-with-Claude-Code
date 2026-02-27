@@ -4,35 +4,335 @@ title: "Chapter 19: App Store Submission"
 description: Take your app from TestFlight to the App Store — the final step.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 19: App Store Submission
 
 > From TestFlight to the App Store. The final step in your journey.
 
+Your app has been beta tested on TestFlight. Bugs are fixed, feedback is incorporated, and you're confident it's ready. This chapter walks through the App Store submission process — the last step between you and a published iOS app.
+
 ---
 
 ## What You'll Learn
 
-- What changes when going from TestFlight to production
-- App Review guidelines you need to know
+- What changes when going from TestFlight to App Store
+- How to prepare your submission
+- The App Review process and timeline
 - Common rejection reasons and how to avoid them
 - What happens after approval
-- Celebrating your first published app
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## Step 1: Pre-Submission Checklist
+
+Before submitting, walk through this final checklist:
+
+### Technical
+
+| Check | Status |
+|---|---|
+| App doesn't crash on any tested device | |
+| All features work without a dev server | |
+| No placeholder text ("Lorem ipsum", "Coming soon", etc.) | |
+| No debug logs or test data visible | |
+| App icon appears correctly | |
+| Launch screen displays properly | |
+| No references to "beta" or "test" in the UI | |
+
+### App Store Connect
+
+| Check | Status |
+|---|---|
+| App name and subtitle finalized | |
+| Description written and proofread | |
+| Keywords filled in (100 char max) | |
+| Screenshots uploaded for required device sizes | |
+| Privacy policy URL active and accessible | |
+| App Privacy questionnaire completed | |
+| Age rating set | |
+| Support URL provided | |
+| "What's New" text written for version 1.0.0 | |
+
+<ClaudeCodePrompt
+  prompt="Review my GratitudeJar app code for anything that shouldn't be in a production build: console.log statements, TODO comments, test data, placeholder text, debug flags, or hardcoded localhost URLs. Check src/ directory recursively."
+  tip="A quick sweep for debug artifacts before submission prevents embarrassing rejections."
+/>
+
+---
+
+## Step 2: Select Your Build
+
+In App Store Connect:
+
+1. Go to your app → **App Store** tab
+2. Scroll down to **Build**
+3. Click **Select a build**
+4. Choose your most recent TestFlight build that's been tested and verified
+5. Click **Done**
+
+The build you select should be the one your testers have validated — don't upload a brand new build at the last minute without testing it.
+
+---
+
+## Step 3: Final Metadata Review
+
+### Screenshots
+
+Make sure you have screenshots for at least:
+- **6.7" display** (iPhone 15 Pro Max) — Required
+- **6.5" display** (iPhone 14 Plus) — Recommended
+
+Screenshots should show real app content (your actual entries), not empty states.
+
+### Description
+
+Your first 3 lines are the most important — they're visible before "More":
+
+```
+GratitudeJar helps you build a daily gratitude practice. Write what
+you're thankful for, snap photos of meaningful moments, and shake
+your phone to rediscover past memories with a satisfying haptic thud.
+```
+
+### App Preview Video (Optional)
+
+A 15-30 second video showing the app in action significantly increases downloads. You can screen-record on your iPhone (Settings → Control Center → Screen Recording) and upload it.
+
+---
+
+## Step 4: Submit for Review
+
+1. In App Store Connect → your app → **App Store** tab
+2. Review all sections one final time
+3. Click **Submit for Review**
+4. Answer the final questions:
+   - **Sign in required?** Yes — provide a test account (email + password)
+   - **Contact info** — your email and phone for the review team
+   - **Notes** — any context the reviewer needs
+
+### Providing a test account
+
+Apple's review team needs to test your app. Since GratitudeJar requires login:
+
+1. Create a test account in your app (e.g., `review@example.com` / `Password123!`)
+2. Add a few entries so the reviewer sees content (not an empty feed)
+3. Enter these credentials in the review submission form
+
+:::warning Don't Skip the Test Account
+If your app requires login and you don't provide test credentials, Apple will reject it immediately. This is one of the most common rejection reasons.
 :::
 
 ---
 
-## Congratulations
+## Step 5: The Review Process
 
-If you've made it this far, you've gone from a blank folder to a published iOS app. That's a real achievement. Most people who start learning app development never ship anything.
+### Timeline
 
-You did.
+| Stage | Typical Duration |
+|---|---|
+| Waiting for Review | 24-48 hours |
+| In Review | 1-24 hours |
+| Total | 1-3 days (usually) |
+
+Apple reviews apps 7 days a week, including holidays. Most apps are reviewed within 24-48 hours. You can check the status in App Store Connect.
+
+### What reviewers check
+
+- App works as described
+- No crashes
+- No placeholder content
+- Privacy policy is accessible
+- Content is appropriate
+- No misleading functionality
+- Follows the [App Store Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
+
+### Possible outcomes
+
+1. **Approved** — Your app is published! (or ready for manual release)
+2. **Rejected** — Apple found issues. You'll get specific feedback on what to fix.
+3. **Metadata Rejected** — Only the listing needs changes (screenshots, description, etc.) — no new build needed.
+
+---
+
+## Step 6: Common Rejection Reasons (and How to Avoid Them)
+
+### 1. Incomplete or placeholder content
+
+**Rejection:** "Your app still includes placeholder content."
+
+**Prevention:** Search your entire codebase for "Coming soon", "Lorem", "TODO", "placeholder", "test". Remove everything.
+
+### 2. Broken or missing functionality
+
+**Rejection:** "We found that certain features did not work as expected."
+
+**Prevention:** Test every feature on a real device. Create entries, upload photos, try the shake gesture, check the heatmap, test login/logout.
+
+### 3. Privacy issues
+
+**Rejection:** "Your app's privacy policy URL is not accessible."
+
+**Prevention:** Verify your privacy policy URL loads in a browser. Make sure it accurately describes what data you collect.
+
+### 4. Missing login credentials
+
+**Rejection:** "We were unable to review your app as it requires login."
+
+**Prevention:** Always provide a test account with pre-existing content.
+
+### 5. Performance issues
+
+**Rejection:** "Your app takes too long to launch."
+
+**Prevention:** Make sure your web assets are bundled (not loading from a dev server). Test the launch time in the Simulator.
+
+### 6. Design guideline violations
+
+**Rejection:** "Your app's UI doesn't comply with iOS Human Interface Guidelines."
+
+**Prevention:** Ensure all touch targets are 44×44pt minimum, text is readable, and the app respects safe areas.
+
+<ClaudeCodePrompt
+  prompt="I'm about to submit my GratitudeJar app to the App Store. What are the most common reasons apps get rejected by Apple's review team? Can you review my app's setup for potential issues? The app uses Firebase Auth (email/password), Firestore, Storage, and Capacitor plugins for camera, haptics, and motion detection."
+  tip="Claude Code knows Apple's review guidelines well. Ask it to audit your app before submission to catch issues early."
+/>
+
+---
+
+## Step 7: If You're Rejected
+
+Don't panic — rejections are normal, especially for first-time submissions. Here's what to do:
+
+1. **Read the rejection message carefully** — Apple tells you exactly what's wrong
+2. **Fix the issue** — make the code or metadata change
+3. **If it's a code fix:**
+   - `npm run build && npx cap sync`
+   - Bump the build number
+   - Archive and upload a new build
+   - Select the new build in App Store Connect
+4. **If it's a metadata fix:**
+   - Update the text/screenshots directly in App Store Connect
+   - No new build needed
+5. **Reply in the Resolution Center** — explain what you fixed
+6. **Resubmit for review**
+
+Second reviews are usually faster (often same-day) because the reviewer already has context.
+
+---
+
+## Step 8: After Approval
+
+### Automatic vs Manual Release
+
+When submitting, you chose one of:
+- **Automatically release after approval** — goes live as soon as approved
+- **Manually release** — you control when it goes live (click "Release This Version")
+
+For your first app, automatic release is fine.
+
+### Your app is live!
+
+Once released:
+- It appears in App Store search (may take a few hours to index)
+- Anyone can download it
+- You can share a direct link: `https://apps.apple.com/app/idXXXXXXXXX`
+- TestFlight builds continue to work alongside the App Store version
+
+### Monitor after launch
+
+- Check **App Store Connect → App Analytics** for downloads and usage
+- Monitor **Crashes** in App Store Connect
+- Read **Ratings & Reviews** (respond to feedback thoughtfully)
+
+---
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Rejection: 'Your app requires login but no demo account was provided'",
+    solution: <p>Create a test account in your app, add some sample entries, and provide the credentials in the submission form under <strong>App Review Information → Sign-in required</strong>. Make sure the password meets your app's minimum requirements.</p>
+  },
+  {
+    error: "Rejection: 'Your app's privacy policy could not be accessed'",
+    solution: <p>Make sure the URL is publicly accessible (not behind a login). Test it in an incognito browser window. If you're using a Google Doc, make sure sharing is set to "Anyone with the link."</p>
+  },
+  {
+    error: "App is approved but doesn't appear in App Store search",
+    solution: <p>It can take 24-48 hours for a new app to be indexed in App Store search. The direct link works immediately. Check back after a day.</p>
+  },
+  {
+    error: "Review is taking longer than 3 days",
+    solution: <p>While rare, reviews can occasionally take longer. You can check the typical review time at <a href="https://developer.apple.com/app-store/review/">Apple's App Review page</a>. If it's been over 5 days, contact Apple Developer Support.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={19}>
+- **Pre-submission checklist** is complete (no debug content, all features working)
+- A tested **build is selected** in App Store Connect
+- All **metadata** is filled in (description, screenshots, privacy policy, etc.)
+- A **test account** with sample content is provided for the reviewer
+- The app is **submitted for review**
+- You understand how to handle a **rejection** if it happens
+</ChapterCheckpoint>
+
+---
+
+## Congratulations!
+
+You started this tutorial with a blank folder and zero iOS experience. Now you have:
+
+- A **React + TypeScript** web app with Firebase backend
+- **User authentication** with email/password
+- **Text and photo** journal entries with real-time sync
+- A **calendar heatmap** and streak tracking
+- **Native iOS features**: camera, haptics, shake detection
+- **Safe area** handling, app icons, and a launch screen
+- A **TestFlight beta** that real people tested
+- An app on the **App Store** that anyone can download
+
+You built all of this with **Claude Code** as your pair programmer — from architecture decisions to debugging, from writing components to configuring iOS-specific details.
+
+### What you actually learned
+
+Beyond the specific tech stack, you learned:
+- How to think about **mobile-first** design
+- How to work with **AI-assisted development** effectively
+- How to give **good prompts** that produce good code
+- How to **verify and understand** generated code rather than blindly trusting it
+- The full lifecycle of **shipping software**: idea → code → test → deploy
+
+### Where to go from here
+
+Ideas for continuing your development:
+
+<ClaudeCodePrompt
+  prompt="I just published my first iOS app (GratitudeJar — a gratitude journal). I want to keep improving it. What features would make the biggest impact? Consider: dark mode, push notification reminders, data export, social sharing, widgets, Apple Watch companion, or something I haven't thought of."
+  tip="Claude Code can help you prioritize features based on user impact vs implementation effort. Start with the highest-impact, lowest-effort features."
+/>
+
+Some popular next steps:
+- **Push notification reminders** — remind users to journal daily
+- **Dark mode** — respect the system appearance setting
+- **Data export** — let users download their entries as a PDF or JSON
+- **Widgets** — show the current streak on the home screen
+- **Apple Watch** — quick entry creation from the wrist
+
+Each of these is a project you can build with Claude Code using the same workflow you learned here.
+
+---
+
+## Thank You
+
+Building software is one of the most powerful skills you can have. You've proven you can take an idea from zero to a published app. The gap between "I want to build an app" and "I have an app on the App Store" is smaller than most people think — and you've crossed it.
+
+Now go build something else.
 
 <TwitterCallout />
 

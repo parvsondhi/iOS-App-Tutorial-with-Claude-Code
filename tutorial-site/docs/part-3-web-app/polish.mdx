@@ -67,7 +67,11 @@ Skeleton screens show the shape of content before it loads. Research shows users
 Send this prompt to Claude Code to generate the skeleton component, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 2"
   prompt="Create a skeleton loading card component at src/components/EntrySkeleton.tsx that mimics the shape of an EntryCard. Use Tailwind's animate-pulse class with amber-colored placeholder rectangles for the header area (date and action buttons) and body area (three lines of varying width). Then update Feed.tsx to show three EntrySkeleton cards instead of the spinner during loading."
+  context="Skeleton screens show the shape of content before it loads. Users perceive them as faster than spinners."
+  expectedOutput="Claude Code will create EntrySkeleton.tsx with animated placeholder blocks and update Feed.tsx to use them during loading."
 />
 
 Here's the reference implementation — compare what Claude Code generated with this:
@@ -126,7 +130,11 @@ When there are no entries, we should do more than say "no entries." We should ex
 Send this prompt to Claude Code to generate the empty state component, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
   prompt="Create a rich empty state component at src/components/EmptyState.tsx. Show a large Flower icon in a circular amber background, 'Your jar is empty' heading, an encouraging description about capturing gratitude, and a 'Create Your First Entry' button with PlusCircle icon. Accept an onCreateFirst callback prop. Update Feed.tsx to use EmptyState when entries.length === 0, and pass onNavigateToCreate from App.tsx."
+  context="Empty states nudge users toward creating their first entry instead of showing a blank screen."
+  expectedOutput="Claude Code will create EmptyState.tsx with icon, heading, description, and CTA button, and wire it into Feed.tsx."
 />
 
 Here's the reference implementation — compare what Claude Code generated with this:
@@ -211,7 +219,11 @@ Toasts are non-blocking messages that slide in, show feedback, and auto-dismiss.
 Send this prompt to Claude Code to generate the toast system, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
   prompt="Build a toast notification system: 1) Create src/components/Toast.tsx with ToastMessage type (id, type success/error, message) and a Toast component that renders toasts as slide-down cards with CheckCircle/AlertCircle icons and auto-dismiss after 3 seconds. 2) Create src/hooks/useToast.ts with showToast and dismissToast functions. 3) Wire toasts into App.tsx — wrap addEntry to show 'Entry saved!' on success. Also add a slide-down CSS animation to src/index.css."
+  context="Toasts provide non-blocking feedback that slides in, confirms the action, and auto-dismisses."
+  expectedOutput="Claude Code will create Toast.tsx, useToast.ts hook, wire them into App.tsx, and add the slide-down CSS animation."
 />
 
 Here's the reference implementation — compare what Claude Code generated with this:
@@ -368,7 +380,11 @@ First-time users should see a welcome screen that explains what the app does.
 Send this prompt to Claude Code to generate the onboarding screen, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
   prompt="Create an onboarding screen at src/pages/Onboarding.tsx with three slides: Welcome (Flower icon), Write & Snap (BookOpen icon), Shake to Discover (Sparkles icon). Include dot indicators, Next/Get Started buttons, and a Skip option. Accept an onComplete callback. In App.tsx, use localStorage to track if onboarding has been shown (key: 'gratitude-jar-onboarded'), and show Onboarding before the auth check if it hasn't."
+  context="First-time users see this before anything else. It explains the app and only shows once."
+  expectedOutput="Claude Code will create Onboarding.tsx with a 3-slide carousel and update App.tsx with localStorage-based first-visit tracking."
 />
 
 Here's the reference implementation — compare what Claude Code generated with this:
@@ -495,7 +511,11 @@ Let's show a more human-friendly time on entry cards — "Just now", "2 hours ag
 Send this prompt to Claude Code to generate the relative time function, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 6"
   prompt="Add a getRelativeTime function to src/lib/dates.ts that takes a Date and returns a human-friendly string: 'Just now' (under 1 min), '5m ago', '2h ago', 'Yesterday', '3d ago', or falls back to formatDisplayDate for older dates."
+  context="Relative timestamps like '2h ago' feel more natural than 'March 15, 2025' on recent entries."
+  expectedOutput="Claude Code will add a getRelativeTime function to dates.ts with time-based thresholds."
 />
 
 Here's the reference implementation — compare what Claude Code generated with this:

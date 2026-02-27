@@ -4,11 +4,16 @@ title: "Chapter 15: Apple Developer Account"
 description: Understand certificates, provisioning profiles, and App IDs in plain English.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 15: Apple Developer Account
 
 > Apple's developer tooling is confusing. This chapter explains it in plain English.
+
+To ship an app to TestFlight (and eventually the App Store), you need an Apple Developer Program membership. This chapter walks through enrollment and explains the concepts — certificates, provisioning profiles, App IDs — that trip up every new developer.
 
 ---
 
@@ -18,13 +23,222 @@ import TwitterCallout from '@site/src/components/TwitterCallout';
 - Certificates: Development vs Distribution
 - Provisioning profiles — what they are and why they exist
 - App IDs and Bundle IDs
+- Automatic signing vs manual signing
 - All of this explained without jargon
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## Step 1: Enroll in the Apple Developer Program
+
+### What it costs
+
+The Apple Developer Program costs **$99/year**. This gives you:
+- TestFlight access (beta testing with up to 10,000 users)
+- App Store distribution
+- Advanced app services (push notifications, Sign in with Apple, etc.)
+- Access to beta OS releases
+
+### How to enroll
+
+1. Go to [developer.apple.com/programs](https://developer.apple.com/programs)
+2. Click **Enroll**
+3. Sign in with your Apple ID (use the same one you use for Xcode)
+4. Choose **Individual** enrollment (not Organization — that requires a D-U-N-S number)
+5. Fill in your legal name and address
+6. Pay the $99 fee
+7. Wait for Apple to process your enrollment (usually 24-48 hours)
+
+:::warning Enrollment Processing Time
+Apple reviews enrollments manually. Most are approved within 48 hours, but it can take up to a week. Start this process before you need it — don't wait until you're ready to upload.
 :::
+
+### Can I use a free account?
+
+A free Apple Developer account lets you:
+- Run apps on your own device via Xcode
+- Use the Simulator
+- Build and test locally
+
+But you **cannot**:
+- Upload to TestFlight
+- Submit to the App Store
+- Use push notifications
+- Use certain entitlements (Sign in with Apple, iCloud, etc.)
+
+For this tutorial, you need the paid account to reach TestFlight.
+
+---
+
+## Step 2: Understand Certificates (in Plain English)
+
+### What is a certificate?
+
+A certificate is Apple's way of saying: **"We verified that this person is a real developer."** It's a digital identity card.
+
+Think of it like a passport:
+- Your **Development certificate** lets you build and test on your own devices
+- Your **Distribution certificate** lets you submit apps to the App Store and TestFlight
+
+### How certificates work
+
+```
+You create a certificate request on your Mac
+    ↓
+Apple signs it (verifying your identity)
+    ↓
+The signed certificate is installed in your Keychain
+    ↓
+Xcode uses it to sign your app
+    ↓
+iOS checks the signature before allowing the app to run
+```
+
+### Do I need to create certificates manually?
+
+**No.** Xcode's **Automatic Signing** handles certificate creation for you. When you enable automatic signing (which we did in Chapter 11), Xcode:
+1. Generates a certificate signing request
+2. Sends it to Apple
+3. Downloads the signed certificate
+4. Installs it in your Keychain
+5. Uses it automatically when building
+
+You don't need to touch the Keychain or the developer portal for certificates.
+
+---
+
+## Step 3: Understand Provisioning Profiles (in Plain English)
+
+### What is a provisioning profile?
+
+A provisioning profile is a file that answers three questions:
+1. **Who** is allowed to build this app? (certificate)
+2. **What** app is this? (App ID)
+3. **Where** can it run? (device list or "any device" for App Store)
+
+```
+Provisioning Profile = Certificate + App ID + Device List
+```
+
+### Types of profiles
+
+| Profile Type | Used For | Devices |
+|---|---|---|
+| **Development** | Testing on your own devices | Specific devices you register |
+| **Ad Hoc** | Testing on a limited set of devices | Up to 100 registered devices |
+| **App Store** | TestFlight + App Store | Any device (Apple handles distribution) |
+
+### Do I need to create profiles manually?
+
+**No.** Automatic Signing in Xcode creates and manages profiles for you. This is another thing you don't need to touch.
+
+---
+
+## Step 4: Understand App IDs and Bundle IDs
+
+### Bundle ID
+
+Your Bundle ID is the unique identifier for your app. We set this in Chapter 11:
+
+```
+com.yourname.gratitudejar
+```
+
+This must be **globally unique** across all apps on the App Store. The convention is reverse domain notation: `com.yourcompany.appname`.
+
+### App ID
+
+An App ID is registered in the Apple Developer Portal and links your Bundle ID to your developer account. It's what Apple uses to track your app.
+
+**Automatic Signing creates the App ID for you** the first time you build with a matching Bundle ID. No manual steps needed.
+
+### The relationship
+
+```
+Apple Developer Account
+    └── App ID (com.yourname.gratitudejar)
+            └── Provisioning Profile
+                    └── Certificate
+                            └── Your signed .ipa file
+```
+
+---
+
+## Step 5: Verify Automatic Signing
+
+Let's make sure everything is configured correctly in Xcode:
+
+1. Open your project: `npx cap open ios`
+2. Select the **App** target in the left sidebar
+3. Go to the **Signing & Capabilities** tab
+4. Ensure **Automatically manage signing** is checked
+5. Select your **Team** from the dropdown (your Apple Developer account)
+6. The **Bundle Identifier** should be `com.yourname.gratitudejar`
+
+If you see a green checkmark next to "Signing Certificate" and "Provisioning Profile" — you're good. Xcode has created everything automatically.
+
+<ClaudeCodePrompt
+  prompt="I'm setting up my Apple Developer account for the first time. I see terms like 'certificates', 'provisioning profiles', 'entitlements', and 'capabilities' in Xcode. Can you explain what each one does and whether I need to configure any of them manually, or if Xcode's automatic signing handles everything?"
+  tip="Claude Code is great at demystifying Apple's developer tooling. If you see an unfamiliar term in Xcode, just ask."
+/>
+
+---
+
+## Step 6: Common Gotchas
+
+### "Your account already has a valid iOS Distribution certificate"
+
+This means you (or another app) already has a distribution certificate. Xcode handles this automatically — it reuses the existing one. No action needed.
+
+### "No profiles for 'com.yourname.gratitudejar' were found"
+
+This usually means:
+- Your Bundle ID in Xcode doesn't match what's registered
+- Your team isn't selected
+- Automatic signing is disabled
+
+Fix: Check that **Automatically manage signing** is enabled and your **Team** is selected.
+
+### "The app ID cannot be registered to your development team"
+
+Someone else has already registered this exact Bundle ID. Choose a different one:
+- `com.yourname.gratitudejar2`
+- `com.youractualname.gratitudejar`
+- `io.github.yourusername.gratitudejar`
+
+---
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Xcode shows 'No accounts with Apple Developer Program membership'",
+    solution: <p>Your Apple Developer enrollment may still be processing. Check your email for confirmation from Apple. If it's been more than 48 hours, contact <a href="https://developer.apple.com/contact/">Apple Developer Support</a>.</p>
+  },
+  {
+    error: "Signing certificate shows a yellow warning triangle",
+    solution: <p>Try revoking and regenerating: Go to <strong>Xcode → Settings → Accounts → Manage Certificates</strong>, right-click the problematic certificate, and select <strong>Revoke</strong>. Then clean build (<code>Cmd + Shift + K</code>) and Xcode will create a new one automatically.</p>
+  },
+  {
+    error: "Bundle ID is already taken",
+    solution: <p>App IDs are globally unique. Add a distinguishing element: <code>com.yourname.gratitudejar-app</code> or use your actual domain if you have one. Update the Bundle ID in both Xcode and <code>capacitor.config.ts</code>.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={15}>
+- You have an active **Apple Developer Program membership** ($99/year)
+- You understand what **certificates**, **provisioning profiles**, and **App IDs** are
+- **Automatic signing** is enabled in Xcode with your team selected
+- Xcode shows **green checkmarks** for signing certificate and provisioning profile
+- Your **Bundle ID** is unique and matches `capacitor.config.ts`
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+Your developer account is set up and signing is configured. In the next chapter, we'll create your app record in App Store Connect — that's Apple's portal where you manage your app's listing, metadata, and TestFlight builds.
 
 <TwitterCallout />
 

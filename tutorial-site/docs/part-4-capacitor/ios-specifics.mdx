@@ -80,7 +80,11 @@ These values are `0` on devices without a notch (or in the browser) and ~47px on
 Send this prompt to Claude Code to apply safe area insets to your fixed elements, then compare the result with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 2"
   prompt="Update the fixed-position elements in our app to respect iOS safe area insets. In Header.tsx, add paddingTop: 'env(safe-area-inset-top)' as an inline style. In BottomNav.tsx, add paddingBottom: 'env(safe-area-inset-bottom)' as an inline style. In App.tsx, update the main content area padding to account for the larger header and nav using calc() with the safe area variables."
+  context="Without safe area insets, content hides behind the notch and home indicator on modern iPhones."
+  expectedOutput="Claude Code will update Header.tsx, BottomNav.tsx, and App.tsx with safe area padding using CSS env() variables."
   tip="The env(safe-area-inset-*) CSS variables return 0 on devices without a notch, so this code works safely everywhere without platform detection."
 />
 
@@ -127,7 +131,11 @@ npx cap sync
 Send this prompt to Claude Code to configure the status bar, then compare the result with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
   prompt="Configure the iOS status bar in src/main.tsx. Import Capacitor and the StatusBar plugin from @capacitor/status-bar. After the imports, add a native platform check that sets the status bar style to Style.Light (dark text for our light theme) and sets the background color to '#fffbeb' (amber-50)."
+  context="The status bar sits at the very top of the iOS screen. We need dark text on our light amber background."
+  expectedOutput="Claude Code will update main.tsx with StatusBar plugin imports and a native platform check that configures the style and background color."
   tip="Style.Light means dark text — it refers to the background being light, not the text color. This trips up many developers."
 />
 
@@ -170,7 +178,11 @@ Our app uses a light amber background, so dark status bar text (`Style.Light`) i
 When a text input is focused on iOS, the keyboard slides up. In a web view, this can push the entire page or cover the input. Send this prompt to Claude Code to fix keyboard behavior, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
   prompt="Fix iOS keyboard behavior in our Capacitor app. Update capacitor.config.ts to add an ios block with scrollEnabled: true and contentInset: 'automatic' so the web view resizes when the keyboard appears. Also add CSS rules to src/index.css: set scroll-margin-bottom: 120px on focused inputs/textareas so they scroll into view, and set font-size: 16px on all input, textarea, and select elements to prevent iOS auto-zoom on focus."
+  context="Keyboard handling is one of the trickiest parts of iOS web views — these changes prevent inputs from being hidden."
+  expectedOutput="Claude Code will update capacitor.config.ts with iOS keyboard config and add CSS rules to index.css for scroll margins and font sizes."
   tip="The 16px font-size rule is critical — iOS Safari auto-zooms the page when focusing inputs smaller than 16px, creating a terrible user experience."
 />
 
@@ -226,7 +238,11 @@ iOS Safari automatically zooms the page when an input with a font size smaller t
 Apple's Human Interface Guidelines require minimum touch targets of **44×44 points**. Some of our buttons (especially icon-only ones) might be too small. Send this prompt to Claude Code to fix touch targets, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
   prompt="Audit and fix touch target sizes across our app to meet Apple's 44x44 minimum. Add a CSS rule to src/index.css that sets min-height: 44px and min-width: 44px on all button, a, and [role='button'] elements. Also review icon-only buttons — ensure they use at least p-2.5 padding with w-6 h-6 icons to reach the 44px minimum."
+  context="Apple's Human Interface Guidelines require 44x44pt minimum touch targets. Failing this can lead to App Store rejection."
+  expectedOutput="Claude Code will add a global CSS rule for minimum touch target sizes and review icon buttons for compliance."
   tip="Apple will reject apps with touch targets smaller than 44x44 points. This global CSS rule is a safety net, but always verify visually in the Simulator."
 />
 
@@ -385,7 +401,11 @@ Before moving to Part 5 (TestFlight), walk through this checklist:
 Before moving to TestFlight, let's make a production build. Send this prompt to Claude Code to prepare the production config, then compare with the reference below:
 
 <ClaudeCodePrompt
+  variant="build"
+  step="Step 10"
   prompt="Update capacitor.config.ts for production by removing the server block (url and cleartext). Keep the appId, appName, webDir, and the ios block with scrollEnabled and contentInset. The app should now load from the bundled dist/ files instead of connecting to a dev server."
+  context="This is the critical switch from development to production — the app must load from bundled files for TestFlight."
+  expectedOutput="Claude Code will update capacitor.config.ts to remove the server block while keeping all other configuration."
   tip="Forgetting to remove the server block is the most common TestFlight mistake — the app tries to connect to localhost and shows a blank screen for your testers."
 />
 

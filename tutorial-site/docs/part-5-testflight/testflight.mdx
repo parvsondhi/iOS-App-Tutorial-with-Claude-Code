@@ -4,29 +4,304 @@ title: "Chapter 17: Building & Uploading to TestFlight"
 description: Archive your app, upload to App Store Connect, and invite testers via TestFlight.
 ---
 
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 17: Building & Uploading to TestFlight
 
 > The finish line. Your app goes from Xcode to real iPhones via TestFlight.
 
+This is the chapter where your app leaves your computer and lands on other people's phones. We'll archive the app, upload it to App Store Connect, and invite testers through TestFlight. By the end of this chapter, someone else will be using your app.
+
 ---
 
 ## What You'll Do
 
-- Set version and build number in Xcode
-- Archive the app (Product → Archive)
-- Upload via Xcode Organizer
+- Make a production build of the web app
+- Sync it to the iOS project
+- Set version and build numbers in Xcode
+- Archive the app
+- Upload to App Store Connect
 - Wait for processing (and what to do while waiting)
-- Invite internal testers
-- Add external testers (requires basic App Review)
+- Invite internal and external testers
 - See what the tester experience looks like
 
 ---
 
-:::info Coming Soon
-This chapter is under construction. Check back soon for the complete walkthrough.
+## Step 1: Pre-Flight Checklist
+
+Before building for TestFlight, verify:
+
+| Check | How to verify |
+|---|---|
+| Dev server config removed | `capacitor.config.ts` has no `server` block |
+| Production build works | `npm run build` succeeds with no errors |
+| App works from bundled files | `npx cap sync` → run in Simulator → app loads (no blank screen) |
+| Signing is configured | Xcode → Signing & Capabilities → green checkmarks |
+| Bundle ID matches | Same in Xcode AND App Store Connect |
+| App icon is set | Visible on the Simulator home screen |
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 1"
+  prompt="Prepare our app for a TestFlight build. Make sure capacitor.config.ts has no server block (remove url and cleartext if present, keep everything else). Then run npm run build && npx cap sync to create a production build and sync it to the iOS project."
+  context="The production build bundles all web assets into dist/ so the iOS app doesn't need a dev server."
+  expectedOutput="Claude Code will clean up capacitor.config.ts and run the build + sync commands."
+  tip="If the app shows a blank white screen in the Simulator after this, the server block wasn't fully removed — double-check capacitor.config.ts."
+/>
+
+### Run the production build
+
+```bash
+npm run build
+npx cap sync
+```
+
+Then test in the Simulator — open Xcode (`npx cap open ios`), select an iPhone simulator, and press `Cmd + R`. The app should load normally without a dev server running.
+
+---
+
+## Step 2: Set Version and Build Number
+
+In Xcode, select the **App** target → **General** tab:
+
+| Field | Value | What it means |
+|---|---|---|
+| **Version** | `1.0.0` | The marketing version users see (e.g., "Version 1.0.0") |
+| **Build** | `1` | An internal number that must increase with each upload |
+
+### Version vs Build number rules
+
+- **Version** (e.g., `1.0.0`): Follows semantic versioning. Visible to users. You decide when to bump it.
+- **Build** (e.g., `1`, `2`, `3`): Must be unique for each upload. Even if you don't change the version, you must bump the build number.
+
+```
+Version 1.0.0, Build 1  → First TestFlight upload
+Version 1.0.0, Build 2  → Bug fix upload (same version, new build)
+Version 1.1.0, Build 3  → Feature update (new version, new build)
+```
+
+For your first upload: Version `1.0.0`, Build `1`.
+
+---
+
+## Step 3: Archive the App
+
+Archiving creates a release-ready bundle of your app.
+
+1. In Xcode, select **Any iOS Device (arm64)** as the build destination (not a Simulator)
+2. Go to **Product → Archive**
+3. Wait for the archive to complete (this takes 1-3 minutes)
+4. The **Organizer** window opens automatically showing your archive
+
+:::warning "Archive" is grayed out?
+This happens when a Simulator is selected as the build destination. You must select **Any iOS Device (arm64)** from the device dropdown. You don't need a physical device connected — "Any iOS Device" targets all real devices.
 :::
+
+### What happens during archiving
+
+Xcode:
+1. Compiles your native code
+2. Bundles your web assets from `dist/`
+3. Signs everything with your distribution certificate
+4. Creates an `.xcarchive` file
+
+---
+
+## Step 4: Upload to App Store Connect
+
+From the Organizer window (after archiving):
+
+1. Select your archive
+2. Click **Distribute App**
+3. Select **App Store Connect** → **Upload**
+4. Leave all options at their defaults:
+   - **Strip Swift symbols**: Yes
+   - **Upload symbols**: Yes
+   - **Manage version and build number**: Yes (Xcode auto-increments)
+5. Click **Upload**
+6. Wait for validation and upload (2-5 minutes)
+
+### What Xcode validates
+
+Before uploading, Xcode checks:
+- Valid signing certificate and provisioning profile
+- Bundle ID matches the App Store Connect record
+- No missing required icons or capabilities
+- Binary is properly formatted
+
+If validation fails, Xcode shows the specific error. Fix it and archive again.
+
+---
+
+## Step 5: Wait for Processing
+
+After a successful upload:
+
+1. Go to [appstoreconnect.apple.com](https://appstoreconnect.apple.com)
+2. Select your app → **TestFlight** tab
+3. You'll see your build with status **"Processing"**
+
+Processing typically takes **5-30 minutes**. Apple is:
+- Scanning for malware
+- Checking for private API usage
+- Verifying the binary structure
+- Generating device-specific builds
+
+### What to do while waiting
+
+This is a good time to:
+- Fill in any missing App Store Connect fields
+- Upload your screenshots
+- Write the "What to Test" notes for testers
+- Draft a message to send testers when it's ready
+
+### Processing complete
+
+When processing finishes, the status changes to either:
+- **Ready to Submit** (or **Ready for Testing**) — success!
+- **Rejected** or **Invalid Binary** — there's an issue (check your email for details)
+
+---
+
+## Step 6: Export Compliance
+
+After processing, Apple may ask about export compliance. For GratitudeJar:
+
+**"Does your app use encryption?"**
+
+Select **Yes** — your app uses HTTPS (which is encryption). Then:
+
+**"Is it exempt?"**
+
+Select **Yes** — standard HTTPS/TLS for network communication is exempt from export compliance documentation.
+
+This is a one-time question per app. After you answer, future builds skip this step.
+
+---
+
+## Step 7: Invite Internal Testers
+
+Internal testers are members of your Apple Developer team. They get builds immediately — no review required.
+
+1. In App Store Connect → **TestFlight** tab
+2. Click **Internal Testing** in the sidebar
+3. Click **+** to create a new group (e.g., "Core Team")
+4. Add testers by their Apple ID email
+5. Select the build to test
+6. Click **Start Testing**
+
+Testers receive an email with a link to install the TestFlight app and your beta.
+
+### What testers see
+
+1. They get an email: "You've been invited to test GratitudeJar"
+2. They install the **TestFlight** app from the App Store (if they don't have it)
+3. They tap **Accept** in the TestFlight invite
+4. Your app appears in TestFlight → they tap **Install**
+5. Your app is on their home screen — with an orange dot indicating it's a TestFlight build
+
+---
+
+## Step 8: Add External Testers (Optional)
+
+External testers are people outside your team. External builds require a **light App Review** (usually approved within 24-48 hours).
+
+1. In TestFlight → **External Testing** in the sidebar
+2. Click **+** to create a group (e.g., "Beta Testers")
+3. Add testers by email or share a **public link**
+4. Select a build
+5. Fill in **Test Information**:
+   - **What to Test**: "Try creating text and photo entries. Shake your phone to discover a random past entry. Check the heatmap on the Profile tab."
+   - **Beta App Description**: Short description of the app
+   - **Contact email**: Your email for feedback
+6. Submit for **Beta App Review**
+
+### Public TestFlight links
+
+Instead of adding testers by email, you can generate a **public link** that anyone can use to join your beta (up to 10,000 testers). This is great for sharing on social media or in communities.
+
+---
+
+## Step 9: What Testers Should Test
+
+Send your testers a message with specific things to try:
+
+```
+Thanks for testing GratitudeJar! Here's what to try:
+
+1. Sign up with your email
+2. Create a text entry about something you're grateful for
+3. Create a photo entry using the camera or library
+4. Go to Profile — check your streak and heatmap
+5. Shake your phone — a random past entry should appear with haptic feedback
+6. Log out and back in — your entries should persist
+
+If anything breaks or feels wrong, let me know!
+```
+
+Testers can submit feedback directly through the TestFlight app — including screenshots — which appears in App Store Connect.
+
+---
+
+<TroubleshootingAccordion items={[
+  {
+    error: "'Archive' is grayed out in the Product menu",
+    solution: <p>Make sure your build destination is <strong>Any iOS Device (arm64)</strong>, not a Simulator. Click the device dropdown at the top of Xcode and select it. You don't need a physical device connected.</p>
+  },
+  {
+    error: "Upload fails with 'No accounts with required role'",
+    solution: <p>Your Apple ID needs the <strong>App Manager</strong> or <strong>Admin</strong> role in App Store Connect. If you enrolled as an individual, you automatically have this. If you're on a team, ask the Account Holder to grant you the role.</p>
+  },
+  {
+    error: "Build is stuck on 'Processing' for over an hour",
+    solution: <p>Processing occasionally gets delayed on Apple's side. If it's been over 2 hours, try uploading again with an incremented build number. You can also check <a href="https://developer.apple.com/system-status/">Apple's System Status</a> for outages.</p>
+  },
+  {
+    error: "Build rejected — 'Missing compliance information'",
+    solution: <p>Go to the TestFlight tab in App Store Connect, find your build, and click <strong>Manage</strong> next to the compliance warning. Answer the encryption questions (Yes to using encryption, Yes to being exempt for standard HTTPS).</p>
+  },
+  {
+    error: "Tester says 'Unable to Install' from TestFlight",
+    solution: <p>Common causes: (1) The tester's iOS version is lower than your app's minimum deployment target — check in Xcode under General → Minimum Deployments. (2) The build has expired (TestFlight builds expire after 90 days). (3) The tester needs to update the TestFlight app itself.</p>
+  },
+  {
+    error: "App shows a blank white screen on tester's device",
+    solution: <p>You likely forgot to remove the <code>server</code> block from <code>capacitor.config.ts</code> before building. The app is trying to connect to <code>localhost:5173</code> which doesn't exist on the tester's phone. Remove the server block, rebuild, re-sync, re-archive, and re-upload.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={17}>
+- A **production build** is created with `npm run build && npx cap sync`
+- The app **runs in the Simulator** without a dev server
+- Version is set to **1.0.0** and build to **1**
+- The app is **archived** successfully in Xcode
+- The archive is **uploaded** to App Store Connect without errors
+- The build has **finished processing** in App Store Connect
+- **Export compliance** questions are answered
+- At least one **tester** is invited and can install the app via TestFlight
+- The app **works on a tester's device** (not just yours)
+</ChapterCheckpoint>
+
+---
+
+## Part 5 Complete!
+
+Your app is on TestFlight. Other people are using something you built. That's a real milestone — most developers never get this far.
+
+| Step | Chapter |
+|---|---|
+| Apple Developer Account setup | Chapter 15 |
+| App Store Connect configuration | Chapter 16 |
+| Build, archive, upload, and test | Chapter 17 |
+
+In Part 6, we'll cover the update cycle (how to ship improvements) and the final step — submitting to the App Store.
 
 <TwitterCallout />
 
