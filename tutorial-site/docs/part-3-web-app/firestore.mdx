@@ -486,17 +486,17 @@ For web apps, we need to explicitly enable it. Send this to Claude Code, then co
 <ClaudeCodePrompt
   variant="build"
   step="Step 6"
-  prompt="Update src/lib/firebase.ts to enable Firestore offline persistence using enableIndexedDbPersistence. Handle the failed-precondition error (multiple tabs) and unimplemented error (browser not supported) gracefully with console warnings."
-  context="Offline persistence lets the app work without internet — reads come from IndexedDB cache and writes queue until reconnection."
-  expectedOutput="Updated firebase.ts with an enableIndexedDbPersistence call and error handling for failed-precondition and unimplemented error codes."
-  tip="If Claude Code uses a newer Firebase API like enableMultiTabIndexedDbPersistence, that's fine too — the behavior is similar."
+  prompt="Update src/lib/firebase.ts to use initializeFirestore with persistentLocalCache and persistentMultipleTabManager for offline persistence, instead of the default getFirestore. This is the modern Firebase v10+ approach."
+  context="Offline persistence lets the app work without internet — reads come from IndexedDB cache and writes queue until reconnection. Firebase v10+ enables this through initializeFirestore configuration rather than the deprecated enableIndexedDbPersistence API."
+  expectedOutput="Updated firebase.ts using initializeFirestore with persistentLocalCache and persistentMultipleTabManager settings."
+  tip="If Claude Code uses the older enableIndexedDbPersistence API, ask it to use initializeFirestore instead — that API was deprecated in Firebase v10."
 />
 
 Here's the reference implementation. Compare it with what Claude Code generated:
 
 ```ts title="src/lib/firebase.ts"
 import { initializeApp } from 'firebase/app'
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore'
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 import { getAuth } from 'firebase/auth'
 
@@ -511,20 +511,15 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 
-export const db = getFirestore(app)
+// Enable offline persistence with multi-tab support
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+})
+
 export const storage = getStorage(app)
 export const auth = getAuth(app)
-
-// Enable offline persistence
-enableIndexedDbPersistence(db).catch((err) => {
-  if (err.code === 'failed-precondition') {
-    // Multiple tabs open — persistence can only be enabled in one tab
-    console.warn('Firestore persistence unavailable: multiple tabs open')
-  } else if (err.code === 'unimplemented') {
-    // Browser doesn't support IndexedDB
-    console.warn('Firestore persistence unavailable: browser not supported')
-  }
-})
 ```
 
 ### What this does
@@ -533,8 +528,10 @@ Without persistence: user goes offline → reads fail, writes fail.
 
 With persistence: user goes offline → reads come from IndexedDB cache, writes are queued and automatically synced when the connection returns. The user might not even notice they were offline.
 
-:::caution Multi-Tab Limitation
-IndexedDB persistence can only be active in one browser tab at a time. If the user opens your app in two tabs, the second tab will log a warning but still work (it just won't have offline persistence). This is a Firestore limitation, not a bug in your code.
+The `persistentMultipleTabManager()` option enables persistence across multiple browser tabs simultaneously — each tab shares the same cache.
+
+:::info Why not `enableIndexedDbPersistence`?
+Older tutorials use `enableIndexedDbPersistence()`, but that API was **deprecated in Firebase v10** (2023). The `initializeFirestore` approach shown above is the modern replacement. It's simpler (no error handling needed) and supports multi-tab by default.
 :::
 
 ---
@@ -676,7 +673,7 @@ gratitude-jar/
   },
   {
     error: "enableIndexedDbPersistence is not a function",
-    solution: <p>This API was deprecated in Firebase SDK v10+. If you're using a newer version, Firestore enables persistence automatically in web apps. You can safely remove the <code>enableIndexedDbPersistence</code> call.</p>
+    solution: <p>This API was deprecated in Firebase SDK v10+. Use <code>initializeFirestore</code> with <code>persistentLocalCache</code> instead of <code>getFirestore</code> + <code>enableIndexedDbPersistence</code>. See the reference code in Step 6 above.</p>
   }
 ]} />
 

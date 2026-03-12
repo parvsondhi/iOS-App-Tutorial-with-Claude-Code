@@ -287,7 +287,7 @@ Send this prompt to Claude Code to update the Create page with native camera sup
 <ClaudeCodePrompt
   variant="build"
   step="Step 5"
-  prompt="Update src/pages/Create.tsx to use the native camera service instead of a file input. Replace the photo picker section with two buttons: 'Take Photo' (calls takePhoto, shows Camera icon) and 'Library' (calls pickFromLibrary, shows Image icon). Add a photoBlob state for the upload. Add hapticLight before camera actions and hapticSuccess after saving."
+  prompt="Update src/pages/Create.tsx to use the native camera service instead of a file input. Replace the photo picker section with two buttons: 'Take Photo' (calls takePhoto, shows Camera icon) and 'Library' (calls pickFromLibrary, shows Image icon). Add a photoBlob state for the upload. Also add an uploadPhotoBlob function to src/lib/storage.ts that uploads a Blob directly (without compression, since the camera plugin already compresses). Add hapticLight before camera actions and hapticSuccess after saving."
   context="Replacing the basic file input with native camera buttons that match how real iOS apps handle photo input."
   expectedOutput="Claude Code will update Create.tsx with two camera action buttons, photoBlob state, and haptic feedback on interactions."
   tip="The two-button pattern (Take Photo + Library) matches how native iOS apps handle photo input."
@@ -353,9 +353,46 @@ import { Camera, Image } from 'lucide-react'
 </div>
 ```
 
-You'll also need to add a `photoBlob` state and update the upload to use the blob directly instead of compressing a file:
+You'll also need to add a `photoBlob` state and update the upload to use the blob directly. First, add an `uploadPhotoBlob` function to `storage.ts` that uploads a pre-compressed blob (since the Capacitor camera plugin already compresses at 80% quality and 1200×1200):
+
+```ts title="src/lib/storage.ts (add this function)"
+export async function uploadPhotoBlob(
+  blob: Blob,
+  onProgress?: (progress: number) => void
+): Promise<string> {
+  // No compression needed — the Capacitor camera plugin already handles it
+  const filename = `entries/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+  const storageRef = ref(storage, filename)
+
+  return new Promise((resolve, reject) => {
+    const uploadTask = uploadBytesResumable(storageRef, blob, {
+      contentType: 'image/jpeg',
+    })
+
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const progress = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        )
+        onProgress?.(progress)
+      },
+      (error) => reject(error),
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+        resolve(downloadURL)
+      }
+    )
+  })
+}
+```
+
+Then update Create.tsx:
 
 ```tsx title="src/pages/Create.tsx (state additions)"
+import { uploadPhoto } from '../lib/storage'
+import { uploadPhotoBlob } from '../lib/storage'
+
 const [photoBlob, setPhotoBlob] = useState<Blob | null>(null)
 
 // In handleSubmit, for photo uploads:

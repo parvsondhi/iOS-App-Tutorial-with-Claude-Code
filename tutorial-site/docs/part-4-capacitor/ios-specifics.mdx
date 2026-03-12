@@ -133,9 +133,9 @@ Send this prompt to Claude Code to configure the status bar, then compare the re
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="Configure the iOS status bar in src/main.tsx. Import Capacitor and the StatusBar plugin from @capacitor/status-bar. After the imports, add a native platform check that sets the status bar style to Style.Light (dark text for our light theme) and sets the background color to '#fffbeb' (amber-50)."
+  prompt="Configure the iOS status bar in src/main.tsx. Import Capacitor and the StatusBar plugin from @capacitor/status-bar. After the imports, add a native platform check that sets the status bar style to Style.Light (dark text for our light theme). Note: setBackgroundColor is Android-only so don't use it — on iOS, the status bar background comes from the app's root view background color."
   context="The status bar sits at the very top of the iOS screen. We need dark text on our light amber background."
-  expectedOutput="Claude Code will update main.tsx with StatusBar plugin imports and a native platform check that configures the style and background color."
+  expectedOutput="Claude Code will update main.tsx with StatusBar plugin imports and a native platform check that configures the style."
   tip="Style.Light means dark text — it refers to the background being light, not the text color. This trips up many developers."
 />
 
@@ -152,7 +152,9 @@ import { StatusBar, Style } from '@capacitor/status-bar'
 // Configure status bar for iOS
 if (Capacitor.isNativePlatform()) {
   StatusBar.setStyle({ style: Style.Light })
-  StatusBar.setBackgroundColor({ color: '#fffbeb' }) // amber-50
+  // Note: setBackgroundColor is Android-only. On iOS, the status bar
+  // background is controlled by the app's root view background color,
+  // which we set via CSS (bg-amber-50 on the root element).
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -240,7 +242,7 @@ Apple's Human Interface Guidelines require minimum touch targets of **44×44 poi
 <ClaudeCodePrompt
   variant="build"
   step="Step 5"
-  prompt="Audit and fix touch target sizes across our app to meet Apple's 44x44 minimum. Add a CSS rule to src/index.css that sets min-height: 44px and min-width: 44px on all button, a, and [role='button'] elements. Also review icon-only buttons — ensure they use at least p-2.5 padding with w-6 h-6 icons to reach the 44px minimum."
+  prompt="Audit and fix touch target sizes across our app to meet Apple's 44x44 minimum. Add a .touch-target utility class to src/index.css with min-height: 44px and min-width: 44px — apply it selectively to standalone interactive elements. Also review icon-only buttons — ensure they use at least p-2.5 padding with w-6 h-6 icons to reach the 44px minimum."
   context="Apple's Human Interface Guidelines require 44x44pt minimum touch targets. Failing this can lead to App Store rejection."
   expectedOutput="Claude Code will add a global CSS rule for minimum touch target sizes and review icon buttons for compliance."
   tip="Apple will reject apps with touch targets smaller than 44x44 points. This global CSS rule is a safety net, but always verify visually in the Simulator."
@@ -266,15 +268,19 @@ Check these components for touch target compliance:
 - **Header** — shake button
 - **ShakeReveal** — dismiss button
 
-A simple fix: add minimum sizing to interactive elements:
+A simple fix: add a utility class for touch targets and apply it selectively:
 
-```css title="src/index.css (add touch target minimum)"
-/* Ensure all interactive elements meet iOS minimum touch target */
-button, a, [role="button"] {
+```css title="src/index.css (add touch target utility)"
+/* Utility class for ensuring iOS minimum touch target */
+.touch-target {
   min-height: 44px;
   min-width: 44px;
 }
 ```
+
+:::caution Don't Apply 44px Minimums Globally
+Avoid setting `min-height: 44px` and `min-width: 44px` on all `button` and `a` elements globally — this can break layouts with inline links, compact toggles, or small icon buttons. Instead, apply the `.touch-target` class selectively to interactive elements that need it, or use adequate padding (e.g., `p-2.5` with a `w-6 h-6` icon = 44px total).
+:::
 
 ---
 
