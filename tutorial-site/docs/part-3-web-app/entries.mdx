@@ -85,14 +85,14 @@ We'll format dates throughout the app, so we need a small utility file. The key 
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="Create a date utility file at src/lib/dates.ts with two functions: getLocalDateString() that returns today's date as 'YYYY-MM-DD' using the local timezone (not UTC, to avoid timezone bugs), and formatDisplayDate() that takes a 'YYYY-MM-DD' string and returns a human-friendly format like 'Mar 15, 2025'."
-  context="Using toISOString() for dates causes timezone bugs — if it's 11 PM in New York, toISOString() returns tomorrow's date because it converts to UTC. Our helper avoids this by using the local timezone."
-  expectedOutput="New file src/lib/dates.ts with getLocalDateString() and formatDisplayDate() functions."
+  prompt="Create a date utility file at src/lib/dates.ts with two functions: getLocalDateString(date?) that takes an optional Date parameter (defaults to new Date()) and returns the date as 'YYYY-MM-DD' using the local timezone (not UTC, to avoid timezone bugs), and formatDisplayDate() that takes a 'YYYY-MM-DD' string and returns a human-friendly format like 'Mar 15, 2025'."
+  context="Using toISOString() for dates causes timezone bugs — if it's 11 PM in New York, toISOString() returns tomorrow's date because it converts to UTC. Our helper avoids this by using the local timezone. The optional Date parameter lets us reuse this function in Chapters 9 and 10 for converting arbitrary dates."
+  expectedOutput="New file src/lib/dates.ts with getLocalDateString(date?: Date) and formatDisplayDate() functions."
 />
 
 ### Why not just use `new Date().toISOString().slice(0, 10)`?
 
-Timezones. If it's 11 PM in New York, `toISOString()` returns the next day's date because it converts to UTC. The `getLocalDateString` function Claude Code generated uses the user's local time, which is what they expect when they log a journal entry.
+Timezones. If it's 11 PM in New York, `toISOString()` returns the next day's date because it converts to UTC. The `getLocalDateString` function Claude Code generated uses the user's local time, which is what they expect when they log a journal entry. It accepts an optional `Date` parameter (defaulting to `new Date()`) so we can reuse it later for converting any date — not just today.
 
 :::tip Timezone Bugs Are Sneaky
 This is one of the most common bugs in apps that deal with dates. A user writes an entry at 11 PM on March 15th, but the app stores it as March 16th. We'll revisit this in Chapter 10 when we build the calendar heatmap.
