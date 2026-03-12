@@ -115,7 +115,7 @@ Node.js is the runtime that powers React, Vite, and all our command-line tools. 
 
 ```bash
 # Install nvm
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 
 # Close and reopen your terminal, then:
 nvm install 20
@@ -127,10 +127,11 @@ nvm alias default 20
 
 ```bash
 node -v
-# Should output: v20.x.x (anything 18+ works)
+# Should output: v20.x.x or newer
 
 npm -v
-# Should output: 10.x.x (comes bundled with Node)
+# Should output: 10.x.x (bundled with Node 20+)
+# If you installed Node 18, you'll see 9.x.x — that's fine too
 ```
 
 ---
