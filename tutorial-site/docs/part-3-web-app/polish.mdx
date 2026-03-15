@@ -69,12 +69,12 @@ Send this prompt to Claude Code to generate the skeleton component, then compare
 <ClaudeCodePrompt
   variant="build"
   step="Step 2"
-  prompt="Create a skeleton loading card component at src/components/EntrySkeleton.tsx that mimics the shape of an EntryCard. Use Tailwind's animate-pulse class with amber-colored placeholder rectangles for the header area (date and action buttons) and body area (three lines of varying width). Then update Feed.tsx to show three EntrySkeleton cards instead of the spinner during loading."
+  prompt="Create a skeleton loading card that shows the shape of an entry card while data is loading. It should have animated placeholder bars that pulse. Then update Feed.tsx to show three of these skeleton cards instead of a spinner during loading."
   context="Skeleton screens show the shape of content before it loads. Users perceive them as faster than spinners."
   expectedOutput="Claude Code will create EntrySkeleton.tsx with animated placeholder blocks and update Feed.tsx to use them during loading."
 />
 
-Here's the reference implementation — compare what Claude Code generated with this:
+Here's a reference implementation. Your code may look different — that's fine as long as it works.
 
 ```tsx title="src/components/EntrySkeleton.tsx"
 export default function EntrySkeleton() {
@@ -132,12 +132,12 @@ Send this prompt to Claude Code to generate the empty state component, then comp
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="Create a rich empty state component at src/components/EmptyState.tsx. Show a large Flower icon in a circular amber background, 'Your jar is empty' heading, an encouraging description about capturing gratitude, and a 'Create Your First Entry' button with PlusCircle icon. Accept an onCreateFirst callback prop. Update Feed.tsx to use EmptyState when entries.length === 0, and pass onNavigateToCreate from App.tsx."
+  prompt="Create a nice empty state component for when there are no entries. Show an encouraging message like 'Your jar is empty' with a button to create the first entry. Update Feed.tsx to show this instead of a blank screen, and wire up the button to navigate to the Create tab."
   context="Empty states nudge users toward creating their first entry instead of showing a blank screen."
   expectedOutput="Claude Code will create EmptyState.tsx with icon, heading, description, and CTA button, and wire it into Feed.tsx."
 />
 
-Here's the reference implementation — compare what Claude Code generated with this:
+Here's a reference implementation. Your code may look different — that's fine as long as it works.
 
 ```tsx title="src/components/EmptyState.tsx"
 import { Flower, PlusCircle } from 'lucide-react'
@@ -221,12 +221,12 @@ Send this prompt to Claude Code to generate the toast system, then compare with 
 <ClaudeCodePrompt
   variant="build"
   step="Step 4"
-  prompt="Build a toast notification system: 1) Create src/components/Toast.tsx with ToastMessage type (id, type success/error, message) and a Toast component that renders toasts as slide-down cards with CheckCircle/AlertCircle icons and auto-dismiss after 3 seconds. 2) Create src/hooks/useToast.ts with showToast and dismissToast functions. 3) Wire toasts into App.tsx — wrap addEntry to show 'Entry saved!' on success. Also add a slide-down CSS animation to src/index.css."
+  prompt="Build a toast notification system that shows brief messages like 'Entry saved!' or 'Failed to delete'. Toasts should slide down from the top, show for 3 seconds, then disappear. Create the Toast component, a useToast hook, wire them into App.tsx, and add a slide-down animation to the CSS."
   context="Toasts provide non-blocking feedback that slides in, confirms the action, and auto-dismisses."
   expectedOutput="Claude Code will create Toast.tsx, useToast.ts hook, wire them into App.tsx, and add the slide-down CSS animation."
 />
 
-Here's the reference implementation — compare what Claude Code generated with this:
+Here's a reference implementation. Your code may look different — that's fine as long as it works.
 
 ```tsx title="src/components/Toast.tsx"
 import { useState, useEffect, useCallback } from 'react'
@@ -382,12 +382,12 @@ Send this prompt to Claude Code to generate the onboarding screen, then compare 
 <ClaudeCodePrompt
   variant="build"
   step="Step 5"
-  prompt="Create an onboarding screen at src/pages/Onboarding.tsx with three slides: Welcome (Flower icon), Write & Snap (BookOpen icon), Shake to Discover (Sparkles icon). Include dot indicators, Next/Get Started buttons, and a Skip option. Accept an onComplete callback. In App.tsx, use localStorage to track if onboarding has been shown (key: 'gratitude-jar-onboarded'), and show Onboarding before the auth check if it hasn't."
+  prompt="Create a welcome onboarding screen that first-time users see. It should have three slides explaining what the app does: welcome, write and snap photos, and shake to discover old entries. Include Next/Get Started buttons, dot indicators, and a Skip option. Only show it once — use localStorage to remember if the user has already seen it."
   context="First-time users see this before anything else. It explains the app and only shows once."
   expectedOutput="Claude Code will create Onboarding.tsx with a 3-slide carousel and update App.tsx with localStorage-based first-visit tracking."
 />
 
-Here's the reference implementation — compare what Claude Code generated with this:
+Here's a reference implementation. Your code may look different — that's fine as long as it works.
 
 ```tsx title="src/pages/Onboarding.tsx"
 import { useState } from 'react'
@@ -498,7 +498,7 @@ if (showOnboarding) {
 The onboarding only appears once. After the user taps "Get Started," we store a flag in `localStorage` so it never shows again.
 
 <ClaudeCodePrompt
-  prompt="I built a 3-slide onboarding screen with dots navigation and a skip button. It uses useState for the current slide. Should I add swipe gestures for mobile?"
+  prompt="Should I add swipe gestures to my onboarding screen so users can swipe between slides on mobile?"
   tip="Swipe gestures are a nice touch for mobile onboarding. Claude Code can help you implement touch event handlers."
 />
 
@@ -513,12 +513,12 @@ Send this prompt to Claude Code to generate the relative time function, then com
 <ClaudeCodePrompt
   variant="build"
   step="Step 6"
-  prompt="Add a getRelativeTime function to src/lib/dates.ts that takes a Date and returns a human-friendly string: 'Just now' (under 1 min), '5m ago', '2h ago', 'Yesterday', '3d ago', or falls back to formatDisplayDate for older dates."
+  prompt="Add a function to our dates utility that shows relative timestamps like 'Just now', '5m ago', '2h ago', 'Yesterday' — more natural than showing the full date for recent entries. Fall back to the full date for entries older than a week."
   context="Relative timestamps like '2h ago' feel more natural than 'March 15, 2025' on recent entries."
   expectedOutput="Claude Code will add a getRelativeTime function to dates.ts with time-based thresholds."
 />
 
-Here's the reference implementation — compare what Claude Code generated with this:
+Here's a reference implementation. Your code may look different — that's fine as long as it works.
 
 ```ts title="src/lib/dates.ts (add relative time function)"
 export function getRelativeTime(date: Date): string {
@@ -554,6 +554,13 @@ npm run dev
 4. **Tap "Create Your First Entry"** → create an entry → green toast appears
 5. **Refresh** → onboarding shouldn't appear again
 6. **Entries should show relative timestamps** — "Just now" for recent ones
+
+---
+
+<ClaudeCodePrompt
+  prompt="Review my project and make sure everything is working correctly. Check for any errors or issues."
+  tip="When in doubt, ask Claude Code to review your work. It's like having a senior developer check your code."
+/>
 
 ---
 

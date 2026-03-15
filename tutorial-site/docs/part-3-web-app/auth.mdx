@@ -75,12 +75,12 @@ Send this prompt to Claude Code to generate the auth hook, then compare with the
 <ClaudeCodePrompt
   variant="build"
   step="Step 2"
-  prompt="Create a custom React hook at src/hooks/useAuth.ts for Firebase authentication. Use onAuthStateChanged as a real-time listener in useEffect (with cleanup). Track user (User | null) and loading state. Expose signup (createUserWithEmailAndPassword), login (signInWithEmailAndPassword), and logout (signOut) functions."
+  prompt="Create an authentication hook at src/hooks/useAuth.ts that tracks whether a user is logged in. It should listen for auth state changes in real-time, and expose functions to sign up, log in, and log out. Track loading state so we know when auth is still being checked."
   context="This hook is the foundation of our auth system. It uses Firebase's onAuthStateChanged listener — a real-time observer that fires whenever auth state changes."
   expectedOutput="Claude Code will create src/hooks/useAuth.ts with useState for user/loading, useEffect with onAuthStateChanged, and signup/login/logout functions."
 />
 
-Here's the reference implementation — compare what Claude Code generated with this:
+Here's a reference implementation. Your code may look different — that's fine as long as it works.
 
 ```ts title="src/hooks/useAuth.ts"
 import { useState, useEffect } from 'react'
@@ -147,12 +147,12 @@ Send this prompt to Claude Code to generate the auth screen, then compare with t
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="Create a combined login/signup screen at src/pages/AuthScreen.tsx. It should have: email and password inputs with Mail and Lock icons from lucide-react, a toggle between Login and Sign Up modes, form validation (check empty fields, password min 6 chars), error handling that translates Firebase error codes to human-readable messages (auth/user-not-found → 'Invalid email or password', auth/email-already-in-use → 'An account with this email already exists'), and a submitting state with Loader2 spinner. Use the same amber theme. Props: onLogin and onSignup callbacks."
+  prompt="Create a login/signup screen at src/pages/AuthScreen.tsx. It should have email and password fields, a toggle to switch between login and signup modes, and good error messages when something goes wrong (like 'Invalid email or password' instead of cryptic error codes). Show a loading spinner while submitting. Use our amber theme and make it look polished."
   context="This is the UI component users see when not logged in. It handles both login and signup in one screen with a toggle."
   expectedOutput="Claude Code will create src/pages/AuthScreen.tsx with form state management, Firebase error code translation, and a polished amber-themed login/signup form."
 />
 
-Here's the reference implementation — compare what Claude Code generated with this:
+Here's a reference implementation. Your code may look different — that's fine as long as it works.
 
 ```tsx title="src/pages/AuthScreen.tsx"
 import { useState } from 'react'
@@ -311,12 +311,12 @@ Send this prompt to Claude Code to update the Profile page, then compare with th
 <ClaudeCodePrompt
   variant="build"
   step="Step 4"
-  prompt="Update src/pages/Profile.tsx to show the logged-in user's info. Accept user (Firebase User type), onLogout callback, and entryCount as props. Show a circular avatar with UserIcon, the user's email with a Mail icon, an entry count stat card, and a red LogOut button."
+  prompt="Update the Profile page to show the logged-in user's info. Display their email, how many entries they have, and a logout button. Replace the placeholder content with real user data."
   context="Replacing the placeholder Profile page with real user data and a logout button."
   expectedOutput="Claude Code will rewrite src/pages/Profile.tsx with user info display, stats card, and logout functionality."
 />
 
-Here's the reference implementation — compare what Claude Code generated with this:
+Here's a reference implementation. Your code may look different — that's fine as long as it works.
 
 ```tsx title="src/pages/Profile.tsx"
 import { User as UserIcon, LogOut, Mail } from 'lucide-react'
@@ -376,7 +376,7 @@ Send this prompt to Claude Code to make entries user-specific, then compare with
 <ClaudeCodePrompt
   variant="build"
   step="Step 5"
-  prompt="Make entries user-specific. Update src/lib/types.ts to add a userId field to Entry and exclude it from NewEntry. Update src/lib/firestore.ts: createEntry should accept userId and include it in the document, subscribeToEntries should accept userId and add where('userId', '==', userId) to the query. Update src/hooks/useEntries.ts to accept userId parameter, reset entries when userId is null, and pass userId to createEntry and subscribeToEntries. Add userId to the useEffect dependency array."
+  prompt="Make entries private to each user. Each entry should be tagged with the user's ID, and users should only see their own entries. Update the types, Firestore service, and useEntries hook to filter entries by the logged-in user."
   context="This is the critical step that makes data private — each user only sees their own entries."
   expectedOutput="Claude Code will update types.ts, firestore.ts, and useEntries.ts to scope all data operations to the authenticated user's ID."
 />
@@ -573,12 +573,12 @@ Send this prompt to Claude Code to integrate authentication into the app, then c
 <ClaudeCodePrompt
   variant="build"
   step="Step 6"
-  prompt="Update src/App.tsx to integrate authentication. Use useAuth() hook alongside useEntries(user?.uid ?? null). Add three render states: 1) if authLoading, show a full-screen spinner, 2) if no user, show AuthScreen with login/signup callbacks, 3) if user exists, show the full app. Pass the user object to Profile along with logout and entryCount."
+  prompt="Update App.tsx to require login before using the app. Show a loading spinner while checking auth, the login screen if not logged in, and the full app if logged in. Pass the user info to the Profile page so it can show the email and a logout button."
   context="This wires together the auth hook, entries hook, and UI components into the auth gate pattern."
   expectedOutput="Claude Code will update App.tsx with useAuth integration, three conditional render states, and proper prop passing to AuthScreen and Profile."
 />
 
-Here's the reference implementation — compare what Claude Code generated with this:
+Here's a reference implementation. Your code may look different — that's fine as long as it works.
 
 ```tsx title="src/App.tsx"
 import { useState } from 'react'
@@ -669,8 +669,9 @@ The app has three states:
 This is the simplest form of "route protection." No router library needed.
 
 <ClaudeCodePrompt
-  prompt="I'm using Firebase Auth's onAuthStateChanged to gate my React app — if no user, show login; if user, show app. Is there a better pattern? Should I use React Router with protected routes instead?"
+  prompt="Review my project and make sure the authentication is working correctly. Check for any errors or issues."
   context="For a simple tab-based app, the conditional rendering pattern in App.tsx is fine. React Router adds value when you have URLs to manage."
+  tip="When in doubt, ask Claude Code to review your work. It's like having a senior developer check your code."
 />
 
 ---

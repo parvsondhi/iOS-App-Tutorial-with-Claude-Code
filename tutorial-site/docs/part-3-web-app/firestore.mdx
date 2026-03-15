@@ -12,9 +12,9 @@ import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
 # Chapter 6: Firebase Backend — Firestore
 
-> Your entries currently vanish when you refresh the page. Let's fix that with a real database.
+> Right now your entries disappear when you refresh. Let's save them to the cloud so they stick around.
 
-This is the chapter where your app becomes real. Instead of storing entries in memory, we'll save them in Firestore — Firebase's cloud database. Entries will persist across sessions, sync in real-time, and even work offline.
+This is the chapter where your app becomes real. Instead of storing entries in memory, we'll save them in Firestore — Firebase's cloud database. The idea is simple: when you create an entry, it gets saved to a database in the cloud. When you open the app again, your entries are still there. And the best part — if something changes in the database, the app updates automatically without you having to refresh.
 
 ---
 
@@ -82,13 +82,13 @@ We'll create a dedicated file for all Firestore operations. Let Claude Code buil
 <ClaudeCodePrompt
   variant="build"
   step="Step 2"
-  prompt="Create a Firestore service at src/lib/firestore.ts with four functions: createEntry (uses addDoc with serverTimestamp), updateEntry (uses updateDoc for content and caption), deleteEntry (uses deleteDoc), and subscribeToEntries (uses onSnapshot with orderBy createdAt desc to set up a real-time listener that returns an unsubscribe function). Import db from ./firebase."
+  prompt="Create a Firestore service that handles saving, updating, deleting, and loading entries from our database. Entries should load in real-time — when something changes in the database, the app should update automatically without refreshing. Save it to src/lib/firestore.ts."
   context="Keeping Firebase logic in a dedicated service file means your React components stay clean and testable."
   expectedOutput="A new file src/lib/firestore.ts with createEntry, updateEntry, deleteEntry, and subscribeToEntries functions."
   tip="If Claude Code asks about types, point it to src/lib/types.ts for the Entry and NewEntry types."
 />
 
-Here's the reference implementation. Compare it with what Claude Code generated:
+Here's a reference implementation. Your code may look different — that's fine as long as it works. **To verify, test it:** we'll test the full flow after wiring everything together in Step 4.
 
 ```ts title="src/lib/firestore.ts"
 import {
@@ -176,13 +176,13 @@ Custom hooks let us encapsulate complex logic and reuse it across components. Le
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="Create a custom React hook at src/hooks/useEntries.ts that manages Firestore subscriptions. It should track entries[], loading, and error state. Use useEffect to subscribe via subscribeToEntries on mount and unsubscribe on cleanup. Expose addEntry, editEntry, and removeEntry functions that delegate to the Firestore service. The key pattern: don't update local state after CRUD — let onSnapshot handle it automatically."
+  prompt="Create a custom React hook at src/hooks/useEntries.ts that connects to our Firestore service. It should track entries, loading state, and errors. When the component loads, start listening for entry changes. When entries are added, edited, or deleted, the real-time listener should handle updating the list automatically. Expose functions to add, edit, and remove entries."
   context="The onSnapshot listener acts as a single source of truth. When you call createEntry, the listener fires automatically with updated data — no manual state sync needed."
   expectedOutput="A new file src/hooks/useEntries.ts exporting a useEntries() hook that returns entries, loading, error, addEntry, editEntry, and removeEntry."
   tip="If Claude Code adds manual state updates after CRUD operations, ask it to remove them — onSnapshot handles that automatically."
 />
 
-Here's the reference implementation. Compare it with what Claude Code generated:
+Here's a reference implementation. Your code may look different — that's fine as long as it works.
 
 ```ts title="src/hooks/useEntries.ts"
 import { useState, useEffect } from 'react'
@@ -257,6 +257,8 @@ export function useEntries() {
 
 ### The subscription lifecycle
 
+Think of it like a radio: when the app opens, it tunes in to your Firestore collection. Any time something changes (an entry is added, edited, or deleted), the radio broadcasts the update and the app displays the new data. When the app closes, it turns the radio off.
+
 ```
 Component mounts
     ↓
@@ -282,7 +284,7 @@ return unsubscribe → listener is cleaned up
 **Why don't CRUD operations update local state?** Because `onSnapshot` does it automatically. When we call `createEntry`, Firestore adds the document, which triggers `onSnapshot`, which calls `setEntries` with the updated list. One source of truth, no synchronization bugs.
 
 <ClaudeCodePrompt
-  prompt="Explain the useEffect cleanup pattern in React. My hook subscribes to Firestore with onSnapshot and returns the unsubscribe function. Why is this important and what happens if I don't clean up?"
+  prompt="Can you explain the cleanup pattern in my useEntries hook? Why do I need to unsubscribe when the component unmounts, and what happens if I forget?"
   context="Memory leaks from uncleaned subscriptions are one of the most common bugs in React apps that use real-time databases."
   tip="If cleanup feels abstract, ask Claude Code to walk through what happens step-by-step when a component mounts and unmounts."
 />
@@ -291,18 +293,18 @@ return unsubscribe → listener is cleaned up
 
 ## Step 4: Update App.tsx to Use the Hook
 
-Now we replace the local state management with our Firestore-backed hook. Send this to Claude Code, then compare with the reference below:
+Now we replace the local state management with our Firestore-backed hook. Send this to Claude Code, then check the reference below:
 
 <ClaudeCodePrompt
   variant="build"
   step="Step 4"
-  prompt="Update src/App.tsx to use the useEntries() hook instead of local state. Destructure entries, loading, error, addEntry, editEntry, removeEntry from the hook. Pass these as props to Feed (entries, loading, error, onEdit, onDelete) and Create (onAddEntry, onClose that switches to feed tab)."
+  prompt="Update App.tsx to use our new useEntries() hook instead of the local state we had before. Remove the old state management code and pass the hook's entries, loading, error, and handler functions as props to Feed and Create."
   context="This replaces all the manual state management from Chapter 5 with the Firestore-backed hook — the component gets simpler while gaining persistence and real-time sync."
   expectedOutput="An updated App.tsx that imports useEntries, removes old local state logic, and passes hook values as props to Feed and Create."
   tip="The component should get shorter, not longer. If Claude Code keeps the old useState and handler functions, ask it to remove them."
 />
 
-Here's the reference implementation. Compare it with what Claude Code generated:
+Here's a reference implementation. Your code may look different — that's fine as long as it works.
 
 ```tsx title="src/App.tsx"
 import { useState } from 'react'
@@ -370,18 +372,18 @@ The component is simpler now because all the data logic lives in the hook.
 
 ## Step 5: Update Feed and Create for Firebase Types
 
-The Feed and Create pages need small updates since we're now using the Firebase `Entry` type instead of `LocalEntry`. Send this to Claude Code, then compare with the reference below:
+The Feed and Create pages need small updates since we're now using the Firebase `Entry` type instead of `LocalEntry`. Send this to Claude Code, then check the reference below:
 
 <ClaudeCodePrompt
   variant="build"
   step="Step 5"
-  prompt="Update Feed.tsx to accept entries, loading, error, onEdit, and onDelete props. Add loading state (show a Loader2 spinner), error state (show AlertCircle with message), and empty state. Update Create.tsx to use NewEntry type instead of LocalEntry — remove the id and createdAt fields since Firestore handles those. Update EntryCard to use Entry type instead of LocalEntry."
+  prompt="Update Feed.tsx to handle loading, error, and empty states. Show a spinner while loading, an error message if something goes wrong, and a helpful empty state when there are no entries. Also update Create.tsx and EntryCard.tsx to use the Firebase Entry type instead of LocalEntry — Firestore handles generating the id and timestamp now, so the Create page doesn't need to provide them."
   context="Switching from LocalEntry to the Firebase Entry/NewEntry types is the key change. Firestore auto-generates the id and createdAt, so the Create page no longer needs to provide them."
   expectedOutput="Updated Feed.tsx with loading/error/empty states, updated Create.tsx using NewEntry, and updated EntryCard.tsx using Entry type."
   tip="If Claude Code asks which icons to use for loading and error states, tell it Loader2 and AlertCircle from lucide-react."
 />
 
-Here's the reference implementation for Feed. Compare it with what Claude Code generated:
+Here's a reference implementation for Feed. Your code may look different — that's fine as long as it works.
 
 ```tsx title="src/pages/Feed.tsx"
 import { BookOpen, Loader2, AlertCircle } from 'lucide-react'
@@ -481,18 +483,18 @@ interface EntryCardProps {
 
 Firestore has built-in offline support. When the user's device goes offline, reads come from a local cache and writes are queued until the connection returns.
 
-For web apps, we need to explicitly enable it. Send this to Claude Code, then compare with the reference below:
+For web apps, we need to explicitly enable it. Send this to Claude Code, then check the reference below:
 
 <ClaudeCodePrompt
   variant="build"
   step="Step 6"
-  prompt="Update src/lib/firebase.ts to use initializeFirestore with persistentLocalCache and persistentMultipleTabManager for offline persistence, instead of the default getFirestore. This is the modern Firebase v10+ approach."
+  prompt="Update src/lib/firebase.ts to enable offline persistence so the app works even without internet. Use the modern Firebase v10+ approach with initializeFirestore instead of getFirestore."
   context="Offline persistence lets the app work without internet — reads come from IndexedDB cache and writes queue until reconnection. Firebase v10+ enables this through initializeFirestore configuration rather than the deprecated enableIndexedDbPersistence API."
   expectedOutput="Updated firebase.ts using initializeFirestore with persistentLocalCache and persistentMultipleTabManager settings."
   tip="If Claude Code uses the older enableIndexedDbPersistence API, ask it to use initializeFirestore instead — that API was deprecated in Firebase v10."
 />
 
-Here's the reference implementation. Compare it with what Claude Code generated:
+Here's a reference implementation. Your code may look different — that's fine as long as it works. **To verify:** run the app and check that entries persist after refreshing the page.
 
 ```ts title="src/lib/firebase.ts"
 import { initializeApp } from 'firebase/app'
@@ -596,6 +598,17 @@ entries (collection)
 ```
 
 This is your data living in the cloud. It survives page refreshes, browser closures, and even device switches (once we add auth).
+
+---
+
+### How to verify
+
+Run the app and check that entries persist after refreshing the page. Create an entry, refresh, and it should still be there. That's the big moment!
+
+<ClaudeCodePrompt
+  prompt="Review my project and make sure everything is working correctly. Check for any errors or issues with the Firestore integration."
+  tip="When in doubt, ask Claude Code to review your work. It's like having a senior developer check your code."
+/>
 
 ---
 

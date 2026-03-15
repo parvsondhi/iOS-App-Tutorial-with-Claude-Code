@@ -66,7 +66,7 @@ Our `Entry` type needs a companion. Since we're working with local state before 
 <ClaudeCodePrompt
   variant="build"
   step="Step 2"
-  prompt="Update src/lib/types.ts to add a LocalEntry type alongside the existing Entry type. LocalEntry is the same as Entry but uses a plain Date for createdAt instead of a Firebase Timestamp. We'll use LocalEntry for in-memory state before connecting Firebase in the next chapter."
+  prompt="Update src/lib/types.ts to add a LocalEntry type that's like Entry but uses a plain Date instead of a Firebase Timestamp for createdAt. We need this for in-memory state before we connect Firebase. Also add a NewEntry type that's an entry without id and createdAt, since those get generated automatically."
   context="We need two versions of the type — one for Firebase (with Timestamp) and one for local development (with Date). This lets us build the full UI now and swap in the real database later."
   expectedOutput="src/lib/types.ts updated with a new LocalEntry type and a NewEntry type (Entry without id and createdAt, since those are generated automatically)."
 />
@@ -85,7 +85,7 @@ We'll format dates throughout the app, so we need a small utility file. The key 
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="Create a date utility file at src/lib/dates.ts with two functions: getLocalDateString(date?) that takes an optional Date parameter (defaults to new Date()) and returns the date as 'YYYY-MM-DD' using the local timezone (not UTC, to avoid timezone bugs), and formatDisplayDate() that takes a 'YYYY-MM-DD' string and returns a human-friendly format like 'Mar 15, 2025'."
+  prompt="Create a date utility file at src/lib/dates.ts with two functions: one that returns today's date as a 'YYYY-MM-DD' string using the local timezone (not UTC, to avoid timezone bugs), and one that formats a date string into something human-friendly like 'Mar 15, 2025'. The first function should accept an optional Date parameter so we can reuse it later."
   context="Using toISOString() for dates causes timezone bugs — if it's 11 PM in New York, toISOString() returns tomorrow's date because it converts to UTC. Our helper avoids this by using the local timezone. The optional Date parameter lets us reuse this function in Chapters 9 and 10 for converting arbitrary dates."
   expectedOutput="New file src/lib/dates.ts with getLocalDateString(date?: Date) and formatDisplayDate() functions."
 />
@@ -107,7 +107,7 @@ The Create page needs a real form to replace the placeholder. This is the bigges
 <ClaudeCodePrompt
   variant="build"
   step="Step 4"
-  prompt="Replace the placeholder src/pages/Create.tsx with a real entry creation form. It needs: a toggle between 'text' and 'photo' entry types (using Type and Image icons from lucide-react), a textarea for text entries, a file input with image preview for photo entries, an optional caption field for photos, and a Save Entry button. The form should create a LocalEntry with crypto.randomUUID() for the id, call an onAddEntry prop with the new entry, then call onClose to navigate back to the feed. Use our amber color scheme with Tailwind."
+  prompt="Replace the placeholder Create page with a real entry creation form. Users should be able to toggle between text and photo entries. For text, show a textarea. For photos, show a file picker with image preview and an optional caption field. Include a Save button that creates the entry and navigates back to the feed. The design should feel polished and premium — like a well-designed iOS app."
   context="This is the main creation form for journal entries. It needs to handle both text and photo entries with a clean, mobile-friendly UI."
   expectedOutput="src/pages/Create.tsx rewritten with a full entry creation form including type toggle, content inputs, image preview, and submit handling."
   tip="If the generated form looks different from what you expected, that's fine! The important thing is that it creates a LocalEntry with the right fields and calls onAddEntry."
@@ -132,7 +132,7 @@ Each entry in the feed needs a card component. This one is interesting because i
 <ClaudeCodePrompt
   variant="build"
   step="Step 5"
-  prompt="Create an EntryCard component at src/components/EntryCard.tsx that displays a single journal entry. It needs: a card header showing the formatted date and edit/delete icon buttons, the entry content (text for text entries, image for photo entries with optional caption), inline edit mode that activates when the pencil icon is clicked, and a delete confirmation bar that slides in at the bottom of the card when the trash icon is clicked. Use Edit3, Trash2, Check, X icons from lucide-react. The component should accept entry, onEdit, and onDelete props."
+  prompt="Create an EntryCard component at src/components/EntryCard.tsx that displays a single journal entry. It should show the date, the entry content (text or image with caption), and have edit and delete buttons. Clicking edit should let the user change the text right on the card. Clicking delete should show a confirmation before removing. The cards should look polished and premium — with rounded corners, subtle borders, and a clean layout like a well-designed iOS app."
   context="Each entry card needs to support viewing, inline editing, and delete confirmation — all without navigating away from the feed."
   expectedOutput="New file src/components/EntryCard.tsx with a card component that handles display, inline editing, and delete confirmation."
 />
@@ -156,7 +156,7 @@ Now we need to replace the Feed placeholder with a real entry list. The Feed com
 <ClaudeCodePrompt
   variant="build"
   step="Step 6"
-  prompt="Update src/pages/Feed.tsx to display a list of entries using the EntryCard component. It should accept entries array, onEdit, and onDelete props. Show an empty state with a message when there are no entries. Render entries in a scrollable list with gap spacing."
+  prompt="Update the Feed page to show a list of entries using the EntryCard component. It should receive entries and handler functions as props. When there are no entries, show a helpful empty state message. When there are entries, show them in a scrollable list."
   context="The Feed page is the main screen users see. It needs to handle two states: an empty journal (with a helpful message) and a populated journal (with scrollable entry cards)."
   expectedOutput="src/pages/Feed.tsx updated with entry list rendering, empty state, and props for entries and handler functions."
 />
@@ -176,7 +176,7 @@ Now the big moment — connect all the pieces. App.tsx needs to own the entries 
 <ClaudeCodePrompt
   variant="build"
   step="Step 7"
-  prompt="Update src/App.tsx to manage entries state with useState. Add handleAddEntry (prepends to array), handleEditEntry (uses map to replace), and handleDeleteEntry (uses filter to remove). Pass entries and handlers as props to Feed and Create. When Create saves an entry, it should auto-navigate back to the Feed tab."
+  prompt="Update App.tsx to manage entries state. Add functions to add, edit, and delete entries. Pass entries and these functions as props to Feed and Create. When an entry is saved, automatically switch back to the Feed tab."
   context="App.tsx is the 'single source of truth' for entries. All data flows down from here as props — this is React's core pattern for state management."
   expectedOutput="src/App.tsx updated with entries useState, three handler functions (add/edit/delete), and props passed to Feed and Create components."
 />
@@ -199,7 +199,7 @@ Let's trace what happens when a user creates an entry:
 **`prev.filter(...)` for deleting** creates a new array that excludes the entry with the matching id.
 
 <ClaudeCodePrompt
-  prompt="I have a React app where entries are stored in useState as an array. I'm using map() for editing and filter() for deleting. Can you explain why I shouldn't mutate the array directly (like using push or splice)?"
+  prompt="Can you explain why I shouldn't use push or splice to update my entries array in React state? I want to understand the immutability concept."
   context="Understanding immutable state updates is crucial for React. Mutation bugs are the #1 cause of 'my component won't re-render' issues."
   tip="If React state concepts like immutability feel confusing, ask Claude Code to explain with visual examples."
 />
@@ -246,7 +246,16 @@ Walk through each operation:
 
 ---
 
-## Step 9: Commit Your Progress
+## Step 9: Review Your Code
+
+<ClaudeCodePrompt
+  prompt="Review my project and make sure everything is working correctly. Check for any errors or issues."
+  tip="When in doubt, ask Claude Code to review your work. It's like having a senior developer check your code."
+/>
+
+---
+
+## Step 10: Commit Your Progress
 
 ```bash
 git add .
