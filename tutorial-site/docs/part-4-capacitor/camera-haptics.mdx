@@ -76,6 +76,13 @@ Open `ios/App/App/Info.plist` in Xcode (or a text editor) and add these entries:
 If you forget these strings and try to use the camera, iOS will **crash your app** immediately. Apple is strict about this — every permission must have a human-readable reason. The App Store will also reject apps with missing usage descriptions.
 :::
 
+You can also ask Claude Code to handle this for you:
+
+<ClaudeCodePrompt
+  prompt="Add the required iOS permissions for camera and photo library access to our Capacitor iOS project. We need permissions for the camera, reading photos, and saving photos."
+  tip="Claude Code can edit the Info.plist file automatically, saving you from manually editing XML."
+/>
+
 ---
 
 ## Step 3: Build the Camera Service
@@ -85,7 +92,7 @@ Send this prompt to Claude Code to create the camera service, then compare the r
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="Create a camera service at src/lib/camera.ts that wraps Capacitor's Camera plugin with a web fallback. Export takePhoto() and pickFromLibrary() functions that return {dataUrl, blob}. On native (Capacitor.isNativePlatform()), use Camera.getPhoto with quality 80, max 1200x1200, DataUrl result type. On web, fall back to a programmatic file input. Include helper functions dataUrlToBlob and fileToDataUrl."
+  prompt="Create a camera service at src/lib/camera.ts that wraps Capacitor's Camera plugin. Export takePhoto() and pickFromLibrary() functions that return a data URL and blob. On native platforms, use the real camera and photo library. On web, fall back to a file input. Include helpers for converting between data URLs and blobs."
   context="This service abstracts platform differences — native iOS gets the real camera, web gets a file picker, and the rest of the app doesn't need to care."
   expectedOutput="Claude Code will create src/lib/camera.ts with takePhoto, pickFromLibrary, and web fallback functions."
   tip="Platform detection with Capacitor.isNativePlatform() is the key pattern — your app works everywhere but uses native APIs when available."
@@ -220,7 +227,7 @@ Haptic feedback makes interactions feel physical. Send this prompt to Claude Cod
 <ClaudeCodePrompt
   variant="build"
   step="Step 4"
-  prompt="Create a haptics service at src/lib/haptics.ts that wraps Capacitor's Haptics plugin. Export functions: hapticLight, hapticMedium, hapticHeavy (impact styles), and hapticSuccess, hapticWarning, hapticError (notification types). Each function should check Capacitor.isNativePlatform() and silently return on web — never throw errors."
+  prompt="Create a haptics service at src/lib/haptics.ts that wraps Capacitor's Haptics plugin. Export functions for light, medium, and heavy impacts, plus success, warning, and error notifications. Each function should silently do nothing on web — never throw errors."
   context="Haptics make iOS interactions feel physical and tactile. The native guard ensures these calls are silent on web."
   expectedOutput="Claude Code will create src/lib/haptics.ts with six exported functions, each with a native platform guard."
   tip="The native guard is critical — calling haptics on the web would throw an error. This pattern makes every haptic call safe on any platform."
@@ -287,7 +294,7 @@ Send this prompt to Claude Code to update the Create page with native camera sup
 <ClaudeCodePrompt
   variant="build"
   step="Step 5"
-  prompt="Update src/pages/Create.tsx to use the native camera service instead of a file input. Replace the photo picker section with two buttons: 'Take Photo' (calls takePhoto, shows Camera icon) and 'Library' (calls pickFromLibrary, shows Image icon). Add a photoBlob state for the upload. Also add an uploadPhotoBlob function to src/lib/storage.ts that uploads a Blob directly (without compression, since the camera plugin already compresses). Add hapticLight before camera actions and hapticSuccess after saving."
+  prompt="Update the Create page to use our native camera service instead of the basic file input. Replace the photo picker with two buttons — one for taking a photo and one for choosing from the library. Store the photo blob for uploading. Also add an upload function to storage.ts that handles blobs directly since the camera plugin already compresses. Add haptic feedback before camera actions and after saving."
   context="Replacing the basic file input with native camera buttons that match how real iOS apps handle photo input."
   expectedOutput="Claude Code will update Create.tsx with two camera action buttons, photoBlob state, and haptic feedback on interactions."
   tip="The two-button pattern (Take Photo + Library) matches how native iOS apps handle photo input."
@@ -412,7 +419,7 @@ Send this prompt to Claude Code to add haptic feedback across the app, then comp
 <ClaudeCodePrompt
   variant="build"
   step="Step 6"
-  prompt="Add haptic feedback to key interactions throughout the app: hapticLight on tab switches in BottomNav.tsx, hapticWarning when showing delete confirmation in EntryCard.tsx, and hapticSuccess after saving an entry in Create.tsx."
+  prompt="Add haptic feedback to key interactions throughout the app — a light tap on tab switches, a warning vibration when showing delete confirmation, and a success feel after saving an entry."
   context="Strategic haptic placement on meaningful actions — not every tap, just the ones that benefit from physical feedback."
   expectedOutput="Claude Code will update BottomNav.tsx, EntryCard.tsx, and Create.tsx with haptic calls at key interaction points."
   tip="Don't overdo haptics — only add them to meaningful state changes like navigation, saving, and destructive actions."
@@ -464,7 +471,7 @@ Don't overdo haptics. Apple's Human Interface Guidelines recommend:
 - **DON'T:** Use haptics as a substitute for visual feedback
 
 <ClaudeCodePrompt
-  prompt="I'm adding haptic feedback to my Capacitor iOS app. I have hapticLight for tab switches, hapticSuccess for saving entries, and hapticWarning for delete confirmation. Is there anything else that should have haptics in a journal app?"
+  prompt="I'm adding haptic feedback to my Capacitor iOS app. I have light taps on tab switches, success feedback on saving entries, and warning vibrations on delete confirmation. Is there anything else that should have haptics in a journal app?"
   tip="Claude Code can help you think through which interactions benefit from haptic feedback based on iOS design patterns."
 />
 

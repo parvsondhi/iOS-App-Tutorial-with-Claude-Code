@@ -77,13 +77,13 @@ Let Claude Code build the header component for you:
 <ClaudeCodePrompt
   variant="build"
   step="Step 2"
-  prompt="Create a Header component at src/components/Header.tsx for our GratitudeJar app. It should be a fixed header at the top of the screen with: a Flower icon from lucide-react, the app name 'GratitudeJar' in bold, amber color scheme (bg-amber-50, border-amber-200), max-w-lg centered content, and a height of h-14. Use z-50 so it stays above scrolling content."
+  prompt="Create a header for the app with the GratitudeJar name and a flower icon. It should stay fixed at the top of the screen and use our warm amber color scheme. Save it to src/components/Header.tsx."
   context="This is the first structural component of our mobile app shell. It stays pinned to the top of the screen at all times."
   expectedOutput="Claude Code will create src/components/Header.tsx with a fixed-position header using Tailwind utility classes and a Flower icon from lucide-react."
   tip="Read through the Tailwind classes Claude Code used — understanding them now will help you style everything else in the tutorial."
 />
 
-Here's what the component should look like. Compare it with what Claude Code generated:
+Here's a reference implementation. Your code may look different — that's fine as long as it works. **To verify, test it:** run the dev server and check that a header appears fixed at the top of the screen with the app name and flower icon.
 
 ```tsx title="src/components/Header.tsx"
 import { Flower } from 'lucide-react'
@@ -138,13 +138,13 @@ The bottom nav is the main way users move between screens. Let Claude Code build
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="Create a BottomNav component at src/components/BottomNav.tsx. It should be a fixed bottom navigation bar with three tabs: Feed (BookOpen icon), New (PlusCircle icon), and Profile (User icon) — all from lucide-react. Props: activeTab (a 'feed' | 'create' | 'profile' union type) and onTabChange callback. The active tab should be text-amber-700 and inactive text-amber-400. Make the Create icon slightly larger (w-7 h-7). Use the same amber theme, max-w-lg centered, fixed bottom-0, z-50."
+  prompt="Create a bottom navigation bar with three tabs: Feed, New (with a plus icon), and Profile. It should stay fixed at the bottom of the screen. The active tab should be highlighted. It needs to accept the current active tab and a callback to change tabs as props. Save it to src/components/BottomNav.tsx."
   context="The bottom navigation follows the same fixed-position pattern as the header. The parent component (App.tsx) will own the activeTab state."
   expectedOutput="Claude Code will create src/components/BottomNav.tsx with a Tab type, BottomNavProps interface, and a nav element containing three buttons with icons and labels."
   tip="Notice how Claude Code uses TypeScript's union type for Tab — this means if you accidentally misspell a tab name, TypeScript catches it at compile time."
 />
 
-Here's the reference implementation. Compare it with what Claude Code generated:
+Here's a reference implementation. Your code may look different — that's fine as long as it works. **To verify, test it:** check that a nav bar appears at the bottom with three tabs and that tapping each one highlights it.
 
 ```tsx title="src/components/BottomNav.tsx"
 import { BookOpen, PlusCircle, User } from 'lucide-react'
@@ -209,7 +209,7 @@ We need three placeholder pages for each tab. These will be simple for now — C
 <ClaudeCodePrompt
   variant="build"
   step="Step 4"
-  prompt="Create three placeholder page components: src/pages/Feed.tsx, src/pages/Create.tsx, and src/pages/Profile.tsx. Each should show a centered layout with a large lucide-react icon (BookOpen for Feed, PlusCircle for Create, User for Profile), a title, and a short description saying what will be built there later. Use the amber color scheme — icons in text-amber-300, titles in text-amber-900, descriptions in text-amber-600."
+  prompt="Create three placeholder page components: Feed, Create, and Profile. Each should show a centered icon, a title, and a short description of what will be built there later. Use our amber color scheme. Save them to src/pages/Feed.tsx, src/pages/Create.tsx, and src/pages/Profile.tsx."
   context="These are temporary placeholder screens. We'll replace them with real content in Chapters 5, 8, and beyond."
   expectedOutput="Claude Code will create three simple page components, each with a centered icon, heading, and description paragraph. They follow the same structural pattern."
   tip="Placeholder screens are a professional practice — they let you build navigation and layout before the real content exists."
@@ -282,13 +282,13 @@ Now we connect everything. Send this prompt to Claude Code:
 <ClaudeCodePrompt
   variant="build"
   step="Step 5"
-  prompt="Update src/App.tsx to wire together the app shell. Import Header, BottomNav, Feed, Create, and Profile components. Add a useState<Tab> for tracking the active tab (default to 'feed'). Render: Header at the top, a main content area with max-w-lg centered and padding to account for the fixed header (pt-14) and bottom nav (pb-20), conditionally render each page based on activeTab, and BottomNav at the bottom. The content area should fill the viewport between header and nav using h-[calc(100vh-8.5rem)]."
+  prompt="Wire together the app shell in App.tsx. Import all the components we just created. Add state to track which tab is active (default to the feed). Show the header at the top, the active page in the middle, and the bottom nav at the bottom. Make sure the content area fills the space between the header and nav."
   context="This is where all the components come together. App.tsx owns the state, passes it down to children, and orchestrates the UI."
   expectedOutput="Claude Code will rewrite App.tsx with imports for all components, useState for tab management, and a layout with Header, conditional page rendering, and BottomNav."
   tip="This is a key React pattern: the parent owns the state, children receive it as props. Understanding this 'lifting state up' pattern will help you throughout the tutorial."
 />
 
-Here's the reference implementation:
+Here's a reference implementation. Your code may look different — that's fine as long as it works. **To verify, test it:** run `npm run dev`, open the app, and confirm you can switch between tabs.
 
 ```tsx title="src/App.tsx"
 import { useState } from 'react'
@@ -343,9 +343,9 @@ This is a common React pattern called **conditional rendering**:
 For a simple tab-based app like this, `useState` is simpler and lighter than adding a router. We're switching between three screens in the same view — there are no URLs to manage, no browser back button behavior to worry about. If the app grew to have nested navigation or deep linking, we'd add a router then. Remember: don't over-engineer.
 
 <ClaudeCodePrompt
-  prompt="I have a React app with three tabs (Feed, Create, Profile) using useState for navigation. The header is fixed at the top and bottom nav is fixed at the bottom. Can you review my layout for any issues with mobile viewport sizing or fixed positioning?"
+  prompt="Review my project and make sure everything is working correctly. Check for any errors or issues, especially around mobile layout and fixed positioning."
   context="Fixed positioning on mobile can cause issues with keyboard pop-ups and notched phones. It's good to get a review."
-  tip="Ask Claude Code to review layout code specifically for mobile edge cases — it knows the common gotchas."
+  tip="When in doubt, ask Claude Code to review your work. It's like having a senior developer check your code."
 />
 
 ---
@@ -357,7 +357,7 @@ For the app to render correctly on mobile devices, we need the viewport meta tag
 <ClaudeCodePrompt
   variant="build"
   step="Step 6"
-  prompt="Update index.html to add viewport-fit=cover to the viewport meta tag. This ensures the app renders correctly on iPhones with notches by extending the app behind the notch and home indicator."
+  prompt="Update index.html so the app renders correctly on iPhones with notches. We need viewport-fit=cover on the viewport meta tag."
   context="We'll need this for proper iOS rendering when we wrap the app with Capacitor later."
   expectedOutput="Claude Code will update the viewport meta tag in index.html to include viewport-fit=cover."
 />

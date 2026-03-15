@@ -114,7 +114,7 @@ Send this prompt to Claude Code to configure Capacitor, then compare the result 
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="Update capacitor.config.ts with our app settings. Set appId to 'com.yourname.gratitudejar', appName to 'GratitudeJar', webDir to 'dist'. Add a server block with url 'http://localhost:5173' and cleartext true for development hot-reload."
+  prompt="Configure capacitor.config.ts for our GratitudeJar app. Set the app ID, name, and web directory. Add a development server block that points to our Vite dev server so we get hot-reload in the Simulator."
   context="The config file tells Capacitor how to build and run the iOS app. The server block enables hot-reload during development."
   expectedOutput="Claude Code will update capacitor.config.ts with the app ID, name, web directory, and development server settings."
   tip="The server block enables live reload during development — you'll remove it before shipping to TestFlight."
@@ -187,7 +187,9 @@ Changes you make in your React code will hot-reload in the Simulator — just li
 
 ## Step 5: Run It in the Simulator
 
-Let's see your app running as a native iOS app for the first time.
+### This is the BIG MOMENT.
+
+Everything you've built across Parts 1-3 is about to come to life as a real iOS app. Let's see it happen.
 
 ### Start the dev server
 
@@ -222,6 +224,12 @@ Xcode
 2. Click the **Play button** (or press `Cmd + R`)
 3. Wait for the Simulator to boot and the app to install
 4. You should see your GratitudeJar app running — same UI, but now inside an iOS app!
+
+### This is it --- your app is running on iOS!
+
+Take a moment to appreciate what just happened. You started with an idea, built a full web app, and now it's running as a native iOS app in the Simulator. This is the same process professional developers use to build the apps on your phone.
+
+**Take a screenshot!** Share it on social media. You earned this.
 
 ### What to verify
 
@@ -269,7 +277,7 @@ For an even smoother dev experience, send this prompt to Claude Code to add conv
 <ClaudeCodePrompt
   variant="build"
   step="Step 7"
-  prompt="Add convenience scripts to package.json for the Capacitor workflow: 'cap:sync' runs 'cap sync', 'cap:open' runs 'cap open ios', and 'ios:dev' runs both in sequence."
+  prompt="Add convenience scripts to package.json for our Capacitor iOS development workflow — one for syncing, one for opening Xcode, and one that does both in sequence."
   context="Convenience scripts save you from remembering the full Capacitor CLI commands."
   expectedOutput="Claude Code will add cap:sync, cap:open, and ios:dev scripts to package.json."
   tip="These scripts simplify the Capacitor dev loop so you don't have to remember the full commands."
@@ -374,6 +382,12 @@ gratitude-jar/
 - Hot reload works — changes in React appear in the Simulator
 - You understand the **build → sync → run** workflow
 </ChapterCheckpoint>
+
+---
+
+:::info Want to go further? Get it on real iPhones with TestFlight
+Part 5 covers getting your app on TestFlight so you (and friends) can install it on real iPhones. This requires an Apple Developer account ($99/year). If you're not ready for that, that's totally fine — running in the Simulator is a major accomplishment and you can always come back to TestFlight later.
+:::
 
 ---
 

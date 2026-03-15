@@ -1,0 +1,296 @@
+---
+sidebar_position: 1
+title: "Chapter 1: Setting Up Your Tools"
+description: Install Node.js, Claude Code, and your code editor — everything you need to start building.
+---
+
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
+# Chapter 1: Setting Up Your Tools
+
+> Before we build anything, let's get your machine ready. This chapter gets you from zero to a working setup.
+
+By the end of this chapter, you'll have everything installed and ready to go. This is the "boring" chapter — but skipping it is the #1 reason beginners get stuck later.
+
+---
+
+## What You'll Install
+
+- **Node.js 18+** — the runtime that powers everything
+- **Claude Code** — your AI coding partner for this entire tutorial
+- **A code editor** — we recommend Cursor, but any editor works
+- **Xcode 15+** — Apple's tools for iOS development (big download — start early)
+
+---
+
+## Step 1: Install Xcode (Start This First)
+
+Xcode is Apple's IDE for iOS development. It includes the iOS Simulator, build tools, and everything we need to compile the app later. The download is **~8 GB**, so start it now and let it download while you set up everything else.
+
+1. Open the **Mac App Store**
+2. Search for **Xcode**
+3. Click **Get** / **Install**
+4. Once installed, open Xcode once to accept the license agreement
+5. Let it install the additional components when prompted
+
+### Install Xcode Command Line Tools
+
+Even if Xcode is still downloading, you can install the command line tools right away:
+
+```bash
+xcode-select --install
+```
+
+A dialog will pop up asking you to install. Click **Install** and wait for it to finish.
+
+### Verify
+
+```bash
+xcode-select -p
+# Should output: /Applications/Xcode.app/Contents/Developer
+
+xcodebuild -version
+# Should output something like: Xcode 15.4
+```
+
+:::tip Don't Skip Xcode
+Even though we won't use Xcode until Part 4, installing it now saves you from a painful 30-minute wait later when you're in the flow of building. Trust us on this one.
+:::
+
+---
+
+## Step 2: Install Node.js
+
+Node.js is the runtime that powers React, Vite, Claude Code, and all our command-line tools. We recommend **Node.js 20 LTS** (Long Term Support).
+
+### Option A: Direct Download (Simplest)
+
+1. Go to [nodejs.org](https://nodejs.org)
+2. Download the **LTS** version (should be 20.x or newer)
+3. Run the installer and follow the prompts
+
+### Option B: Using nvm (Recommended for Developers)
+
+`nvm` (Node Version Manager) lets you switch between Node.js versions easily:
+
+```bash
+# Install nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+
+# Close and reopen your terminal, then:
+nvm install 20
+nvm use 20
+nvm alias default 20
+```
+
+### Verify
+
+```bash
+node -v
+# Should output: v20.x.x or newer
+
+npm -v
+# Should output: 10.x.x (bundled with Node 20+)
+```
+
+---
+
+## Step 3: Install Claude Code
+
+Claude Code is the AI coding partner you'll use throughout this entire tutorial. Instead of manually typing out hundreds of lines of code, you describe what you want in plain English, and Claude Code writes the actual code for your project.
+
+### Install via npm
+
+Now that Node.js is installed, you can install Claude Code:
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+### Set up authentication
+
+After installing, run `claude` in your terminal to start it:
+
+```bash
+claude
+```
+
+Follow the prompts to connect your Anthropic account. Once you see the Claude Code prompt, you're ready.
+
+### Verify
+
+```bash
+claude --version
+```
+
+### How Claude Code works
+
+Claude Code runs right in your terminal. Here's what to expect:
+
+1. **You type a prompt** — describe what you want in plain English
+2. **Claude Code responds** — it may ask to create or edit files, run commands, etc.
+3. **You approve changes** — Claude Code asks for permission before modifying your project
+4. **Files are created/updated** — the code appears in your project automatically
+
+You can also use Claude Code in other ways:
+
+| Option | How | Best for |
+|---|---|---|
+| **Terminal** | Run `claude` in your terminal | The primary way we'll use it in this tutorial |
+| **In an IDE** | Claude Code integrates with Cursor, VS Code, and other editors | If you prefer staying in your editor |
+| **On the web** | Visit [claude.ai/code](https://claude.ai) | Coding on the go from any device |
+
+:::tip Your First Interaction
+Try sending Claude Code a simple prompt to make sure it's working:
+
+```
+What version of Node.js do I have installed?
+```
+
+Claude Code will check your system and tell you. This is the workflow you'll use for the entire tutorial — describe what you want, let Claude Code do the work, and review the result.
+:::
+
+<TroubleshootingAccordion items={[
+  {
+    error: "npm: command not found",
+    solution: <p>Node.js isn't installed yet or your terminal doesn't see it. Go back to Step 2 and install Node.js first. If you used nvm, close and reopen your terminal.</p>
+  },
+  {
+    error: "npm ERR! EACCES: permission denied",
+    solution: <p>Don't use <code>sudo npm install</code> — that causes more problems. Instead, fix npm permissions: <code>mkdir ~/.npm-global && npm config set prefix '~/.npm-global'</code>. Then add <code>export PATH=~/.npm-global/bin:$PATH</code> to your <code>~/.zshrc</code> and restart your terminal.</p>
+  },
+  {
+    error: "Claude Code asks for an API key or won't authenticate",
+    solution: <p>Make sure you have an Anthropic account. Run <code>claude</code> and follow the authentication prompts. If you see a browser window open, log in and authorize the connection. If it still doesn't work, try <code>claude logout</code> then <code>claude</code> again.</p>
+  },
+  {
+    error: "Claude Code seems stuck or isn't responding",
+    solution: <p>Press <code>Ctrl + C</code> to stop it, then run <code>claude</code> again. Make sure you have a stable internet connection — Claude Code needs to connect to Anthropic's servers.</p>
+  },
+  {
+    error: "claude: command not found (after installing)",
+    solution: <p>The global npm bin directory may not be in your PATH. Run <code>npm config get prefix</code> to find it, then add that path's <code>/bin</code> directory to your PATH. For example: <code>export PATH="$(npm config get prefix)/bin:$PATH"</code>. Add this line to your <code>~/.zshrc</code> to make it permanent.</p>
+  }
+]} />
+
+---
+
+## Step 4: Choose Your Code Editor
+
+You need a code editor to view and browse the files Claude Code creates. We recommend **Cursor** because it has built-in AI features that complement Claude Code, but you can use whatever you're comfortable with.
+
+### Option A: Cursor (Recommended)
+
+1. Download from [cursor.com](https://www.cursor.com)
+2. Install and open it
+3. It works just like VS Code with added AI features
+
+### Option B: VS Code
+
+1. Download from [code.visualstudio.com](https://code.visualstudio.com)
+2. Move the app to your **Applications** folder
+3. Open it
+
+### Option C: Terminal Only
+
+You don't need a code editor at all. Claude Code runs in the terminal and creates files directly. You can view files with any text editor. This is a perfectly valid way to work through the tutorial.
+
+### Option D: Claude Code on the Web
+
+If you use Claude Code on [claude.ai](https://claude.ai) with a GitHub repository, you can code from any device — even an iPad. This is great for coding on the go, but you'll still need a Mac with Xcode for the iOS Simulator chapters (Part 4+).
+
+:::tip Pick What's Comfortable
+The tutorial works the same regardless of which editor you choose. Claude Code creates and modifies files — your editor just lets you browse them. Don't spend time agonizing over this choice.
+:::
+
+---
+
+## Step 5: Install Git (Optional for This Project)
+
+Git tracks changes to your code. It's a standard developer tool, but **you don't need it to complete this tutorial**. Your project saves locally on your machine.
+
+### Check if Git is already installed
+
+```bash
+git --version
+# If you see a version number, you're good!
+```
+
+If it's not installed, the Xcode command line tools (Step 1) should have included it. If you still don't have it:
+
+```bash
+# Install via Homebrew (if you have it)
+brew install git
+
+# Or download from: https://git-scm.com/download/mac
+```
+
+:::info Want to use GitHub?
+If you want to store your code on GitHub (for backup or to share it), here's a quick setup:
+
+1. Create an account at [github.com](https://github.com)
+2. Configure Git with your name and email:
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "your@email.com"
+```
+
+3. Create a new repository on GitHub (name it `gratitude-jar`)
+4. We'll show you how to push your code there later in the tutorial
+
+**You can skip this entirely** — the tutorial works without GitHub. Your project saves locally and that's all you need. GitHub is a nice-to-have for backup and sharing.
+:::
+
+---
+
+## Step 6: Verify Everything
+
+Let's use Claude Code to check your setup. Open your terminal and run `claude`, then send this prompt:
+
+<ClaudeCodePrompt
+  variant="build"
+  step={1}
+  prompt="Check my development environment. I need Node.js 18+, and Xcode for building an iOS app. Tell me what's installed and what's missing."
+  expectedOutput="Claude Code will run version checks for each tool and report what's installed, what version you have, and flag anything that's missing or out of date."
+  tip="This is your first real interaction with Claude Code. Get used to this workflow: you send a prompt, Claude Code does the work, you review the result. This is how the entire tutorial works."
+/>
+
+<TroubleshootingAccordion items={[
+  {
+    error: "xcode-select: error: command line tools are already installed",
+    solution: <p>This actually means you're fine — the tools are installed. Run <code>xcode-select -p</code> to confirm.</p>
+  },
+  {
+    error: "nvm: command not found",
+    solution: <p>Close your terminal completely and reopen it. If that doesn't work, add this to your <code>~/.zshrc</code> file: <code>export NVM_DIR="$HOME/.nvm"</code> and <code>[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"</code>. Then restart your terminal.</p>
+  },
+  {
+    error: "xcrun: error: unable to find utility 'simctl'",
+    solution: <p>Xcode is installed but the command line tools aren't pointed at it. Run: <code>sudo xcode-select -s /Applications/Xcode.app/Contents/Developer</code>.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={1}>
+- You have **Xcode 15+** installed (or it's downloading)
+- You have **Node.js 18+** installed and `node -v` works
+- You have **Claude Code** installed and you've sent it at least one prompt
+- You have a **code editor** installed (Cursor, VS Code, or you're going terminal-only)
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+Your machine is ready. In the next chapter, we'll use Claude Code to plan the app — scope the MVP, sketch wireframes, and design the data model.
+
+<TwitterCallout />
+
+**[Next: Chapter 2 — From Idea to Blueprint →](../part-2-the-idea/blueprint)**

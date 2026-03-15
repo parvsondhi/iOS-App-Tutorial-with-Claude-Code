@@ -1,18 +1,18 @@
 ---
 sidebar_position: 1
 title: Welcome
-description: Build your first iOS app from idea to TestFlight using React, Firebase, Capacitor, and Claude Code.
+description: Build your first iOS app from idea to the iOS Simulator using React, Firebase, Capacitor, and Claude Code.
 slug: /intro
 ---
 
 import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
 
-# From Idea to TestFlight
+# From Idea to iOS
 
 **Build your first iOS app with React, Firebase, Capacitor & Claude Code.**
 
-This is a free, step-by-step tutorial that takes you from a blank folder to a real iOS app running on TestFlight. No prior mobile development experience needed.
+This is a free, step-by-step tutorial that takes you from a blank folder to a real iOS app running in the Simulator. No prior mobile development experience needed.
 
 ---
 
@@ -27,8 +27,11 @@ By the end of this tutorial, you'll have a fully functional iOS app with:
 - **Camera integration** — take photos or pick from your library using native iOS APIs
 - **Shake interaction** — shake your phone to surface a random past entry with haptic feedback
 - **Calendar heatmap and streaks** — track your journaling habit
-- **Authentication** — email/password login with guest mode fallback
-- **TestFlight distribution** — your app, on real iPhones, shared with testers
+- **Authentication** — email/password login
+- **Premium, native-feeling design** — polished UI that looks like a designer built it
+- **Running in the iOS Simulator** — your app, looking and feeling like a real iOS app
+
+Want to go further? An optional section covers **TestFlight distribution** so friends can install it on real iPhones.
 
 ---
 
@@ -53,18 +56,16 @@ You do **not** need prior experience with React, Firebase, Capacitor, TypeScript
 | Requirement | Why |
 |---|---|
 | **A Mac** | Xcode only runs on macOS. This is a hard requirement for iOS development. |
-| **Node.js 18+** | Runtime for React, Vite, and all our tooling. |
-| **Xcode 15+** | Apple's IDE for building and signing iOS apps. Free from the Mac App Store. |
-| **Apple Developer Account** | Required for TestFlight. Costs $99/year. Sign up early — approval can take 24-48 hours. |
-| **A code editor** | We recommend VS Code, but any editor works. |
-| **Git** | For version control and accessing checkpoint branches. |
-| **Claude Code** | Your AI coding partner for this entire tutorial. It writes the code; you learn from it. Free to try. |
+| **Claude Code** | Your AI coding partner for this entire tutorial. It writes the code; you learn from it. |
 
 ### Nice to Have (Not Required)
 
 | Tool | Why |
 |---|---|
 | **An iPhone** | For testing camera and shake features. The iOS Simulator works for most chapters. |
+| **Apple Developer Account ($99/year)** | Only needed if you want to distribute via TestFlight (Part 6). Not required to complete the core tutorial. |
+
+Everything else (Node.js, Xcode, a code editor) gets installed in Chapter 1.
 
 ---
 
@@ -72,19 +73,15 @@ You do **not** need prior experience with React, Firebase, Capacitor, TypeScript
 
 ### Sequential chapters
 
-This tutorial is designed to be followed **in order**, from Chapter 1 through Chapter 19. Each chapter builds on the previous one.
+This tutorial is designed to be followed **in order**, from Chapter 1 through the end. Each chapter builds on the previous one.
 
 ### Prompt-driven development
 
 Every step gives you a **prompt to send to Claude Code**. Claude Code writes the code, and we explain what it created and why. You learn by reviewing real code that Claude Code generated for your project — not by copying and pasting from a wall of text.
 
-### Checkpoints
+### Simple, natural prompts
 
-At the end of every chapter, you'll see a **checkpoint** — a screenshot of what your app should look like, a checklist of what should be working, and a link to the companion repo branch so you can compare your code.
-
-### Claude Code is your coding partner
-
-Claude Code is the **primary way you'll build this app**. Instead of manually typing out hundreds of lines of code, you send a prompt describing what you need, and Claude Code generates the actual code for your project. The prompts in this tutorial are carefully designed to produce the right code at each step.
+The prompts in this tutorial are written in **plain English** — the way you'd naturally describe what you want. No need to know technical jargon. Claude Code figures out the implementation details.
 
 <ClaudeCodePrompt
   prompt="What does the onSnapshot function do in Firestore? Explain it like I'm a beginner."
@@ -96,16 +93,23 @@ Claude Code is the **primary way you'll build this app**. Instead of manually ty
 
 Here is how every chapter works:
 
-1. **You send a prompt** — Each step includes a prompt you copy and send to Claude Code in your terminal
+1. **You send a prompt** — Each step includes a prompt you copy and send to Claude Code
 2. **Claude Code writes the code** — It creates or modifies files in your project based on the prompt
-3. **You review what it created** — We walk through the generated code and explain what each part does and why
-4. **You learn from it** — By reading real, working code in context, you build understanding naturally
+3. **You test it** — Run the app and verify it works as expected
+4. **You learn from it** — We explain what the code does and why
 
-Terminal commands (like `npm install` or `git commit`) are still things you run yourself. But the app code? That comes from Claude Code.
+Terminal commands (like `npm install` or `npm run dev`) are still things you run yourself. But the app code? That comes from Claude Code.
 
-### Time estimate
+### Verifying your work
 
-Plan for **20–30 hours** spread over a few weeks. Some chapters take 30 minutes, others (like the Xcode/TestFlight chapters) may take a couple of hours as you navigate Apple's tooling for the first time.
+Instead of comparing your code line-by-line against reference snippets, we use **functional testing** — run the app and check that it works. Since Claude Code generates code, your files may look different from ours, and that's perfectly fine as long as the app behaves correctly.
+
+When in doubt, you can always ask Claude Code to review your work:
+
+<ClaudeCodePrompt
+  prompt="Review my project and check if everything is working correctly. Flag any errors or issues."
+  tip="This is like having a senior developer review your code. Use this whenever something feels off."
+/>
 
 ---
 
@@ -129,12 +133,13 @@ Plan for **20–30 hours** spread over a few weeks. Some chapters take 30 minute
 
 | Part | Chapters | What You'll Build |
 |---|---|---|
-| **Part 1 — The Idea** | 1 | Blueprint: scope, wireframes, data model |
-| **Part 2 — Foundation** | 2–3 | Dev environment + project scaffolding |
-| **Part 3 — Web App** | 4–10 | Full web app: UI, CRUD, Firebase, auth, polish |
-| **Part 4 — Going Mobile** | 11–14 | Capacitor, camera, shake, iOS polish |
-| **Part 5 — TestFlight** | 15–17 | Certificates, App Store Connect, TestFlight |
-| **Part 6 — Next Steps** | 18–19 | Iteration cycle + App Store submission |
+| **Part 1 — Getting Started** | 1 | Install tools: Node.js, Claude Code, editor, Xcode |
+| **Part 2 — The Idea** | 2 | Blueprint: scope, wireframes, data model |
+| **Part 3 — Foundation** | 3 | Project scaffolding + dependencies |
+| **Part 4 — Web App** | 4–10 | Full web app: UI, CRUD, Firebase, auth, polish |
+| **Part 5 — Going Mobile** | 11–14 | Capacitor, camera, shake, iOS polish — **your app in the Simulator!** |
+| **Part 6 — TestFlight** *(optional)* | 15–17 | Apple Developer, App Store Connect, TestFlight |
+| **Part 7 — Next Steps** | 18–19 | Iteration cycle + App Store submission |
 
 ---
 
@@ -144,4 +149,4 @@ Let's build something real.
 
 <TwitterCallout />
 
-**[Start Chapter 1: From Idea to Blueprint →](./part-1-the-idea/blueprint)**
+**[Start Chapter 1: Setting Up Your Tools →](./part-1-getting-started/tools-setup)**

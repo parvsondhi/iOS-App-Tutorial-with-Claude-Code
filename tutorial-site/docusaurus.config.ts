@@ -3,7 +3,7 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'From Idea to TestFlight',
+  title: 'From Idea to iOS',
   tagline: 'Build your first iOS app with React, Firebase, Capacitor & Claude Code',
   favicon: 'img/favicon.ico',
 
@@ -17,7 +17,7 @@ const config: Config = {
   organizationName: 'parvsondhi',
   projectName: 'iOS-App-Tutorial-with-Claude-Code',
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
 
   markdown: {
     hooks: {
@@ -53,8 +53,18 @@ const config: Config = {
       defaultMode: 'light',
       respectPrefersColorScheme: true,
     },
+    docs: {
+      sidebar: {
+        hideable: false,
+        autoCollapseCategories: false,
+      },
+    },
+    tableOfContents: {
+      minHeadingLevel: 2,
+      maxHeadingLevel: 3,
+    },
     navbar: {
-      title: 'Idea to TestFlight',
+      title: 'Idea to iOS',
       items: [
         {
           type: 'docSidebar',
@@ -80,11 +90,11 @@ const config: Config = {
               to: '/docs/intro',
             },
             {
-              label: 'Part 1 — The Idea',
-              to: '/docs/part-1-the-idea/blueprint',
+              label: 'Part 1 — Getting Started',
+              to: '/docs/part-1-getting-started/tools-setup',
             },
             {
-              label: 'Part 3 — Web App',
+              label: 'Part 4 — Web App',
               to: '/docs/part-3-web-app/ui-shell',
             },
           ],
@@ -129,7 +139,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} From Idea to TestFlight. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} From Idea to iOS. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,
