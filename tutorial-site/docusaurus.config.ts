@@ -36,8 +36,6 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl:
-            'https://github.com/parvsondhi/iOS-App-Tutorial-with-Claude-Code/tree/main/tutorial-site/',
         },
         blog: false,
         theme: {
@@ -72,11 +70,6 @@ const config: Config = {
           position: 'left',
           label: 'Tutorial',
         },
-        {
-          href: 'https://github.com/parvsondhi/iOS-App-Tutorial-with-Claude-Code',
-          label: 'GitHub',
-          position: 'right',
-        },
       ],
     },
     footer: {
@@ -102,10 +95,6 @@ const config: Config = {
         {
           title: 'Resources',
           items: [
-            {
-              label: 'Companion Repo',
-              href: 'https://github.com/parvsondhi/iOS-App-Tutorial-with-Claude-Code',
-            },
             {
               label: 'Claude Code',
               href: 'https://docs.anthropic.com/en/docs/claude-code/overview',
