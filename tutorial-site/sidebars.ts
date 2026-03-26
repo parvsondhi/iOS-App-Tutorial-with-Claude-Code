@@ -14,20 +14,20 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Part 2 — The Idea',
+      label: 'Part 2 — Scaffolding',
       className: 'sidebar-part sidebar-part-2',
       collapsible: false,
       items: [
-        'part-2-the-idea/blueprint',
+        'part-2-scaffolding/scaffolding',
       ],
     },
     {
       type: 'category',
-      label: 'Part 3 — Foundation',
+      label: 'Part 3 — The Idea',
       className: 'sidebar-part sidebar-part-3',
       collapsible: false,
       items: [
-        'part-3-foundation/scaffolding',
+        'part-3-the-idea/blueprint',
       ],
     },
     {
@@ -36,13 +36,11 @@ const sidebars: SidebarsConfig = {
       className: 'sidebar-part sidebar-part-4',
       collapsible: false,
       items: [
-        'part-3-web-app/ui-shell',
-        'part-3-web-app/entries',
-        'part-3-web-app/firestore',
-        'part-3-web-app/storage',
-        'part-3-web-app/auth',
-        'part-3-web-app/polish',
-        'part-3-web-app/streaks-heatmap',
+        'part-4-web-app/ui-shell',
+        'part-4-web-app/entries',
+        'part-4-web-app/auth',
+        'part-4-web-app/polish',
+        'part-4-web-app/streaks',
       ],
     },
     {
@@ -51,10 +49,10 @@ const sidebars: SidebarsConfig = {
       className: 'sidebar-part sidebar-part-5',
       collapsible: false,
       items: [
-        'part-4-capacitor/capacitor-setup',
-        'part-4-capacitor/camera-haptics',
-        'part-4-capacitor/shake',
-        'part-4-capacitor/ios-specifics',
+        'part-5-capacitor/capacitor-setup',
+        'part-5-capacitor/camera-haptics',
+        'part-5-capacitor/shake',
+        'part-5-capacitor/ios-specifics',
       ],
     },
     {
@@ -62,9 +60,9 @@ const sidebars: SidebarsConfig = {
       label: 'Part 6 — TestFlight (Optional)',
       className: 'sidebar-part sidebar-part-6',
       items: [
-        'part-5-testflight/apple-developer',
-        'part-5-testflight/app-store-connect',
-        'part-5-testflight/testflight',
+        'part-6-testflight/apple-developer',
+        'part-6-testflight/app-store-connect',
+        'part-6-testflight/testflight',
       ],
     },
     {
@@ -72,8 +70,8 @@ const sidebars: SidebarsConfig = {
       label: 'Part 7 — Next Steps',
       className: 'sidebar-part sidebar-part-7',
       items: [
-        'part-6-next-steps/iteration',
-        'part-6-next-steps/app-store',
+        'part-7-next-steps/iteration',
+        'part-7-next-steps/app-store',
       ],
     },
   ],

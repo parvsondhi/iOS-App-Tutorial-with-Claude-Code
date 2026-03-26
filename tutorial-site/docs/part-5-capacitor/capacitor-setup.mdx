@@ -1,0 +1,459 @@
+---
+sidebar_position: 1
+title: "Chapter 9: Capacitor Setup"
+description: Install Capacitor and run your web app as a native iOS app for the first time.
+---
+
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import TwitterCallout from '@site/src/components/TwitterCallout';
+import FileTree from '@site/src/components/FileTree';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
+# Chapter 9: Capacitor Setup
+
+> This is the chapter you've been building toward. Your web app is about to become a real iOS app.
+
+Everything you built in Part 4 was a web app running in the browser. That changes now. In this chapter, we install Capacitor --- the bridge that wraps your web app in a native iOS shell --- and run it in the iOS Simulator. Same code you already wrote. Real native app.
+
+---
+
+## What You'll Do
+
+- Install Capacitor and the iOS platform
+- Configure your project for iOS builds
+- Learn the **build, sync, run** workflow
+- Open your project in Xcode for the first time
+- Run the app in the iOS Simulator
+
+---
+
+## What You'll Learn
+
+- How Capacitor works under the hood (it's a WKWebView, not a compiler)
+- The relationship between your web build and the native project
+- The Capacitor sync workflow
+- Xcode project structure basics
+
+---
+
+## Before You Start: Install Xcode
+
+:::caution You Need the Full Xcode App
+This is the chapter where you need the **full Xcode app** (not just Command Line Tools). If you haven't installed it yet, open the **Mac App Store**, search for **Xcode**, and install it. It's roughly 8 GB, so start the download now if you haven't already.
+
+After the install finishes, **open Xcode once**. It will ask you to accept the license agreement and install additional components --- say yes to both. This one-time setup takes a few minutes. You cannot proceed with this chapter until Xcode is fully set up.
+:::
+
+Once Xcode is ready, verify it from your terminal:
+
+```bash
+xcode-select -p
+```
+
+You should see something like `/Applications/Xcode.app/Contents/Developer`. If you see a path pointing to CommandLineTools instead, run:
+
+```bash
+sudo xcode-select -s /Applications/Xcode.app
+```
+
+---
+
+## Step 1: How Capacitor Works
+
+Before installing anything, let's understand what Capacitor actually does. This is important because it affects how you think about the entire iOS workflow.
+
+```
+Your React App (HTML/CSS/JS)
+         |
+         v
+   +--------------------+
+   |   Capacitor         |
+   |                     |
+   |  +---------------+  |
+   |  |  WKWebView    |  |  <-- Safari's rendering engine
+   |  |               |  |
+   |  |  Your app     |  |
+   |  |  runs here    |  |
+   |  +---------------+  |
+   |                     |
+   |  Native Bridge      |  <-- Connects JS to native APIs
+   |  (Camera, etc.)     |
+   |                     |
+   +--------------------+
+         |
+         v
+   iOS App (.ipa)
+```
+
+**Capacitor is not a compiler.** It does not convert your React code into Swift or Objective-C. Here's what actually happens:
+
+1. Your app's built files (the `dist/` folder from `npm run build`) are copied into an iOS project
+2. The iOS app loads those files inside a **WKWebView** --- essentially an embedded Safari browser without the address bar
+3. Capacitor provides a JavaScript bridge to native device APIs (camera, haptics, filesystem, and more)
+4. The result is a genuine iOS app that you can submit to the App Store
+
+This is the same approach used by many production apps. Your web skills transfer directly --- no Swift required.
+
+**Why not just use a PWA?** Progressive Web Apps can't reliably access the camera, can't trigger haptic feedback, can't appear in the App Store, and can't use TestFlight for beta testing. Capacitor gives you all of that without changing a single line of your existing web code.
+
+---
+
+## Step 2: Send the Prompt to Claude Code
+
+Let Claude Code handle the installation and setup:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 2"
+  prompt="I want to bundle this app for iOS using capacitor. Please help with this."
+  context="This prompt tells Claude Code to install Capacitor, initialize it, add the iOS platform, and configure the project. Claude Code will handle the package installs, config file creation, and iOS project generation."
+  expectedOutput="Claude Code will install @capacitor/core, @capacitor/cli, and @capacitor/ios. It will run cap init and cap add ios, creating a capacitor.config.ts file and an ios/ directory containing a full Xcode project."
+  tip="If any terminal commands fail during installation, copy the error output and paste it directly to Claude Code. It can diagnose npm errors, CocoaPods issues, and Xcode path problems."
+/>
+
+### What Claude Code will do
+
+When you send that prompt, Claude Code will run several commands. Here's what to expect:
+
+**Install the packages:**
+
+```bash
+npm install @capacitor/core @capacitor/cli
+```
+
+```bash
+npm install @capacitor/ios
+```
+
+**Initialize Capacitor** --- this creates the config file:
+
+```bash
+npx cap init
+```
+
+During initialization, you'll be asked for:
+- **App name:** `GratitudeJar` (or whatever you named your app)
+- **App Package ID:** something like `com.yourname.gratitudejar` --- this is the unique identifier for your app on the App Store, using reverse domain notation
+
+**Add the iOS platform** --- this creates the Xcode project:
+
+```bash
+npx cap add ios
+```
+
+This command creates an entire `ios/` folder in your project containing a full Xcode workspace. You won't need to manually edit most of these files --- Capacitor manages them for you.
+
+:::tip Terminal Issues? Post Them to Claude Code
+Throughout this chapter, if any terminal command fails or produces unexpected output, copy the full error message and paste it to Claude Code. It's particularly good at diagnosing Capacitor setup issues, CocoaPods errors, and Xcode configuration problems. This applies to every step from here on.
+:::
+
+---
+
+## Step 3: Understand What Capacitor Created
+
+After Claude Code finishes, take a look at what changed in your project.
+
+### The config file
+
+Claude Code created a `capacitor.config.ts` file in your project root. This file tells Capacitor everything it needs to know about your app. The key settings are:
+
+| Setting | What it does |
+|---|---|
+| `appId` | Your app's unique identifier on the App Store (reverse domain notation, e.g., `com.yourname.gratitudejar`) |
+| `appName` | The name displayed under the app icon on the home screen |
+| `webDir` | The folder containing your built web files --- this should be `dist` since Vite outputs there |
+| `server.url` | (Optional) During development, points to Vite's dev server for live reload |
+| `server.cleartext` | (Optional) Allows HTTP connections --- needed for local development since `localhost` isn't HTTPS |
+
+The `server` block is for development only. It tells the iOS app to load your UI from `http://localhost:5173` instead of from the bundled files. This means changes you make in your React code will appear instantly in the Simulator without rebuilding. You'll remove this block later when building for TestFlight.
+
+:::caution Dev Server vs. Production
+The `server` block with the `url` property is a development convenience. When you build for TestFlight or the App Store, you must remove it so the app uses the bundled `dist/` files. We'll handle that in Part 6.
+:::
+
+### The ios/ folder
+
+The `ios/` directory is a complete Xcode project. Here's what's inside:
+
+```
+ios/
+└── App/
+    ├── App/
+    │   ├── AppDelegate.swift        <-- Native app entry point
+    │   ├── Info.plist               <-- iOS app configuration
+    │   ├── Assets.xcassets          <-- App icon and images
+    │   └── public/                  <-- Your built web files land here
+    ├── Podfile                      <-- CocoaPods dependencies
+    └── App.xcworkspace              <-- Open this in Xcode
+```
+
+You don't need to understand all of these files. The important thing to know is that Capacitor generated and manages this project for you.
+
+---
+
+## Step 4: The Build-Sync-Run Workflow
+
+Capacitor has a three-step workflow. You'll use this every time you want to test changes in the Simulator:
+
+```bash
+npm run build
+```
+
+```bash
+npx cap sync
+```
+
+```bash
+npx cap open ios
+```
+
+### Why three steps?
+
+1. **Build** --- Vite compiles your TypeScript and React into plain HTML, CSS, and JavaScript in the `dist/` folder
+2. **Sync** --- Capacitor copies that `dist/` folder into the iOS project and installs or updates any native plugins (via CocoaPods)
+3. **Open** --- Launches Xcode with your project so you can run it in the Simulator
+
+### The dev server shortcut
+
+During development, you can skip the build step because the `server.url` setting in your Capacitor config points to Vite's dev server. This means the Simulator loads your app directly from `localhost:5173`. The workflow becomes:
+
+1. Start Vite in one terminal: `npm run dev`
+2. Sync and open in another terminal: `npx cap sync` then `npx cap open ios`
+3. Run in the Simulator from Xcode
+4. Edit your React code --- changes hot-reload in the Simulator automatically
+
+This is the workflow you'll use most during development. The full build-sync-run workflow is for production builds and when you need to test the bundled app.
+
+:::tip Terminal Issues? Post Them to Claude Code
+If `npx cap sync` fails with pod install errors, or if `npx cap open ios` can't find Xcode, paste the full error into Claude Code. These are common first-time setup issues that Claude Code knows how to resolve.
+:::
+
+---
+
+## Step 5: Run It in the Simulator
+
+### This is the big moment.
+
+Everything you've built across Parts 1 through 4 --- the idea, the scaffolding, the UI shell, the entries, authentication, polish, streaks --- all of it is about to come to life as a real iOS app.
+
+### Start the dev server
+
+In your first terminal:
+
+```bash
+npm run dev
+```
+
+### Sync and open Xcode
+
+In a second terminal:
+
+```bash
+npx cap sync
+```
+
+```bash
+npx cap open ios
+```
+
+Xcode will open with your project loaded.
+
+### Run the app
+
+1. In the Xcode toolbar at the top, find the **device selector** dropdown. Click it and choose a Simulator --- for example, **iPhone 15** or **iPhone 16**
+2. Click the **Play button** (the triangle icon in the top-left, or press `Cmd + R`)
+3. Wait for the Simulator to boot up and the app to install. The first build takes longer because Xcode needs to compile native dependencies and set up the Simulator. Subsequent builds are much faster.
+4. Your GratitudeJar app appears --- running inside an iOS app, not a browser
+
+---
+
+### Your app is running on iOS.
+
+Take a second to appreciate what just happened. You started this tutorial with an idea. You built a complete web application with a UI shell, journal entries, authentication, streaks, and polish. And now that same application is running as a native iOS app in the Simulator.
+
+There's no browser address bar. No navigation controls. It looks and feels like every other app on your phone. Because it is one.
+
+**Take a screenshot of the Simulator.** You earned this moment.
+
+---
+
+### What to verify in the Simulator
+
+- The app loads and shows your login screen (or the main app if you have an active session)
+- Tab navigation works --- tap Feed, New, and Profile
+- Creating and viewing entries works (as long as your Vite dev server is running)
+- The app fills the screen naturally --- no browser chrome, no address bar
+- The status bar (time, battery, signal) appears above your app like a real iOS app
+
+:::tip First Build Takes Longer
+The first Xcode build downloads and compiles CocoaPods dependencies, which can take a minute or two. Don't worry if it seems slow. Subsequent builds reuse the cached artifacts and finish much faster.
+:::
+
+---
+
+## Step 6: Understand the Xcode Project
+
+You don't need to become an Xcode expert. But knowing the basics will save you time when configuring native features in the next chapters.
+
+### Files you'll touch during this tutorial
+
+| File | When you'll need it |
+|---|---|
+| `ios/App/App/Info.plist` | Adding camera and photo library permission descriptions |
+| `ios/App/App/Assets.xcassets` | Setting the app icon |
+| `capacitor.config.ts` | Changing Capacitor configuration (lives in your project root, not in `ios/`) |
+
+### Files Capacitor manages (don't edit manually)
+
+| File | What it is |
+|---|---|
+| `AppDelegate.swift` | The iOS app lifecycle entry point |
+| `Podfile` | CocoaPods dependency list (updated by `cap sync`) |
+| `ios/App/App/public/` | Your built web files (overwritten every sync) |
+
+### The golden rule
+
+**Never manually edit files inside `ios/App/App/public/`.** That folder gets completely overwritten every time you run `npx cap sync`. All your code changes happen in your React project. Capacitor copies them into the iOS project during sync.
+
+### Xcode Signing (quick setup)
+
+When you first open the project, Xcode may show a signing error. To fix it:
+
+1. Click on **App** in the Xcode project navigator (the left sidebar)
+2. Select the **Signing & Capabilities** tab
+3. Check **Automatically manage signing**
+4. Select your **Team** from the dropdown --- if you don't have an Apple Developer account, select your personal team (your Apple ID works for Simulator testing)
+
+This is only needed for running on physical devices and for TestFlight. The Simulator usually works without signing configuration, but it's good to set it up now.
+
+---
+
+## Step 7: Add Convenience Scripts
+
+Ask Claude Code to add shortcuts to your `package.json`:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 7"
+  prompt="Add convenience scripts to package.json for our Capacitor iOS workflow. I want a script to sync, a script to open Xcode, and a combined script that syncs and then opens Xcode."
+  context="These scripts simplify the three-step Capacitor workflow so you don't have to remember the full commands each time."
+  expectedOutput="Claude Code will add cap:sync, cap:open, and ios:dev scripts to the scripts section of package.json."
+  tip="If Claude Code makes changes you don't expect in package.json, paste the diff back and ask it to explain or fix the issue."
+/>
+
+After Claude Code adds the scripts, your development workflow becomes:
+
+```bash
+npm run dev
+```
+
+In a second terminal:
+
+```bash
+npm run ios:dev
+```
+
+That single command syncs the project and opens Xcode. From there, press `Cmd + R` to run in the Simulator. Two terminals, two commands, and you're developing an iOS app.
+
+---
+
+## Step 8: Commit Your Progress
+
+Your project now has a complete iOS setup. Save it:
+
+```bash
+git add -A
+```
+
+```bash
+git commit -m "Add Capacitor: iOS project setup and dev workflow"
+```
+
+```bash
+git push
+```
+
+:::caution What to commit
+The `ios/` folder should be committed --- it contains your Xcode project configuration, Info.plist, and other settings you'll modify later. However, the `ios/App/Pods/` directory should be in `.gitignore` (Capacitor sets this up by default). If Claude Code created or updated your `.gitignore`, verify that `Pods/` is listed.
+:::
+
+---
+
+<FileTree title="Updated project structure">
+
+```
+gratitude-jar/
+├── ios/                           <-- NEW (entire Xcode project)
+│   └── App/
+│       ├── App/
+│       │   ├── AppDelegate.swift
+│       │   ├── Info.plist
+│       │   ├── Assets.xcassets
+│       │   └── public/            <-- Built web files (auto-generated)
+│       ├── Podfile
+│       └── App.xcworkspace
+├── src/
+│   └── ...                        <-- Unchanged
+├── capacitor.config.ts            <-- NEW
+├── package.json                   <-- UPDATED (new scripts)
+└── ...
+```
+
+</FileTree>
+
+<TroubleshootingAccordion items={[
+  {
+    error: "App shows a blank white screen in the Simulator",
+    solution: <p>This almost always means the Simulator can't reach your dev server. Make sure Vite is running (<code>npm run dev</code>) on port 5173 in a separate terminal. If it's running but you still see a blank screen, check that your <code>capacitor.config.ts</code> has the <code>server.url</code> set to <code>http://localhost:5173</code>. Also try restarting both the dev server and the Simulator.</p>
+  },
+  {
+    error: "Build error: 'Signing for App requires a development team'",
+    solution: <p>In Xcode, click on <strong>App</strong> in the left sidebar, go to the <strong>Signing & Capabilities</strong> tab, and select a team from the dropdown. Your personal Apple ID works fine for Simulator testing --- you don't need a paid developer account yet.</p>
+  },
+  {
+    error: "'pod install' fails or CocoaPods errors during sync",
+    solution: <p>First, make sure CocoaPods is installed: run <code>sudo gem install cocoapods</code>. Then try running <code>cd ios/App && pod install</code> manually. If you see architecture errors on Apple Silicon Macs, try <code>cd ios/App && arch -x86_64 pod install</code>. Paste any remaining errors into Claude Code for help.</p>
+  },
+  {
+    error: "'npx cap add ios' fails with 'Xcode not found'",
+    solution: <p>Make sure you installed the full Xcode app from the Mac App Store (not just Command Line Tools). Then run <code>sudo xcode-select -s /Applications/Xcode.app</code> to point the tools at the correct location. Open Xcode once to accept the license if you haven't already.</p>
+  },
+  {
+    error: "Simulator can't connect to localhost",
+    solution: <p>The iOS Simulator shares your Mac's network, so <code>localhost</code> should work. If it doesn't, find your Mac's local IP address (System Settings &gt; Wi-Fi &gt; Details &gt; IP Address) and use that instead of <code>localhost</code> in your Capacitor config. For example: <code>http://192.168.1.100:5173</code>.</p>
+  },
+  {
+    error: "Changes in React don't appear in the Simulator",
+    solution: <p>If hot reload isn't working, make sure the <code>server</code> block in your Capacitor config has the correct <code>url</code> pointing to your Vite dev server. Try stopping the Simulator app (not the Simulator itself) and pressing <code>Cmd + R</code> in Xcode to relaunch it. If you changed the Capacitor config, you need to run <code>npx cap sync</code> again.</p>
+  },
+  {
+    error: "Xcode says 'Could not find or use auto-linked library'",
+    solution: <p>Run <code>cd ios/App && pod install</code> to reinstall CocoaPods dependencies. This usually happens after adding a new Capacitor plugin without syncing.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={9}>
+- Capacitor is installed and initialized with your app ID
+- The `ios/` folder contains a full Xcode project
+- Your Capacitor config is set up with the dev server URL for live reload
+- Running `npx cap sync` copies web files to the iOS project
+- The app **runs in the iOS Simulator** and looks like a native app
+- Hot reload works --- React code changes appear in the Simulator
+- You understand the **build, sync, run** workflow
+- Convenience scripts are added to `package.json`
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+Your app runs on iOS --- but it's still using web APIs for everything. In the next chapter, we'll add Capacitor plugins for the **camera** and **haptic feedback**. These are your first real native features --- things that a browser simply can't do as well. The app will start to feel like it belongs on a phone.
+
+<TwitterCallout />
+
+**[Next: Chapter 10 -- Native Plugins: Camera & Haptics -->](./camera-haptics)**

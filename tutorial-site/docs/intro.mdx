@@ -26,7 +26,7 @@ By the end of this tutorial, you'll have a fully functional iOS app with:
 - **Real-time sync** — entries update instantly across devices via Firebase
 - **Camera integration** — take photos or pick from your library using native iOS APIs
 - **Shake interaction** — shake your phone to surface a random past entry with haptic feedback
-- **Calendar heatmap and streaks** — track your journaling habit
+- **Streaks and stats** — track your journaling habit with a fire animation
 - **Authentication** — email/password login
 - **Premium, native-feeling design** — polished UI that looks like a designer built it
 - **Running in the iOS Simulator** — your app, looking and feeling like a real iOS app
@@ -65,7 +65,7 @@ You do **not** need prior experience with React, Firebase, Capacitor, TypeScript
 | **An iPhone** | For testing camera and shake features. The iOS Simulator works for most chapters. |
 | **Apple Developer Account ($99/year)** | Only needed if you want to distribute via TestFlight (Part 6). Not required to complete the core tutorial. |
 
-Everything else (Node.js, Xcode, a code editor) gets installed in Chapter 1.
+Everything else (Node.js, Cursor, Xcode Command Line Tools) gets installed in Chapter 1.
 
 ---
 
@@ -111,6 +111,10 @@ When in doubt, you can always ask Claude Code to review your work:
   tip="This is like having a senior developer review your code. Use this whenever something feels off."
 />
 
+:::caution Running Into Issues?
+Don't hesitate to paste error messages directly into Claude Code and ask it to help you debug. That's one of its superpowers — it can read error output and suggest fixes. Throughout this tutorial, if you hit a wall, your first move should always be to share the error with Claude Code.
+:::
+
 ---
 
 ## The Tech Stack
@@ -133,13 +137,13 @@ When in doubt, you can always ask Claude Code to review your work:
 
 | Part | Chapters | What You'll Build |
 |---|---|---|
-| **Part 1 — Getting Started** | 1 | Install tools: Node.js, Claude Code, editor, Xcode |
-| **Part 2 — The Idea** | 2 | Blueprint: scope, wireframes, data model |
-| **Part 3 — Foundation** | 3 | Project scaffolding + dependencies |
-| **Part 4 — Web App** | 4–10 | Full web app: UI, CRUD, Firebase, auth, polish |
-| **Part 5 — Going Mobile** | 11–14 | Capacitor, camera, shake, iOS polish — **your app in the Simulator!** |
-| **Part 6 — TestFlight** *(optional)* | 15–17 | Apple Developer, App Store Connect, TestFlight |
-| **Part 7 — Next Steps** | 18–19 | Iteration cycle + App Store submission |
+| **Part 1 — Getting Started** | 1 | Install tools: Xcode CLI Tools, Node.js, Cursor, Claude Code |
+| **Part 2 — Scaffolding** | 2 | Project scaffolding + Firebase setup |
+| **Part 3 — The Idea** | 3 | Blueprint: scope, MVP planning, implementation plan |
+| **Part 4 — Web App** | 4–8 | Full web app: UI, entries, Firebase, auth, polish, streaks |
+| **Part 5 — Going Mobile** | 9–12 | Capacitor, camera, shake, iOS polish — **your app in the Simulator!** |
+| **Part 6 — TestFlight** *(optional)* | 13–15 | Apple Developer, App Store Connect, TestFlight |
+| **Part 7 — Next Steps** | 16–17 | Iteration cycle + App Store submission |
 
 ---
 
@@ -149,4 +153,4 @@ Let's build something real.
 
 <TwitterCallout />
 
-**[Start Chapter 1: Setting Up Your Tools →](./part-1-getting-started/tools-setup)**
+**[Start Chapter 1: Setting Up Your Dev Environment →](./part-1-getting-started/tools-setup)**

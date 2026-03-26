@@ -1,0 +1,228 @@
+---
+sidebar_position: 5
+title: "Chapter 8: Streaks & Stats"
+description: Build a streak counter with fire animation and profile stats to turn journaling into a habit.
+---
+
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
+# Chapter 8: Streaks & Stats
+
+> Habits need feedback loops. A streak counter and stats give your users a reason to come back tomorrow.
+
+Your app works. Users can create entries, see them in a feed, and manage their profile. But there is nothing pulling them back each day. No sense of progress, no momentum. In this chapter, we add the two most effective habit-building tools in any app: a streak counter that rewards consistency and stat cards that show progress at a glance.
+
+---
+
+## What You'll Build
+
+- A streak calculator that tracks consecutive days of journaling
+- A fire icon in the header that animates and fills based on the current streak
+- A pop animation that celebrates when the streak increments
+- A calendar modal showing which days the user submitted entries
+- Three profile stat cards: Current Streak, Best Streak, and Entries Created
+
+---
+
+## What You'll Learn
+
+- Streak calculation logic and date arithmetic
+- How to build animated SVG icons in React
+- Modal patterns with calendar views
+- Storing derived stats in Firebase against a user document
+- Celebratory micro-interactions that reinforce habits
+
+---
+
+## How Streak Logic Works
+
+Before we start building, it is worth understanding what "streak" means in practice. A streak counts the number of consecutive calendar days a user has submitted at least one entry. Here are the rules:
+
+- **Today counts.** If the user journaled today, that day is part of the streak.
+- **Yesterday still counts.** If the user has not journaled today but did yesterday, the streak is still alive. They might journal later today -- we should not punish them for opening the app in the morning before writing.
+- **Multiple entries on the same day count as one.** Two entries on Tuesday is still just one streak day.
+- **Missing a day resets the streak to zero.** If the last entry was two or more days ago, the streak breaks.
+- **Best streak is tracked separately.** Even when the current streak resets, the all-time best is preserved.
+
+This "yesterday grace period" is the same pattern used by Duolingo, Wordle, and most habit-tracking apps. It keeps the streak motivating without being punishing.
+
+---
+
+## Step 1: Build the Streak Calculator
+
+First, we need the core logic that takes an array of entry dates and computes the current streak, best streak, and total entries. This is pure date math -- no UI yet.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 1"
+  prompt="Create a streak calculator and visual in the app. Below the header lets add a daily streak counter on the right. Lets draw out a fire symbol that animates and fills in when we add to the streak. Each day we add a entry the streak adds up. When we miss a day the streak resets to 0 and loses it fill. When i tap on the streak it should load a new modal which shows the month calendar view and on each date has a small circle which fills up with the checkbox icon if i submitted on that day."
+  context="This prompt handles the full streak feature in one shot -- the calculator logic, the animated fire icon in the header, and the calendar modal. Claude Code will create the streak utility, the fire component, and wire it into the header."
+  expectedOutput="Claude Code will create a streak calculation utility, an animated fire icon component that fills based on streak count, a calendar modal showing submission history, and integrate everything into the header."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+Claude Code will build several things from this single prompt. The streak calculator will handle all the date math -- deduplicating entries that fall on the same day, counting backwards from today to find consecutive days, and tracking the longest streak ever achieved. The fire icon will be drawn as an SVG that fills with color based on the current streak value. When the streak is zero, the fire appears as an outline. As the streak grows, the flame fills in with warm amber and orange tones. Tapping the fire opens a calendar modal showing the current month with small circles on each date -- filled circles with a checkmark for days the user submitted an entry, empty circles for days they did not.
+
+---
+
+## Step 2: Add the Streak to the Header
+
+After Step 1, you should already see the streak counter in your header. Take a moment to verify it is positioned correctly -- it should sit on the right side of the header, showing the fire icon alongside the current streak number. If the positioning is off or the fire icon does not appear, describe what you see to Claude Code and it will adjust.
+
+Start your dev server if it is not already running:
+
+```bash
+npm run dev
+```
+
+Create a new entry and watch the streak counter. It should show "1" next to the fire icon. The fire should have some color fill indicating an active streak. Tap the fire icon to open the calendar modal and confirm today's date shows a filled circle with a checkmark.
+
+---
+
+## Step 3: Add the Pop Animation
+
+Now let's add the satisfying moment -- when the user submits an entry and their streak increments, a celebratory pop animation plays. This is a micro-interaction that makes the app feel alive and rewards the user for consistency.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
+  prompt="lets add a modal pop animation, so that if a new streak # has been achieved or has incremented, then one i submit the entry and it saves, there is a pop that shows the fire icon flaming and text animation below that shows the previous streak number incrementing to the new value."
+  context="This celebratory animation plays after a successful entry submission when the streak increases. It reinforces the habit loop by giving immediate visual feedback."
+  expectedOutput="Claude Code will create a pop animation modal that appears after saving an entry when the streak increments. It will show an animated fire icon with a number counting up from the previous streak to the new value."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+The pop animation should feel quick and satisfying -- not slow or blocking. It appears briefly after the entry saves, shows the fire icon with an animated flame effect, and the streak number counts up from the old value to the new one. After a moment it dismisses automatically or when the user taps anywhere. This is the same pattern Duolingo uses when you complete a lesson and your streak increments.
+
+---
+
+## Step 4: Add Profile Stats
+
+The Profile page needs more than just an email and a logout button. Let's add stat cards that give the user a dashboard view of their journaling habit.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
+  prompt="Show three stat cards in a grid in the profile: Current Streak (Flame icon), Best Streak (Trophy icon), Entries Created (Calendar icon). Update the firebase if we need to store this against a user"
+  context="The Profile page becomes the stats dashboard. These three cards give users an at-a-glance view of their journaling habit. Firebase may need a user document to persist the best streak."
+  expectedOutput="Claude Code will add three stat cards to the Profile page in a responsive grid layout, each with an icon, a large number, and a label. It will update Firestore to store streak data against the user document if needed."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+The three stat cards should appear in a row at the top of the Profile page. Each card has an icon, a prominent number, and a short label:
+
+- **Current Streak** with a flame icon -- shows how many consecutive days the user has journaled
+- **Best Streak** with a trophy icon -- the all-time longest streak, persisted in Firebase so it survives even if the current streak resets
+- **Entries Created** with a calendar icon -- total number of entries the user has ever created
+
+Claude Code may update your Firestore rules or add a user document to store the best streak persistently. The current streak can always be recalculated from entry dates, but the best streak needs to be stored because old entries might be deleted.
+
+---
+
+## Step 5: Test Everything
+
+Start your dev server if it is not already running:
+
+```bash
+npm run dev
+```
+
+Work through this testing checklist:
+
+1. **Streak counter in header** -- verify the fire icon and streak number appear on the right side of the header
+2. **Create a new entry** -- the streak should show "1" and the fire icon should fill with color
+3. **Pop animation** -- after submitting, a brief celebration animation should play showing the streak increment
+4. **Tap the fire icon** -- the calendar modal should open showing the current month with today marked as complete
+5. **Profile stats** -- navigate to Profile and verify all three stat cards display correct values
+6. **Multiple entries same day** -- create another entry. The streak should stay at 1 (not increment to 2) since both entries are on the same calendar day
+7. **Fire icon state** -- with an active streak, the fire should appear filled and animated. If you could test with no streak (fresh account), it should appear as an unfilled outline
+
+:::tip Testing Streaks Across Days
+Testing multi-day streaks is tricky since you cannot easily fast-forward time. The simplest approach is to trust the logic and verify the single-day case works. If you want to be thorough, you can temporarily modify the streak calculator to use a hardcoded array of dates spanning multiple days, verify the count is correct, then revert the change.
+:::
+
+---
+
+## Step 6: Commit Your Progress
+
+Once everything is working, save your progress:
+
+```bash
+git add .
+```
+
+```bash
+git commit -m "Add streak counter with fire animation, calendar modal, pop celebration, and profile stats"
+```
+
+```bash
+git push
+```
+
+---
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Streak shows 0 even though I just created an entry",
+    solution: <p>The streak calculator checks if the most recent entry date matches today or yesterday. Make sure your entry's date field is stored in <code>"YYYY-MM-DD"</code> format using local time, not UTC. Log the entry dates array to the console and compare with today's date string to find the mismatch.</p>
+  },
+  {
+    error: "Fire icon does not appear in the header",
+    solution: <p>The fire icon may not have been wired into the Header component correctly. Tell Claude Code: "The fire streak icon is not showing in the header. Can you check the Header component and make sure the streak counter is rendered on the right side?" Paste any console errors you see.</p>
+  },
+  {
+    error: "Calendar modal does not open when tapping the fire icon",
+    solution: <p>Check that the fire icon has an <code>onClick</code> handler that toggles the modal's visibility state. If tapping does nothing and there are no errors, the click handler may not be attached. Describe the issue to Claude Code and it will fix the wiring.</p>
+  },
+  {
+    error: "Pop animation never appears after submitting an entry",
+    solution: <p>The pop animation triggers only when the streak <em>increments</em> -- not on every submission. If you already submitted an entry today, subsequent entries will not trigger it because the streak value has not changed. Try testing with a fresh day or a new account. Also make sure the animation component is rendered in the correct parent component.</p>
+  },
+  {
+    error: "Profile stats show incorrect numbers",
+    solution: <p>The stats derive from the entries array passed to the Profile page. Make sure <code>App.tsx</code> is passing the full entries array to the Profile component, not just a count. Tell Claude Code: "My profile stats are wrong. Can you check that the entries array is being passed correctly to Profile?"</p>
+  },
+  {
+    error: "Firebase permission error when storing best streak",
+    solution: <p>If Claude Code added a user document to Firestore, your security rules may need updating to allow writes to the users collection. Tell Claude Code: "I'm getting a Firebase permission error when the best streak tries to save. Can you update the Firestore security rules?"</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={8}>
+- A **fire icon** in the header shows the current streak count
+- The fire **animates and fills** when the streak is active
+- Tapping the fire opens a **calendar modal** showing submission history
+- A **pop animation** celebrates when the streak increments
+- The **Profile page** shows three stat cards: Current Streak, Best Streak, and Entries Created
+- Streak logic correctly handles **same-day entries**, the **yesterday grace period**, and **streak resets**
+- Best streak is **persisted in Firebase** so it survives streak resets
+</ChapterCheckpoint>
+
+---
+
+## Part 4 Complete!
+
+You have built a full-featured web application from scratch. Let's take a step back and look at everything you have created across Part 4:
+
+| Feature | Chapter |
+|---|---|
+| Mobile-first app shell with header and tab navigation | Chapter 4 |
+| CRUD for text and photo entries with Firestore and image compression | Chapter 5 |
+| User authentication with Firebase Auth | Chapter 6 |
+| Polish: skeleton loading, empty states, toasts, onboarding | Chapter 7 |
+| Streak counter, fire animation, calendar modal, and profile stats | Chapter 8 |
+
+Your web app is feature-complete. It has authentication, data persistence, media uploads, habit tracking, and a polished mobile interface. That is a real product.
+
+In Part 5, we take this exact web app and wrap it in Capacitor to turn it into a native iOS app. Same codebase, native superpowers -- camera access, haptic feedback, shake detection, and the App Store.
+
+<TwitterCallout />
+
+**[Next: Chapter 9 -- Capacitor Setup →](../part-5-capacitor/capacitor-setup)**

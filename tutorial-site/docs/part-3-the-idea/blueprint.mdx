@@ -1,0 +1,159 @@
+---
+sidebar_position: 1
+title: "Chapter 3: From Idea to Blueprint"
+description: Use Claude Code to scope an MVP, plan features, and create an implementation plan before writing app code.
+---
+
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import TwitterCallout from '@site/src/components/TwitterCallout';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
+# Chapter 3: From Idea to Blueprint
+
+> Every app starts as a vague idea. This chapter turns yours into a concrete plan.
+
+Your project is scaffolded and running. Before we start building the actual app, let's plan what we're building. By the end of this chapter, you'll have a clear MVP scope and an implementation plan saved to a file that Claude Code can reference throughout the project.
+
+---
+
+## What You'll Learn
+
+- How to scope an MVP — what to build first, what to cut
+- How to use Claude Code for planning (not just coding)
+- Why planning before coding saves you time
+- The tech stack and why each piece was chosen
+
+---
+
+## The App: GratitudeJar
+
+**GratitudeJar** is a daily journal app. The concept is simple:
+
+1. **Write** a thought or **snap** a photo
+2. **Browse** past entries in a scrollable feed
+3. **Shake** the phone to rediscover a random memory
+
+That's it. Three core interactions. The simplicity is the point — it lets us focus on learning the full stack without getting lost in complex business logic.
+
+### Why a journal app?
+
+- **Universal appeal** — everyone can relate to journaling
+- **Natural daily habit** — gives the app a reason to exist on your phone
+- **Covers the full stack** — database, file storage, native APIs
+- **The shake interaction** — this is the hero moment. Nothing makes you feel like you built a "real app" faster than shaking your phone and having something happen.
+
+---
+
+## Step 1: Scope the MVP with Claude Code
+
+MVP stands for **Minimum Viable Product** — the smallest version of your app that still delivers value. Let's ask Claude Code to help us plan. Open Claude Code in your project terminal and send this prompt:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 1"
+  prompt="I want to build a journal app called GratitudeJar. It should support text entries, photo entries, and a shake-to-discover feature. Help me scope the MVP — what features should be in v1 vs cut for later? Dont code anything yet and output your plan in a new implementation.md file"
+  expectedOutput="Claude Code will produce an MVP feature list split into 'in' and 'out' categories and save it to implementation.md in your project root."
+  tip="This is how real developers start projects — by describing the idea and letting AI help structure the plan. Read through what Claude Code suggests."
+/>
+
+### What to expect
+
+Claude Code's output may vary — and that's fine. The MVP scope can fluctuate, and you can decide what to keep in or out. Here's the general shape of what should be **IN** the MVP:
+
+| Feature | Why it's essential |
+|---|---|
+| Create text entries | Core functionality |
+| Create photo entries | Teaches file uploads |
+| View entry feed | Users need to see their data |
+| Edit and delete entries | Complete CRUD cycle |
+| Shake to show random entry | The "wow" feature |
+| Streaks and stats | Habit building |
+
+**We'll add authentication later** — so if Claude Code includes it in the MVP, you can keep it there knowing we'll tackle it in a future chapter. If it leaves it out, that's fine too.
+
+:::tip The MVP Rule
+If you're unsure whether a feature belongs in the MVP, cut it. You can always add it later. Shipping something simple that works is infinitely better than not shipping something complex.
+:::
+
+---
+
+## Step 2: Confirm the Tech Stack
+
+This tutorial uses a specific set of technologies. Let's confirm with Claude Code that our plan aligns with the stack:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 2"
+  prompt="I'm building the GratitudeJar journal app. Confirm this tech stack is a good fit for a beginner building their first iOS app: React with TypeScript and Vite for the frontend, Tailwind CSS for styling, Firebase for the backend (Auth, Firestore, Storage), and Capacitor to wrap it as a native iOS app. Explain briefly why each piece was chosen. Don't code anything."
+  expectedOutput="Claude Code should confirm the stack and explain why each technology is a good fit."
+  tip="This prompt anchors Claude Code to our specific tech stack. Throughout the tutorial, Claude Code will generate code using these exact technologies."
+/>
+
+| Technology | What it's for |
+|---|---|
+| React + TypeScript + Vite | Frontend framework, type safety, fast build tool |
+| Tailwind CSS | Utility-first styling |
+| Firebase Auth | Login/signup without building a server |
+| Cloud Firestore | Real-time database |
+| Firebase Storage | Photo uploads |
+| Capacitor | Wrapping the web app as a native iOS app |
+
+---
+
+## Step 3: Review Your Implementation Plan
+
+Open the `implementation.md` file that Claude Code created. This file is your roadmap — it tells you (and Claude Code) what you're building, what's in scope, and what's deferred.
+
+You should now have:
+- A **scaffolded project** running in the browser (from Chapter 2)
+- An **implementation plan** with MVP features defined (from this chapter)
+
+This combination — a working project plus a clear plan — is the starting point for building the actual app.
+
+:::caution Running Into Issues?
+Don't hesitate to paste error messages directly into Claude Code and ask it to help you debug. You can also copy errors from your terminal and ask Claude Code to explain what went wrong and how to fix it.
+:::
+
+---
+
+## Why This Tech Stack
+
+### React + Vite + TypeScript
+
+**React** is the most popular frontend framework. The skills you learn here transfer directly to job opportunities. **Vite** is the modern build tool — it's fast and requires almost zero configuration. **TypeScript** adds type safety — it catches bugs before they reach the browser.
+
+### Tailwind CSS
+
+Instead of writing CSS files, you style elements directly with utility classes. It's fast to write, easy to maintain, and perfect for mobile-first design.
+
+### Firebase (Auth + Firestore + Storage)
+
+Firebase gives us three backend services in one:
+- **Authentication** — login/signup without building a server
+- **Firestore** — a real-time database that syncs automatically
+- **Storage** — upload and serve photos with security rules
+
+### Capacitor
+
+Capacitor wraps your web app in a native iOS shell. Your React code runs inside a WKWebView (Safari's rendering engine), but you get access to native APIs like the camera and haptics through JavaScript plugins.
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={3}>
+- You have an `implementation.md` file with your MVP scope
+- You understand what features are in v1 vs. deferred
+- You know the tech stack and why each piece was chosen
+- You're ready to start building the actual app UI
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+You have a plan and a running project. In the next chapter, we start building the app for real — the header, bottom navigation, and tab screens that make it look and feel like a mobile app.
+
+<TwitterCallout />
+
+**[Next: Chapter 4 — UI Shell →](../part-4-web-app/ui-shell)**

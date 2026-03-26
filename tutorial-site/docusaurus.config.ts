@@ -95,7 +95,7 @@ const config: Config = {
             },
             {
               label: 'Part 4 — Web App',
-              to: '/docs/part-3-web-app/ui-shell',
+              to: '/docs/part-4-web-app/ui-shell',
             },
           ],
         },

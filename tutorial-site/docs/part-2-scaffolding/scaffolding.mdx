@@ -1,0 +1,318 @@
+---
+sidebar_position: 1
+title: "Chapter 2: Project Scaffolding"
+description: Create the GratitudeJar project with Vite, React, TypeScript, install all dependencies, and set up Firebase.
+---
+
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
+# Chapter 2: Project Scaffolding
+
+> Time to create the project and lay the foundation for everything that follows.
+
+By the end of this chapter, you'll have a running React + TypeScript project with Tailwind CSS styling, Firebase configured, and your project structure organized. You'll see it live in the browser.
+
+---
+
+## What You'll Do
+
+- Scaffold a new project with Vite
+- Install React, TypeScript, Tailwind CSS v4, Firebase, and Lucide React
+- Have Claude Code configure Tailwind and clean up starter files
+- Set up your project folder structure
+- Create a Firebase project and get your config keys
+- See your first `npm run dev` output
+
+---
+
+## Step 1: Create the Project with Vite
+
+If you followed Chapter 1, you should have an empty `gratitude-jar` folder open in Cursor with Claude Code running in the terminal.
+
+:::tip Already in Your Project Folder?
+If you opened a new project in Cursor in Chapter 1, you're already in the right place. The commands below assume you're inside the `gratitude-jar` folder.
+
+If you're starting fresh from a different terminal, navigate to where you want your project to live first.
+:::
+
+Run this command to scaffold the project. Since we're already inside the `gratitude-jar` folder, we use `.` to create the project in the current directory:
+
+```bash
+npm create vite@latest . -- --template react-ts
+```
+
+:::info
+This may ask you to install the `create-vite` package. Type `y` and press Enter to confirm.
+:::
+
+This sets up React + TypeScript in your current folder. Now install the base dependencies:
+
+```bash
+npm install
+```
+
+### Test that it works
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser. You should see the default Vite + React landing page with a counter button.
+
+:::note
+The page may look a bit weird or default-styled. That's completely ok — we're about to replace all of it with our own app.
+:::
+
+Press `Ctrl + C` to stop the dev server.
+
+---
+
+## Step 2: Install Dependencies
+
+We need several packages. Run each command separately:
+
+```bash
+npm install firebase lucide-react
+```
+
+```bash
+npm install tailwindcss @tailwindcss/vite
+```
+
+| Package | What it does |
+|---|---|
+| `firebase` | Firebase SDK — auth, Firestore, storage |
+| `lucide-react` | Beautiful open-source icon library |
+| `tailwindcss` | Utility-first CSS framework |
+| `@tailwindcss/vite` | Vite plugin for Tailwind CSS v4 |
+
+:::info We'll Install Capacitor Later
+Capacitor and its plugins are only needed when we wrap the web app for iOS. Installing them now would just add confusion. One step at a time.
+:::
+
+---
+
+## Step 3: Configure Tailwind CSS v4
+
+Tailwind CSS v4 uses a new Vite plugin instead of the old PostCSS setup. It's much simpler — and Claude Code can handle the entire configuration for you.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
+  prompt="Configure Tailwind CSS v4 in my Vite project. Add the Tailwind Vite plugin to vite.config.ts, replace src/index.css with just the Tailwind import, and remove src/App.css since we'll use Tailwind for all styling. Also remove the App.css import from App.tsx."
+  context="Tailwind v4 uses a Vite plugin instead of the old PostCSS config. This is simpler and faster."
+  expectedOutput="Claude Code will update vite.config.ts to include the tailwindcss() plugin, replace the contents of src/index.css with a single @import 'tailwindcss' line, delete src/App.css, and remove the App.css import from App.tsx."
+  tip="After Claude Code makes these changes, restart your dev server (Ctrl+C then npm run dev) for the Tailwind plugin to take effect."
+/>
+
+---
+
+## Step 4: Clean Up the Starter Files
+
+Vite's template comes with demo content we don't need. Let's have Claude Code clear it out and set up our starting point.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
+  prompt="Clean up the Vite starter files for our GratitudeJar app. Replace src/App.tsx with a minimal component that shows 'GratitudeJar' centered on the screen with a warm amber background using Tailwind. Delete the unused react.svg and vite.svg files. Update the page title in index.html to 'GratitudeJar'."
+  context="We're replacing Vite's demo content with a clean starting point for our app."
+  expectedOutput="Claude Code will rewrite src/App.tsx with a simple centered layout using Tailwind's amber color scheme, delete unused SVG files, and change the title in index.html."
+/>
+
+### Test it
+
+```bash
+npm run dev
+```
+
+You should see a warm amber page with "GratitudeJar" centered on the screen. If Tailwind classes are working (amber background, bold text), your setup is correct.
+
+---
+
+## Step 5: Set Up the Folder Structure and Project Context
+
+A clear folder structure keeps you organized as the app grows. Let Claude Code create the folders and a project context file.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
+  prompt="Create the folder structure for our app: src/components/, src/pages/, src/lib/, and src/hooks/. Also create a CLAUDE.md file in the project root with directions for any AI assistant: the app should follow iOS Human Interface Guidelines, use a premium minimal aesthetic with subtle shadows and rounded corners, the color scheme is warm amber tones, and the tech stack is React + TypeScript + Vite + Tailwind CSS v4 + Firebase + Capacitor."
+  context="The folder structure organizes our code. The CLAUDE.md file tells Claude Code about the project's design philosophy so you don't have to repeat it in every prompt."
+  expectedOutput="Claude Code will create four directories and a CLAUDE.md file that acts as a style guide for the project."
+  tip="The CLAUDE.md file is like giving Claude Code a design brief. Instead of repeating 'make it look premium' in every prompt, this file handles it automatically."
+/>
+
+The folders will be used for:
+- **`components/`** — Small, reusable pieces. A button, a card, a header.
+- **`pages/`** — One file per screen. `Feed.tsx`, `Profile.tsx`, etc.
+- **`lib/`** — Configuration and utility functions. Firebase config lives here.
+- **`hooks/`** — Custom React hooks like `useEntries()` or `useAuth()`.
+
+---
+
+## Step 6: Set Up Firebase
+
+Firebase provides our backend — authentication, database, and file storage — without building a server.
+
+### Create a Firebase Project
+
+1. Go to [console.firebase.google.com](https://console.firebase.google.com)
+2. Click **Create a project** (or **Set up new project** depending on your console version)
+3. Name it `gratitude-jar` (or anything you like)
+4. **Disable** Google Analytics (we don't need it and it adds complexity)
+5. Click **Create project**
+
+### Register a Web App
+
+1. In your Firebase project dashboard, click the **web icon** (`</>`) to add a web app
+2. Name it `gratitude-jar-web`
+3. **Don't** check "Also set up Firebase Hosting"
+4. Click **Register app**
+5. Firebase will show you a config object — **copy it**
+
+:::caution Where Does This Config Go?
+Don't worry about pasting the config anywhere yet. We'll create a `.env` file and a `firebase.ts` config file in the next step. Just keep the config values handy (you can always find them again in Firebase Console → Project Settings → Your apps).
+:::
+
+### Enable Firestore Database
+
+1. In the Firebase console sidebar, look for **Firestore Database** (it may be under **Build** or listed separately depending on your console version)
+2. Click **Create database**
+3. Choose **Start in test mode** (we'll add security rules later)
+4. Pick a location close to you (e.g., `us-central1` for North America)
+
+### Enable Storage
+
+1. Look for **Storage** in the sidebar (may be under **Build** or listed separately)
+2. Click **Get started**
+3. Choose **Start in test mode**
+4. Same location as Firestore
+
+### Enable Authentication
+
+1. Look for **Authentication** in the sidebar (in newer console versions, this may be under **Security**)
+2. Click **Get started**
+3. Under **Sign-in method**, enable **Email/Password**
+
+---
+
+## Step 7: Configure Environment Variables and Firebase
+
+Never commit API keys directly in your code. We'll use environment variables.
+
+Create a `.env` file **in the project root** (same level as `package.json`):
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 7"
+  prompt="Create a .env file in the project root with placeholder Firebase config variables. The variable names should be: VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_STORAGE_BUCKET, VITE_FIREBASE_MESSAGING_SENDER_ID, VITE_FIREBASE_APP_ID. Use placeholder values that I'll replace with my real Firebase config. Also make sure .env is in .gitignore."
+  context="Vite only exposes environment variables that start with VITE_ to your frontend code. The .env file must be in the project root."
+  expectedOutput="Claude Code will create a .env file with placeholder values and ensure .gitignore includes .env."
+/>
+
+**Now open the `.env` file and replace the placeholder values with the real ones from your Firebase config.**
+
+:::info Where Is .env?
+The `.env` file must be in your **project root** — the same folder that contains `package.json`. If it's nested inside `src/` or anywhere else, it won't work.
+:::
+
+### Create the Firebase config file
+
+Now let Claude Code create the file that initializes Firebase in your app:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 7"
+  prompt="Create the Firebase configuration file at src/lib/firebase.ts. It should initialize Firebase using the VITE_ environment variables and export the db (Firestore), storage, and auth instances. Use initializeFirestore with persistentLocalCache and persistentMultipleTabManager for offline persistence instead of the default getFirestore."
+  context="This file is the single source of truth for Firebase in your app. Every other file that needs Firebase will import from here."
+  expectedOutput="Claude Code will create src/lib/firebase.ts that imports Firebase modules, reads config from import.meta.env variables, initializes the app, and exports db, storage, and auth."
+  tip="Make sure your .env file is saved with your real Firebase values before testing — Claude Code may try to verify the environment variables exist."
+/>
+
+---
+
+## Step 8: Initialize Git (Optional)
+
+If you're using Git for version control, this is a good time to initialize your repository:
+
+```bash
+git init
+```
+
+```bash
+git add .
+```
+
+```bash
+git commit -m "Initial project setup: React + TypeScript + Tailwind + Firebase config"
+```
+
+:::note
+Git is optional for this tutorial. If you're not using Git, skip this step — everything saves locally on your machine.
+:::
+
+---
+
+## Step 9: Final Verification
+
+Let's make sure everything works together:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173` and confirm the page loads with GratitudeJar on an amber background. No errors in the browser console (`Cmd + Option + J` in Chrome).
+
+<ClaudeCodePrompt
+  prompt="Review my project structure and tell me if I'm missing anything before I start building components. Check that Firebase is configured correctly and Tailwind is working."
+  tip="Claude Code can spot missing configs, incorrect imports, and common setup mistakes. Use it as a sanity check."
+/>
+
+:::caution Running Into Issues?
+Don't hesitate to paste error messages directly into Claude Code and ask it to help you debug. You can also copy errors from your terminal and ask Claude Code to explain what went wrong and how to fix it.
+:::
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Tailwind classes not working (no styling applied)",
+    solution: <p>Make sure your <code>src/index.css</code> contains <code>@import "tailwindcss";</code> and that you've added the <code>tailwindcss()</code> plugin to <code>vite.config.ts</code>. Restart the dev server after making changes.</p>
+  },
+  {
+    error: "Cannot find module 'firebase/firestore'",
+    solution: <p>Run <code>npm install firebase</code> again. If it persists, delete <code>node_modules</code> and <code>package-lock.json</code>, then run <code>npm install</code>.</p>
+  },
+  {
+    error: "import.meta.env.VITE_FIREBASE_API_KEY is undefined",
+    solution: <p>Make sure your <code>.env</code> file is in the project root (same level as <code>package.json</code>), and that variable names start with <code>VITE_</code>. You must restart the dev server after creating or editing <code>.env</code>.</p>
+  },
+  {
+    error: "Port 5173 is already in use",
+    solution: <p>Another process is using that port. Either close it or run Vite on a different port: <code>npm run dev -- --port 5174</code>.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={2}>
+- Running `npm run dev` shows a page with "GratitudeJar" on an amber background
+- Tailwind CSS classes are working (you can see the amber colors and centered layout)
+- The `src/lib/firebase.ts` file initializes Firebase
+- Your `.env` file has your Firebase config keys
+- A `CLAUDE.md` file exists with your design directions
+- You have a `src/components/`, `src/pages/`, `src/lib/`, and `src/hooks/` folder structure
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+The foundation is laid and your project is running. In the next chapter, we'll use Claude Code to plan the app — scope the MVP, define the features, and create an implementation plan before writing any app code.
+
+<TwitterCallout />
+
+**[Next: Chapter 3 — From Idea to Blueprint →](../part-3-the-idea/blueprint)**

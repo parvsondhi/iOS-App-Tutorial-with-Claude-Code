@@ -1,0 +1,278 @@
+---
+sidebar_position: 2
+title: "Chapter 5: Building the App"
+description: Build the entry form, connect to Firestore, create the feed, add edit/delete, and handle photo uploads.
+---
+
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
+# Chapter 5: Building the App
+
+> Time to build the core of GratitudeJar. By the end of this chapter, users can create entries, see them in a feed, edit, delete, and upload photos — all persisted in Firebase.
+
+This is the biggest chapter in the tutorial. We'll build the entry creation form, define our data types, connect to Firestore, build the feed, add a post detail view with edit and delete, compress images, and clean up the display. Let's go.
+
+---
+
+## What You'll Build
+
+- An entry creation form with text and photo toggle
+- TypeScript types for your data model
+- Firestore integration for real-time persistence
+- A social-media-style feed with entry cards
+- A post detail view with edit and delete
+- Image compression for photo uploads
+- Offline persistence
+
+---
+
+## Step 1: Build the Entry Form
+
+Right now your app has a nice shell but no functionality. Let's build the entry creation form. Send this to Claude Code:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 1"
+  prompt="Ok. I want to now start building the entry form for a memory. It needs: a toggle between 'text' and 'photo' entry types. a textarea for text entries, a file input with image preview for photo entries, an optional caption field for photos, and a Save Entry button."
+  expectedOutput="Claude Code will create or update a page component with a form that toggles between text and photo modes, with appropriate inputs for each."
+  tip="Claude Code will figure out where to put this based on your project structure. It may create a new page or update the existing Create page."
+/>
+
+### Test it
+
+```bash
+npm run dev
+```
+
+Navigate to the Create tab. You should see a form with a text/photo toggle. Try switching between modes — the inputs should change. The Save button won't do anything yet, and that's expected.
+
+**As of now, nothing is getting stored.** We need to define our data types and connect to Firebase first.
+
+---
+
+## Step 2: Define Types and Set Up Firebase
+
+Now let's define the data model and make sure Firebase is properly configured. Claude Code will ask you for any values it needs:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 2"
+  prompt="Lets define the entry type for this project first and set up firebase as needed. Please ask me for what value are needed to set this up. I have already created a project in firebase console. Please make sure my firebase values are in a .env file."
+  expectedOutput="Claude Code will create a types file with the Entry type definition and ensure your Firebase config is reading from .env variables. It may ask you for your Firebase config values."
+  tip="If Claude Code asks for your Firebase values, paste them from the Firebase Console (Project Settings → Your apps → Web app → Config). Make sure they go into the .env file in your project root."
+/>
+
+:::info Where Is .env?
+The `.env` file must be in your **project root** — the same folder that contains `package.json`. If it's nested inside `src/` or anywhere else, it won't work. You must restart the dev server (`Ctrl+C` then `npm run dev`) after creating or editing `.env`.
+:::
+
+---
+
+## Step 3: Wire Save to Firestore
+
+Next step is wiring the Save button to actually write to Firestore. Send this to Claude Code:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
+  prompt="Wire up the handleSave in the entry form to actually write to Firestore. Create a Firestore service file if needed with functions to create, update, and delete entries. Use serverTimestamp for the createdAt field. Also set up a real-time listener with onSnapshot so entries update automatically."
+  context="We're going straight to Firestore — no local state. When you save an entry, it goes to the cloud. When you load the feed, it reads from the cloud in real-time."
+  expectedOutput="Claude Code will create a Firestore service file and wire the form's save handler to write documents to Firestore."
+/>
+
+### What just happened
+
+Instead of storing entries in memory (where they'd disappear on refresh), we're saving directly to Firestore. This means:
+
+- **Entries persist** — refresh the page and they're still there
+- **Real-time sync** — changes appear instantly without refreshing
+- **Cloud-hosted** — your data lives on Firebase's servers
+
+The `onSnapshot` listener is the key — it watches for any changes in the Firestore collection and automatically updates the UI. It's like a radio that's always tuned in.
+
+---
+
+## Step 4: Build the Feed
+
+Now let's build the feed page where entries are displayed:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
+  prompt="Lets update the feed page to create feed type cards similar to social media apps where each entry is a feed item. Read from firestore to pull in the data for each feed card."
+  expectedOutput="Claude Code will update the Feed page to display entries as styled cards, reading data from Firestore in real-time."
+  tip="The feed should show entries newest-first. Each card should display the date, content (text or image), and optional caption."
+/>
+
+### Test it
+
+```bash
+npm run dev
+```
+
+1. Go to the Create tab and write a text entry
+2. Save it
+3. Switch to the Feed tab — your entry should appear as a card
+4. **Refresh the page** — the entry should still be there (this is the big moment!)
+5. Create a few more entries — they should stack newest-first
+
+---
+
+## Step 5: Add Post Detail View with Edit and Delete
+
+Each entry needs a detail view where users can edit or delete it:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
+  prompt="For each card lets add a tap/click handler such that when i tap on the post it opens the post with the date of posting and then an edit option on edit it should let me edit the post or add an image and then also show a delete option so that i can delete the post if i want to. The header should have a back icon to go back to feed page and leave post view."
+  expectedOutput="Claude Code will add a post detail view that opens when you tap a card. It will include the full post content, date, edit functionality, delete with confirmation, and a back button."
+/>
+
+### Test the full CRUD flow
+
+1. **Create** — make a new entry, it appears in the feed
+2. **Read** — tap an entry card to open the detail view
+3. **Update** — tap edit, change the text, save — it updates
+4. **Delete** — tap delete, confirm — the entry disappears
+5. **Refresh** — all changes should persist
+
+---
+
+## Step 6: Clean Up and Review
+
+Let's have Claude Code review everything and fix any issues:
+
+<ClaudeCodePrompt
+  prompt="Review my project and make sure everything is working correctly. Check for any errors or issues with the entry form, feed, detail view, and Firestore integration."
+  tip="When in doubt, ask Claude Code to review your work. It's like having a senior developer check your code."
+/>
+
+---
+
+## Step 7: Add Offline Persistence
+
+Firestore has built-in offline support. When the user goes offline, reads come from a local cache and writes are queued until the connection returns. Let's enable it:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 7"
+  prompt="Update src/lib/firebase.ts to use initializeFirestore with persistentLocalCache and persistentMultipleTabManager for offline persistence, instead of the default getFirestore. This is the modern Firebase v10+ approach."
+  context="Offline persistence lets the app work without internet — reads come from IndexedDB cache and writes queue until reconnection."
+  expectedOutput="Claude Code will update firebase.ts to use initializeFirestore with persistence configuration instead of getFirestore."
+/>
+
+---
+
+## Step 8: Add Image Compression
+
+Phone cameras take huge photos (3000x4000 pixels, 4MB+). We need to compress them before uploading:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 8"
+  prompt="Create an image compression utility at src/lib/image.ts. The compressImage function should take a File, load it into an Image element, resize it proportionally to max 1200x1200, draw it to a Canvas, and export as JPEG at 80% quality. This reduces 4MB phone photos to ~200-400KB. Update AddEntryPage as needed"
+  context="Compressing images before uploading saves bandwidth, reduces storage costs, and makes the feed load faster."
+  expectedOutput="Claude Code will create an image compression utility and integrate it into the photo upload flow."
+/>
+
+:::note
+Your images may not look nice when uploading to the feed at first — the display might cut them off or stretch them. Don't worry, we'll fix that next.
+:::
+
+---
+
+## Step 9: Fix Image Display in Feed
+
+Let's clean up how images appear in the feed:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 9"
+  prompt="Lets clean up the feed preview of the images when uploaded. Depending on the image dimension we want to ensure that the full image is shown appropriately in the feed and not cut off inappropriately. sorry i want to update this so that its the full image but still scaled for mobile not just full dimension"
+  expectedOutput="Claude Code will update the feed card image display so images show fully, scaled appropriately for mobile screens without being cut off."
+/>
+
+---
+
+## Step 10: Set Up Storage Security Rules
+
+In the Firebase console, go to **Storage → Rules** and set up basic rules. For now, allow reads and writes with a file size limit. We'll lock this down further when we add authentication in the next chapter.
+
+---
+
+## Step 11: Commit Your Progress (Optional)
+
+If you're using Git:
+
+```bash
+git add .
+```
+
+```bash
+git commit -m "Add entries: creation form, Firestore persistence, feed, detail view, image compression"
+```
+
+:::caution Running Into Issues?
+Don't hesitate to paste error messages directly into Claude Code and ask it to help you debug. You can also copy errors from your terminal and ask Claude Code to explain what went wrong and how to fix it.
+:::
+
+<TroubleshootingAccordion items={[
+  {
+    error: "FirebaseError: Missing or insufficient permissions",
+    solution: <p>Your Firestore security rules are blocking the request. Go to Firebase Console → Firestore → Rules and make sure you have <code>allow read, write: if true;</code> for now. We'll add proper rules when we add authentication.</p>
+  },
+  {
+    error: "Entries load but new entries don't appear in real-time",
+    solution: <p>Make sure you're using <code>onSnapshot</code> for real-time listening, not <code>getDocs</code> for one-time fetch. Also check that the useEffect cleanup returns the unsubscribe function.</p>
+  },
+  {
+    error: "Photo preview doesn't show after selecting a file",
+    solution: <p>Ask Claude Code to check the file input onChange handler. It should use <code>URL.createObjectURL(file)</code> to create a local preview URL.</p>
+  },
+  {
+    error: "Entries appear in wrong order or without dates",
+    solution: <p>Make sure entries have a <code>createdAt</code> field using <code>serverTimestamp()</code> and the query uses <code>orderBy('createdAt', 'desc')</code>. Delete any old entries from the Firebase console that were created before adding the timestamp.</p>
+  },
+  {
+    error: "Image displays broken/corrupted after upload",
+    solution: <p>Make sure the content type is set to <code>'image/jpeg'</code> in the upload metadata. Without it, Firebase may serve the file with the wrong MIME type.</p>
+  },
+  {
+    error: "Upload fails with permission error",
+    solution: <p>Check your Storage security rules in the Firebase console. Make sure they allow writes under the entries path. We'll add proper auth-based rules in the next chapter.</p>
+  },
+  {
+    error: "import.meta.env.VITE_FIREBASE_API_KEY is undefined",
+    solution: <p>Make sure your <code>.env</code> file is in the project root (same level as <code>package.json</code>), variable names start with <code>VITE_</code>, and you've restarted the dev server after editing <code>.env</code>.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={5}>
+- You can **create text entries** and they appear in the Feed
+- You can **create photo entries** with image preview and optional caption
+- Entries **persist across page refreshes** (stored in Firestore)
+- You can **tap an entry** to open a detail view
+- You can **edit** any entry from the detail view
+- You can **delete** any entry with confirmation
+- Images are **compressed** before upload
+- Images display **properly scaled** in the feed (not cut off)
+- The **Firebase console** shows your entries as documents
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+Your app has real functionality with persistent data. But right now, anyone can see everyone's entries. In the next chapter, we add authentication — login, signup, and private data.
+
+<TwitterCallout />
+
+**[Next: Chapter 6 — Authentication →](./auth)**

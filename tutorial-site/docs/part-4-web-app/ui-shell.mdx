@@ -1,0 +1,219 @@
+---
+sidebar_position: 1
+title: "Chapter 4: UI Shell"
+description: Build the mobile-first app shell with header, bottom navigation, and tab screens.
+---
+
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
+# Chapter 4: UI Shell
+
+> Let's build something you can see. By the end of this chapter, your app will have a real mobile interface.
+
+This is the chapter where your project stops feeling like a coding exercise and starts looking like an actual app. We'll build the structural skeleton -- the header, bottom navigation bar, and page screens -- that everything else will be built inside.
+
+---
+
+## What You'll Build
+
+- A mobile-first app shell sized to a phone viewport
+- A fixed header with the app name
+- A bottom navigation bar with tabs for **Feed** and **Profile**, plus a center button for adding entries
+- Placeholder page components that swap when you tap a tab
+- Safe area handling for notched phones (iPhone X and later)
+
+---
+
+## Step 1: Build the Mobile Scaffold
+
+Before writing any code, let's think about what a mobile app shell looks like. Every app you use daily -- Instagram, Twitter, Spotify -- follows the same structural pattern. A header pinned to the top. A navigation bar fixed at the bottom. And a scrollable content area in between. This is the layout users expect, and it is what we are building first.
+
+Let Claude Code handle the implementation:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 1"
+  prompt="Lets create a simple mobile scafold right now. We are looking for just 3 key things now: 1. The header stays at the top — it doesn't scroll with content 2. The bottom nav stays at the bottom — always visible for navigation. This includes two tabs - Feed and Profile and a center button for adding a new entry 3. The content area fills the remaining space and scrolls independently. This is the exact pattern used by Instagram, Twitter, and most mobile apps."
+  context="This is the foundational layout for the entire app. Claude Code will create the Header, BottomNav, and placeholder page components in one go."
+  expectedOutput="Claude Code will create multiple component files -- a Header component fixed to the top, a BottomNav component fixed to the bottom with Feed, Add, and Profile buttons, and placeholder page components for each tab."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+Claude Code will set up several files for you. The header component will be fixed at the top of the screen so it never scrolls away. The bottom navigation will be fixed at the bottom with three interactive elements -- a Feed tab, a center Add button for creating new entries, and a Profile tab. Each tab will have an icon and label, and the active tab will be visually highlighted.
+
+The placeholder pages are intentionally simple for now. Each one shows a centered icon, a title, and a short description of what will eventually be built there. This is a professional practice -- placeholder screens let you build and test navigation before the real content exists.
+
+---
+
+## Step 2: Wire Everything Together
+
+Now we need to connect all these components in the main App file. The key React pattern here is **lifting state up** -- the parent component owns the state and passes it down to children as props. App.tsx will track which tab is active, and both the content area and the bottom nav will respond to that state.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 2"
+  prompt="Let's wire things together in the app. Add a useState<Tab> for tracking the active tab (default to 'feed'). Render: Header at the top, a main content area and padding to account for the fixed header and bottom nav. Conditionally render each page based on activeTab, and BottomNav at the bottom. The content area should fill the viewport between header and nav"
+  context="App.tsx is the orchestrator. It owns the tab state and passes it down to children. This is a common React pattern called conditional rendering."
+  expectedOutput="Claude Code will update App.tsx with useState for tab management, imports for all components, and a layout structure with the Header, conditional page rendering, and BottomNav."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+After this step, your app has real navigation. When a user taps a tab in the bottom nav, it calls a function passed down from App.tsx, which updates the state, causing React to re-render and display the corresponding page. This is the same pattern used by virtually every React application with tab-based navigation.
+
+You might wonder why we are not using React Router here. For a simple tab-based app like this, `useState` is simpler and lighter than adding a router. We are switching between screens in the same view -- there are no URLs to manage, no browser back button behavior to worry about. If the app grew to need nested navigation or deep linking, we would add a router then. Don't over-engineer.
+
+---
+
+## Step 3: Handle the iPhone Notch
+
+Modern iPhones have a notch at the top and a home indicator bar at the bottom. If we don't account for these, our header and navigation will render behind them, making parts of the UI unreachable. This is a two-part fix.
+
+First, update the viewport meta tag:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
+  prompt="Update index.html to add viewport-fit=cover to the viewport meta tag. This ensures the app renders correctly on iPhones with notches by extending the app behind the notch and home indicator."
+  context="This is required for proper iOS rendering when we wrap the app with Capacitor later. Without it, the app won't extend into the safe area on notched iPhones."
+  expectedOutput="Claude Code will update the viewport meta tag in index.html to include viewport-fit=cover."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+The `viewport-fit=cover` value tells the browser to extend the app behind the notch and home indicator. But extending behind them is only half the solution -- we also need to add padding so our actual content is not obscured.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 3 (continued)"
+  prompt="add padding to avoid content being obscured by the notch and home indicator."
+  context="Now that we've extended the app behind the safe areas with viewport-fit=cover, we need safe area padding on the header and bottom nav so they don't overlap with the notch or home indicator."
+  expectedOutput="Claude Code will add safe-area-inset padding to the Header and BottomNav components using CSS environment variables like env(safe-area-inset-top)."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+The safe area insets are CSS environment variables provided by the browser. `env(safe-area-inset-top)` gives the height of the notch area, and `env(safe-area-inset-bottom)` gives the height of the home indicator. By adding these as padding, our content stays visible and touchable on every device.
+
+---
+
+## Step 4: Test Your App Shell
+
+Start the dev server:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser and check:
+
+1. **Header** appears at the top with the app name
+2. **Bottom nav** appears at the bottom with Feed, Add, and Profile
+3. **Feed** is active by default (its icon should be highlighted)
+4. **Tap "Add"** -- the center content changes to the Create placeholder
+5. **Tap "Profile"** -- switches to the Profile placeholder
+6. **Tap "Feed"** -- back to the Feed view
+7. The active tab icon/text changes color when you switch
+
+### Test mobile sizing
+
+Open Chrome DevTools (`Cmd + Option + I` on Mac, `Ctrl + Shift + I` on Windows), click the device toolbar icon (or press `Cmd + Shift + M`), and select **iPhone 14** from the device dropdown. Your app should look like a real mobile app:
+
+- Content is centered and doesn't stretch to fill a wide screen
+- The header and bottom nav span the full width
+- Tapping tabs switches the view
+- Nothing is hidden behind the notch or home indicator
+
+---
+
+## Step 5: Spruce Up the Design
+
+The scaffold works, but it probably looks a bit plain. Let's give it some personality. We want something that feels polished and premium -- think Headspace or Calm. Clean lines, warm tones, subtle depth.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
+  prompt="Lets update the design of the header and nav bar to be more polished and premium. Use a clean, minimal design with smooth rounded elements and subtle depth. Think Headspace-style — calm, inviting, with warm amber tones."
+  context="We're taking the functional scaffold and giving it visual polish. The layout stays the same but the styling gets elevated."
+  expectedOutput="Claude Code will update the Header and BottomNav components with refined styling -- subtle shadows, rounded elements, smoother color transitions, and a warmer overall feel."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+:::tip Make It Yours
+This is a great moment to experiment. Don't like amber? Tell Claude Code to try a different color palette. Want a different vibe? Describe it -- "make it feel more like a journaling app" or "give it a dark mode." One of the best things about working with Claude Code is that design iteration is fast. Try a few different looks and pick the one that feels right to you.
+:::
+
+---
+
+## Step 6: Clean Up and Commit
+
+Let's have Claude Code do a final review to make sure everything is clean:
+
+<ClaudeCodePrompt
+  prompt="Review my project and make sure everything is working correctly. Check for any errors or issues, especially around mobile layout and fixed positioning. Fix any issues you find."
+  context="Fixed positioning on mobile can cause quirks. It's good to get a review before moving on."
+  expectedOutput="Claude Code will scan your components for potential issues and either confirm everything looks good or fix any problems it finds."
+/>
+
+Once everything looks good, commit your progress:
+
+```bash
+git add .
+```
+
+```bash
+git commit -m "Add app shell: header, bottom nav, and tab navigation"
+```
+
+```bash
+git push
+```
+
+---
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Cannot find module 'lucide-react'",
+    solution: <p>Run <code>npm install lucide-react</code> in your terminal. If you already installed it in a previous chapter, make sure you're in the correct project directory.</p>
+  },
+  {
+    error: "Header and bottom nav overlap the content",
+    solution: <p>The main content area needs top and bottom padding to account for the fixed header and bottom nav. Tell Claude Code: "The header and nav are covering my content. Add padding to the main content area so nothing is hidden behind the fixed elements."</p>
+  },
+  {
+    error: "Tab clicks don't change the page",
+    solution: <p>Make sure <code>App.tsx</code> is passing the <code>setActiveTab</code> function (not the <code>activeTab</code> value) as the <code>onTabChange</code> prop to <code>BottomNav</code>. Paste the error or describe the behavior to Claude Code and it will fix the wiring.</p>
+  },
+  {
+    error: "Icons don't appear (blank space where icon should be)",
+    solution: <p>Icons need to be imported by name from lucide-react. Paste the issue into Claude Code and ask it to check the icon imports in your components.</p>
+  },
+  {
+    error: "Content looks wrong on iPhone / notch area",
+    solution: <p>Make sure your <code>index.html</code> has <code>viewport-fit=cover</code> in the viewport meta tag, and that your Header and BottomNav have safe-area-inset padding applied. Tell Claude Code: "My app content is hidden behind the iPhone notch" and it will add the correct safe area handling.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={4}>
+- The app has a **fixed header** at the top of the screen
+- A **bottom navigation bar** with Feed, Add, and Profile
+- Clicking each tab **switches the displayed page**
+- The **active tab** is visually highlighted
+- The layout looks correct in **Chrome DevTools mobile view**
+- Safe area padding handles **notched iPhones** correctly
+- The design feels **polished and premium** with warm amber tones
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+You have an app shell that looks and navigates like a real mobile app. In the next chapter, we'll build the core feature -- creating, viewing, editing, and deleting journal entries. That's where the app comes alive.
+
+<TwitterCallout />
+
+**[Next: Chapter 5 — Building the App →](./entries)**

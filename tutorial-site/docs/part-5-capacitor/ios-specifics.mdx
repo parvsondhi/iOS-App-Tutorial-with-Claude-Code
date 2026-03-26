@@ -1,0 +1,391 @@
+---
+sidebar_position: 4
+title: "Chapter 12: iOS-Specific Work"
+description: Handle safe areas, keyboard behavior, app icons, and splash screens for iOS.
+---
+
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
+# Chapter 12: iOS-Specific Work
+
+> Make the app look and feel like it belongs on iOS. Handle the notch, the keyboard, and all the little details.
+
+Your app runs on iOS, but it doesn't quite feel native yet. The status bar overlaps the header. The keyboard covers input fields. There's no app icon. This chapter fixes every one of those issues. These are the details that separate "an app that runs on iOS" from "an iOS app."
+
+---
+
+## What You'll Do
+
+- Handle safe area insets (the notch, home indicator, status bar)
+- Fix keyboard behavior so inputs aren't covered
+- Set up the app icon for all required sizes
+- Create a splash/launch screen
+- Configure the status bar style
+- Ensure touch targets meet Apple's minimum size guidelines
+- Test on the Simulator and a physical device
+
+---
+
+## What You'll Learn
+
+- CSS `env(safe-area-inset-*)` variables
+- How the iOS keyboard interacts with web views
+- Apple's app icon requirements (1024×1024 source → many sizes)
+- Xcode's asset catalog system
+- The `@capacitor/status-bar` plugin
+- Apple's Human Interface Guidelines for touch targets
+
+---
+
+## Step 1: The Safe Area Problem
+
+Modern iPhones have a notch (or Dynamic Island) at the top and a home indicator bar at the bottom. If your app ignores these, content will be hidden:
+
+```
+Without safe areas:        With safe areas:
+┌──────────────────┐      ┌──────────────────┐
+│▓▓▓▓ NOTCH ▓▓▓▓▓│      │▓▓▓▓ NOTCH ▓▓▓▓▓│
+│er (hidden!)      │      │                  │
+│                  │      │  Header          │
+│  Content         │      │                  │
+│                  │      │  Content         │
+│                  │      │                  │
+│  Bottom Nav      │      │  Bottom Nav      │
+│▓▓ HOME BAR ▓▓▓▓│      │                  │
+└──────────────────┘      │▓▓ HOME BAR ▓▓▓▓│
+                          └──────────────────┘
+```
+
+### The CSS solution
+
+iOS exposes safe area dimensions through CSS environment variables:
+
+- `env(safe-area-inset-top)` — Space below the notch/Dynamic Island
+- `env(safe-area-inset-bottom)` — Space above the home indicator
+- `env(safe-area-inset-left)` — Space on the left (landscape)
+- `env(safe-area-inset-right)` — Space on the right (landscape)
+
+These values are `0` on devices without a notch (or in the browser) and ~47px on notched iPhones. This means our safe area CSS works everywhere without platform detection.
+
+---
+
+## Step 2: Apply Safe Area Insets
+
+Send this prompt to Claude Code to apply safe area insets to your fixed elements:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 2"
+  prompt="Update the fixed-position elements in our app to respect iOS safe area insets. The header needs padding for the notch, the bottom nav needs padding for the home indicator, and the main content area needs to account for both so nothing is hidden behind the fixed elements."
+  context="Without safe area insets, content hides behind the notch and home indicator on modern iPhones."
+  expectedOutput="Claude Code will update Header.tsx, BottomNav.tsx, and App.tsx with safe area padding using CSS env() variables."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+### Why inline styles instead of Tailwind?
+
+Tailwind doesn't support `env()` functions in its utility classes. The `style` prop is the correct way to use CSS environment variables in React. These values are computed by the browser at render time — they're not static.
+
+---
+
+## Step 3: Configure the Status Bar
+
+Install the Status Bar plugin:
+
+```bash
+npm install @capacitor/status-bar
+```
+
+```bash
+npx cap sync
+```
+
+Send this prompt to Claude Code to configure the status bar:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
+  prompt="Configure the iOS status bar in main.tsx. We have a light amber theme, so set the status bar to show dark text. Only apply this on native platforms."
+  context="The status bar sits at the very top of the iOS screen. We need dark text on our light amber background."
+  expectedOutput="Claude Code will update main.tsx with StatusBar plugin imports and a native platform check that configures the style."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+:::tip Style.Light vs Style.Dark
+`Style.Light` means dark text — it refers to the background being light, not the text color. This trips up many developers.
+:::
+
+### Status bar options
+
+| Style | Effect |
+|---|---|
+| `Style.Light` | Dark text on light background (for light app themes) |
+| `Style.Dark` | White text on dark background (for dark app themes) |
+
+Our app uses a light amber background, so dark status bar text (`Style.Light`) is correct.
+
+---
+
+## Step 4: Fix Keyboard Behavior
+
+When a text input is focused on iOS, the keyboard slides up. In a web view, this can push the entire page or cover the input. Send this prompt to Claude Code to fix keyboard behavior:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
+  prompt="Fix iOS keyboard behavior in our Capacitor app. Update the Capacitor config so the web view resizes properly when the keyboard appears. Also add CSS rules so focused inputs scroll into view and inputs don't trigger iOS auto-zoom."
+  context="Keyboard handling is one of the trickiest parts of iOS web views — these changes prevent inputs from being hidden."
+  expectedOutput="Claude Code will update capacitor.config.ts with iOS keyboard config and add CSS rules to index.css for scroll margins and font sizes."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+:::warning The 16px Font Size Rule
+iOS Safari automatically zooms the page when an input with a font size smaller than 16px is focused. This is meant to help readability but creates a terrible UX — the page zooms in and doesn't zoom back. Setting `font-size: 16px` on all inputs prevents this.
+:::
+
+---
+
+## Step 5: Touch Target Sizes
+
+Apple's Human Interface Guidelines require minimum touch targets of **44×44 points**. Some of our buttons (especially icon-only ones) might be too small. Send this prompt to Claude Code to fix touch targets:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
+  prompt="Audit and fix touch target sizes across our app to meet Apple's minimum guidelines. Add a utility CSS class for touch targets and review icon-only buttons to make sure they're large enough to tap comfortably."
+  context="Apple's Human Interface Guidelines require 44x44pt minimum touch targets. Failing this can lead to App Store rejection."
+  expectedOutput="Claude Code will add a global CSS rule for minimum touch target sizes and review icon buttons for compliance."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+Check these components for touch target compliance:
+- **EntryCard** — edit and delete buttons
+- **BottomNav** — tab buttons (already good with `py-2` + icon + label)
+- **Header** — shake button
+- **ShakeReveal** — dismiss button
+
+:::caution Don't Apply 44px Minimums Globally
+Avoid setting `min-height: 44px` and `min-width: 44px` on all `button` and `a` elements globally — this can break layouts with inline links, compact toggles, or small icon buttons. Instead, apply the `.touch-target` class selectively to interactive elements that need it, or use adequate padding (e.g., `p-2.5` with a `w-6 h-6` icon = 44px total).
+:::
+
+---
+
+## Step 6: Set Up the App Icon
+
+Apple requires a 1024×1024 pixel source image for your app icon. From this, Xcode generates all required sizes.
+
+### Create your icon
+
+You can use any image editor, or ask Claude Code for help:
+
+<ClaudeCodePrompt
+  prompt="I need a 1024x1024 app icon for a journal app called GratitudeJar. The app uses an amber/warm color palette. Can you suggest a simple icon design that would work well at small sizes (like on the iPhone home screen)?"
+  tip="App icons need to be recognizable at 60×60 pixels. Simple shapes and bold colors work best. Avoid text — it's unreadable at small sizes."
+/>
+
+### Add the icon to Xcode
+
+1. Open the Xcode project: `npx cap open ios`
+2. In the left sidebar, navigate to **App → Assets.xcassets → AppIcon**
+3. Drag your 1024×1024 image into the **App Store** slot (1024pt)
+4. Xcode will automatically generate all required sizes from this source
+
+If you're using Xcode 15+, you only need the single 1024×1024 image — Xcode generates the rest automatically.
+
+### Verify the icon
+
+After adding the icon:
+1. Build and run in the Simulator (`Cmd + R`)
+2. Press `Cmd + Shift + H` to go to the home screen
+3. You should see your custom app icon with "GratitudeJar" underneath
+
+---
+
+## Step 7: Create a Launch Screen
+
+The launch screen (splash screen) is what users see between tapping the app icon and the app loading. Apple recommends matching it to your app's initial screen for a seamless transition.
+
+### Option A: Storyboard (recommended)
+
+In Xcode:
+1. Open `ios/App/App/Base.lproj/LaunchScreen.storyboard`
+2. Select the existing view
+3. Set the background color to your amber-50 (`#FFFBEB`)
+4. Optionally add your app icon centered on the screen
+5. Build and run to test
+
+### Option B: Simple color
+
+For the simplest approach, just set the background color:
+
+1. Open LaunchScreen.storyboard in Xcode
+2. Select the **View** in the hierarchy
+3. In the Attributes Inspector, set **Background** to a custom color: `#FFFBEB`
+4. This gives a clean amber splash that transitions smoothly into the app
+
+The launch screen should load almost instantly because Capacitor's web view starts loading immediately. A matching background color creates the illusion of an instant launch.
+
+---
+
+## Step 8: Deploy to a Physical Device
+
+Testing on a real device is the only way to verify:
+- Safe area insets with the actual notch
+- Haptic feedback
+- Camera access
+- Shake detection
+- Performance on real hardware
+
+### Requirements
+
+1. An iPhone connected via USB (or on the same Wi-Fi for wireless debugging)
+2. A free Apple Developer account (or paid for App Store submission)
+3. Xcode's automatic signing set up
+
+### Steps
+
+1. Connect your iPhone to your Mac via USB
+2. In Xcode, select your iPhone from the device dropdown (instead of a Simulator)
+3. Go to **Signing & Capabilities** → select your Apple ID team
+4. Click **Play** (`Cmd + R`)
+5. On your iPhone, go to **Settings → General → VPN & Device Management** → trust your developer certificate
+6. The app installs and launches on your phone
+
+### Using the dev server on a physical device
+
+Update `capacitor.config.ts` to use your Mac's local IP instead of `localhost`. Find your Mac's IP: **System Settings → Network → Wi-Fi → Details → IP Address**
+
+Your phone and Mac must be on the same Wi-Fi network.
+
+:::tip Paste Errors into Claude Code
+If you run into issues deploying to a physical device, paste the full Xcode error output directly into Claude Code. It can diagnose signing issues, provisioning profile problems, and device trust errors quickly.
+:::
+
+---
+
+## Step 9: Final Polish Checklist
+
+Before moving to Part 6 (TestFlight), walk through this checklist:
+
+| Check | Status |
+|---|---|
+| Header text doesn't overlap the notch/Dynamic Island | |
+| Bottom nav doesn't overlap the home indicator | |
+| Status bar text is readable (dark text on light bg) | |
+| Keyboard doesn't cover text inputs | |
+| Input fields don't trigger page zoom (font-size ≥ 16px) | |
+| All buttons are at least 44×44 touch targets | |
+| App icon appears on the home screen | |
+| Launch screen matches the app's background color | |
+| Haptics work on the physical device | |
+| Camera opens the actual viewfinder (not just file picker) | |
+| Shake detection works with a real shake | |
+
+---
+
+## Step 10: Production Build
+
+Before moving to TestFlight, let's make a production build. Send this prompt to Claude Code to prepare the production config:
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 10"
+  prompt="Update capacitor.config.ts for production by removing the development server block. The app should load from the bundled files instead of connecting to localhost."
+  context="This is the critical switch from development to production — the app must load from bundled files for TestFlight."
+  expectedOutput="Claude Code will update capacitor.config.ts to remove the server block while keeping all other configuration."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+Then build and sync:
+
+```bash
+npm run build
+```
+
+```bash
+npx cap sync
+```
+
+Now the iOS app uses the bundled files from `dist/` instead of connecting to a dev server. This is what you'll submit to TestFlight.
+
+:::warning Don't Forget to Remove the Server Block
+Forgetting to remove the server block is the most common TestFlight mistake — the app tries to connect to localhost and shows a blank screen for your testers.
+:::
+
+---
+
+## Step 11: Commit Your Progress
+
+```bash
+git add .
+```
+
+```bash
+git commit -m "Add iOS polish: safe areas, status bar, keyboard handling, app icon, touch targets"
+```
+
+```bash
+git push
+```
+
+---
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Content is still hidden behind the notch",
+    solution: <p>Make sure <code>viewport-fit=cover</code> is in your <code>index.html</code> meta viewport tag. Without it, the <code>env(safe-area-inset-*)</code> variables return 0. Also verify the inline <code>style</code> props are applied to the header and bottom nav.</p>
+  },
+  {
+    error: "Input fields zoom in when focused",
+    solution: <p>Set <code>font-size: 16px</code> on all input and textarea elements. iOS Safari auto-zooms when the font size is below 16px. Add the CSS rule from Step 4 to your global styles.</p>
+  },
+  {
+    error: "Can't run on physical device — 'Untrusted Developer'",
+    solution: <p>On your iPhone, go to <strong>Settings → General → VPN & Device Management</strong>. Find your developer certificate and tap <strong>Trust</strong>. Then try running the app again from Xcode.</p>
+  },
+  {
+    error: "App icon doesn't appear (shows default grid icon)",
+    solution: <p>Make sure your icon is in the correct slot in Xcode's asset catalog. The source image must be exactly 1024×1024 pixels. After adding it, do a clean build: <strong>Product → Clean Build Folder</strong> (<code>Cmd + Shift + K</code>), then rebuild.</p>
+  },
+  {
+    error: "Status bar text is invisible (white on white)",
+    solution: <p>You're using <code>Style.Dark</code> (white text) on a light background. Switch to <code>Style.Light</code> (dark text) which is correct for light-themed apps.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={12}>
+- **Safe area insets** are applied — content doesn't overlap the notch or home indicator
+- **Status bar** has the correct style (dark text on light background)
+- **Keyboard** doesn't cover input fields when focused
+- All interactive elements meet the **44×44 minimum touch target**
+- The **app icon** appears on the home screen
+- The **launch screen** matches the app's background color
+- The app runs correctly on a **physical iOS device**
+- A **production build** works without the dev server
+</ChapterCheckpoint>
+
+---
+
+## Part 5 Complete!
+
+Your web app is now a fully functional iOS app. Let's recap what Part 5 added:
+
+| Feature | Chapter |
+|---|---|
+| Capacitor setup and Xcode project | Chapter 9 |
+| Native camera and haptic feedback | Chapter 10 |
+| Shake-to-discover with motion detection | Chapter 11 |
+| Safe areas, icons, keyboard, and polish | Chapter 12 |
+
+In Part 6, we'll take this app to the finish line — setting up an Apple Developer account, configuring App Store Connect, and shipping to TestFlight so other people can install and test your app on their iPhones.
+
+<TwitterCallout />
+
+**[Next: Chapter 13 — Apple Developer Account →](../part-6-testflight/apple-developer)**
