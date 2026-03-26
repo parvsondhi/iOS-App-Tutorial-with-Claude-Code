@@ -290,6 +290,23 @@ There's no browser address bar. No navigation controls. It looks and feels like 
 The first Xcode build downloads and compiles CocoaPods dependencies, which can take a minute or two. Don't worry if it seems slow. Subsequent builds reuse the cached artifacts and finish much faster.
 :::
 
+### If you see an infinite loading spinner
+
+:::danger Fix This Before Moving On
+If your app loads in the Simulator but gets stuck on an infinite loading spinner, this is a known compatibility issue between Firebase's `persistentMultipleTabManager` and Capacitor's WKWebView. The multi-tab manager depends on `BroadcastChannel` and `SharedWorker`, which WKWebView does not support --- so Firebase silently fails to initialize.
+
+Send this prompt to Claude Code to fix it:
+:::
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Fix"
+  prompt={`My app uses Firebase Firestore with persistentLocalCache. I'm about to build it for iOS using Capacitor. Before I do, apply these two preemptive fixes for known Capacitor + WKWebView compatibility issues:\n\n1. Find where Firestore is initialized and replace persistentMultipleTabManager with persistentSingleTabManager. WKWebView does not support BroadcastChannel or SharedWorker which the multi-tab manager depends on — leaving it in will silently break Firebase init and cause an infinite loading spinner on iOS.\n\n2. Find the auth hook that uses onAuthStateChanged and add a 5-second timeout fallback that sets loading to false if the callback never fires. This prevents users getting permanently stuck on a loading screen if Firebase is slow to initialize on device.\n\nDo not change anything else.`}
+  context="WKWebView (the browser engine inside Capacitor) does not support BroadcastChannel or SharedWorker. Firebase's multi-tab persistence manager relies on these APIs, so it silently breaks inside a native iOS app. The fix is to switch to the single-tab manager, which works perfectly in Capacitor since your app only ever runs in one tab anyway."
+  expectedOutput="Claude Code will update your Firebase config to use persistentSingleTabManager instead of persistentMultipleTabManager, and add a timeout fallback to your auth hook."
+  tip="If you don't see the spinner, you can still send this prompt as a preventive fix. It won't hurt anything and prevents a confusing bug later."
+/>
+
 ---
 
 ## Step 6: Understand the Xcode Project
