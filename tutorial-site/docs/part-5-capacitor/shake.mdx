@@ -1,0 +1,237 @@
+---
+sidebar_position: 3
+title: "Chapter 11: The Shake Interaction"
+description: Detect phone shakes and surface random journal entries with haptic feedback.
+---
+
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
+# Chapter 11: The Shake Interaction
+
+> The hero moment. Shake the phone, feel the haptics, see a random memory appear.
+
+This is the feature that makes GratitudeJar special. The user shakes their phone, feels a heavy haptic thud, and a random past journal entry animates into view — like reaching into a physical jar and pulling out a memory. It combines motion detection, haptics, random selection, and animation into one delightful interaction.
+
+---
+
+## What You'll Build
+
+- A shake detection system using the Capacitor Motion plugin
+- A shake gesture algorithm that filters out noise
+- A full-screen overlay that shows a random entry with animation
+- Heavy haptic feedback on shake detection
+- A "Shake Again" action and dismiss gesture
+- A web fallback button for development and non-native contexts
+
+---
+
+## What You'll Learn
+
+- The DeviceMotion API and accelerometer data
+- How to detect a shake gesture from raw motion data
+- CSS keyframe animations for the reveal effect
+- The `useCallback` and `useRef` hooks for event handling
+- Cooldown patterns to prevent rapid re-triggers
+
+---
+
+## Step 1: Install the Motion Plugin
+
+```bash
+npm install @capacitor/motion
+```
+
+```bash
+npx cap sync
+```
+
+The Motion plugin provides access to the device's accelerometer — the sensor that detects movement and orientation.
+
+:::tip
+If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow.
+:::
+
+---
+
+## Step 2: Understand Shake Detection
+
+A shake is a rapid back-and-forth motion. The accelerometer reports acceleration on three axes (x, y, z). We detect a shake by looking for acceleration that exceeds a threshold:
+
+```
+Normal movement:   x: 0.1, y: 0.2, z: 9.8  (gravity alone)
+Shake movement:    x: 15.3, y: -12.7, z: 22.1  (much larger values)
+```
+
+The algorithm:
+
+1. Read accelerometer values
+2. Calculate total acceleration: `√(x² + y² + z²)`
+3. Subtract gravity (~9.8): anything above a threshold is a shake
+4. Require multiple threshold-exceeding samples within a time window
+5. Trigger the shake event with a cooldown to prevent rapid re-triggers
+
+---
+
+## Step 3: Build the Shake Detection Hook
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
+  prompt="Create a custom React hook at src/hooks/useShakeDetection.ts that uses Capacitor's Motion plugin to detect phone shakes. It should accept an onShake callback, calculate acceleration from the device motion data, distinguish real shakes from normal movement, and enforce a cooldown between triggers. Only listen on native platforms."
+  context="This hook bridges the accelerometer hardware to React state. It filters noise from real shakes using a threshold and cooldown."
+  expectedOutput="Claude Code will create src/hooks/useShakeDetection.ts with Motion listener setup, acceleration calculation, threshold check, and cooldown enforcement."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+### Key design decisions
+
+**Threshold of 30:** Normal phone movement (walking, gesturing) produces accelerations of 10-15. A deliberate shake hits 25-40+. We use 30 to avoid false positives while being responsive enough to feel natural.
+
+**Cooldown of 1000ms:** Without a cooldown, a single shake gesture (back-forth-back) would trigger multiple events. The cooldown ensures one shake = one reveal, and gives the animation time to complete.
+
+**`useRef` for timing:** We use `useRef` instead of `useState` for `lastShakeTime` because we don't want re-renders when the timestamp updates. This is a performance pattern — refs are mutable without triggering renders.
+
+**`useCallback` for stability:** The motion listener is registered once in `useEffect`. If `handleMotion` changed on every render, we'd need to tear down and recreate the listener. `useCallback` keeps it stable.
+
+---
+
+## Step 4: Build the Shake Reveal Overlay
+
+When a shake is detected, we show a full-screen card with a random entry.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
+  prompt="Create a ShakeReveal component at src/components/ShakeReveal.tsx that shows a full-screen overlay when a journal entry is revealed. It should have a dark backdrop with a fade-in, and the card should bounce in with a playful animation. Show a 'From Your Jar' header, display the entry content (text or photo), the date, and a 'Shake Again' button. Dismiss on backdrop click or Escape key. Also add the CSS keyframe animations to index.css."
+  context="This is the hero UI — the magical reveal when a user shakes their phone to discover a past memory."
+  expectedOutput="Claude Code will create ShakeReveal.tsx with animated overlay, entry display, dismiss/shake-again actions, and CSS keyframe animations."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+The `bounce-in` animation uses a spring-like cubic bezier curve. The card starts small, overshoots slightly, bounces back, and settles. It feels playful and rewarding — exactly the vibe we want for a "jar reveal" moment.
+
+---
+
+## Step 5: Wire Shake into App.tsx
+
+Now connect the shake detection to the reveal overlay.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
+  prompt="Wire up the shake-to-discover feature in App.tsx. When a shake is detected, pick a random entry, fire a heavy haptic, and show the ShakeReveal overlay. Add a 'shake again' action that picks a different random entry. Dismiss the overlay when the user taps the backdrop or X button."
+  context="Wiring the shake detection hook, random entry selection, haptics, and the reveal overlay together in App.tsx."
+  expectedOutput="Claude Code will update App.tsx with shakeEntry state, handleShake/handleShakeAgain callbacks, useShakeDetection integration, and ShakeReveal rendering."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+---
+
+## Step 6: Add a Web Fallback Button
+
+Shaking doesn't work in the browser or Simulator. We need a tappable fallback for testing.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 6"
+  prompt="Add a shake fallback button to the Header for web and Simulator testing. Show a sparkles icon that triggers the same shake reveal when tapped. Only show it when there are entries to reveal. Update App.tsx to pass the shake handler to the Header."
+  context="Shaking doesn't work in the browser or Simulator, so we need a tappable fallback for testing."
+  expectedOutput="Claude Code will update Header.tsx with optional onShake/hasEntries props and a Sparkles button, and update App.tsx to pass the props."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+Now there's a sparkles icon in the header. Tapping it triggers the same reveal as shaking — useful for testing and for web users who can't shake their browser.
+
+<ClaudeCodePrompt
+  prompt="I built a shake detection feature for my Capacitor iOS app. It works on real devices but I need a way to test it in the browser and Simulator. Is there a better approach for testing motion-based features?"
+  tip="You can also simulate shake events in Xcode's Simulator via the Device menu → Shake Gesture. But the Capacitor Motion plugin doesn't always respond to the simulated shake."
+/>
+
+---
+
+## Step 7: Test the Shake Feature
+
+### On the web
+
+1. Start the dev server: `npm run dev`
+2. Create a few entries (you need at least one)
+3. Tap the **sparkles icon** in the header
+4. A card should animate in with a random entry
+5. Tap **Shake Again** — a different random entry should appear
+6. Tap the dark overlay or the X button to dismiss
+
+### On a physical device
+
+1. Build and deploy to a real iPhone (we'll cover this in Chapter 12)
+2. Physically shake the phone
+3. Feel the heavy haptic thud
+4. See the random entry card bounce in
+5. Shake again while the card is dismissed
+
+:::tip The Simulator Limitation
+The iOS Simulator can simulate a shake via **Hardware → Shake Gesture** (or `Cmd + Ctrl + Z`), but the Capacitor Motion plugin may not respond to simulated shakes. For reliable testing, use a physical device or the header button.
+:::
+
+---
+
+## Step 8: Commit Your Progress
+
+```bash
+git add .
+```
+
+```bash
+git commit -m "Add shake-to-discover: motion detection, random entry reveal, bounce animation"
+```
+
+```bash
+git push
+```
+
+---
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Shake is detected too easily (false positives)",
+    solution: <p>Increase the <code>threshold</code> value in <code>useShakeDetection</code>. The default is 30 — try 35 or 40. If the user just walks with their phone, the acceleration is typically 10-20, so 35 should filter that out.</p>
+  },
+  {
+    error: "Shake is never detected (no response to shaking)",
+    solution: <p>Make sure you installed <code>@capacitor/motion</code> and ran <code>npx cap sync</code>. Also verify you're testing on a physical device — the Simulator's accelerometer simulation is unreliable with Capacitor.</p>
+  },
+  {
+    error: "Multiple reveals trigger from one shake",
+    solution: <p>Check the cooldown timing. The <code>cooldownMs</code> should be at least 1000ms. Also verify the <code>if (shakeEntry) return</code> guard in <code>handleShake</code> — it prevents new shakes while a reveal is already showing.</p>
+  },
+  {
+    error: "Animation doesn't play (card just appears)",
+    solution: <p>Make sure the <code>@keyframes bounce-in</code> and <code>.animate-bounce-in</code> CSS classes are in your <code>index.css</code>. Also check that the card div has the <code>animate-bounce-in</code> class name.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={11}>
+- **Shaking the phone** triggers a random entry reveal (physical device)
+- The **sparkles button** in the header works as a web/Simulator fallback
+- The reveal card has a **bounce-in animation** that feels playful
+- **Heavy haptic feedback** fires on shake detection
+- **"Shake Again"** picks a different random entry
+- Tapping the **overlay or X button** dismisses the reveal
+- The shake has a **cooldown** to prevent rapid re-triggers
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+The hero feature is built. In the next chapter, we handle the iOS-specific details — safe area insets for the notch, keyboard behavior, app icons, and splash screens. These are the details that make your app feel truly native.
+
+<TwitterCallout />
+
+**[Next: Chapter 12 — iOS-Specific Work →](./ios-specifics)**

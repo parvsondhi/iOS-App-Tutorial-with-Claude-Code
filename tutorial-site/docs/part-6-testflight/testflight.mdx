@@ -1,6 +1,6 @@
 ---
 sidebar_position: 3
-title: "Chapter 17: Building & Uploading to TestFlight"
+title: "Chapter 15: Building & Uploading to TestFlight"
 description: Archive your app, upload to App Store Connect, and invite testers via TestFlight.
 ---
 
@@ -9,7 +9,7 @@ import TwitterCallout from '@site/src/components/TwitterCallout';
 import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
 import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
-# Chapter 17: Building & Uploading to TestFlight
+# Chapter 15: Building & Uploading to TestFlight
 
 > The finish line. Your app goes from Xcode to real iPhones via TestFlight.
 
@@ -46,7 +46,7 @@ Before building for TestFlight, verify:
 <ClaudeCodePrompt
   variant="build"
   step="Step 1"
-  prompt="Prepare our app for a TestFlight build. Make sure capacitor.config.ts has no server block (remove url and cleartext if present, keep everything else). Then run npm run build && npx cap sync to create a production build and sync it to the iOS project."
+  prompt="Prepare our app for a TestFlight build. Make sure the Capacitor config doesn't have the development server block, then create a production build and sync it to the iOS project."
   context="The production build bundles all web assets into dist/ so the iOS app doesn't need a dev server."
   expectedOutput="Claude Code will clean up capacitor.config.ts and run the build + sync commands."
   tip="If the app shows a blank white screen in the Simulator after this, the server block wasn't fully removed — double-check capacitor.config.ts."
@@ -277,7 +277,7 @@ Testers can submit feedback directly through the TestFlight app — including sc
 
 ## Checkpoint
 
-<ChapterCheckpoint chapter={17}>
+<ChapterCheckpoint chapter={15}>
 - A **production build** is created with `npm run build && npx cap sync`
 - The app **runs in the Simulator** without a dev server
 - Version is set to **1.0.0** and build to **1**
@@ -297,12 +297,12 @@ Your app is on TestFlight. Other people are using something you built. That's a 
 
 | Step | Chapter |
 |---|---|
-| Apple Developer Account setup | Chapter 15 |
-| App Store Connect configuration | Chapter 16 |
-| Build, archive, upload, and test | Chapter 17 |
+| Apple Developer Account setup | Chapter 13 |
+| App Store Connect configuration | Chapter 14 |
+| Build, archive, upload, and test | Chapter 15 |
 
-In Part 6, we'll cover the update cycle (how to ship improvements) and the final step — submitting to the App Store.
+In Part 7, we'll cover the update cycle (how to ship improvements) and the final step — submitting to the App Store.
 
 <TwitterCallout />
 
-**[Next: Chapter 18 — The Update Cycle →](../part-6-next-steps/iteration)**
+**[Next: Chapter 16 — The Update Cycle →](../part-7-next-steps/iteration)**

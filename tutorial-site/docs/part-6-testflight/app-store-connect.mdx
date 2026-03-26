@@ -1,6 +1,6 @@
 ---
 sidebar_position: 2
-title: "Chapter 16: App Store Connect Setup"
+title: "Chapter 14: App Store Connect Setup"
 description: Create your app record, add metadata, and prepare for TestFlight.
 ---
 
@@ -9,7 +9,7 @@ import TwitterCallout from '@site/src/components/TwitterCallout';
 import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
 import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
-# Chapter 16: App Store Connect Setup
+# Chapter 14: App Store Connect Setup
 
 > App Store Connect is where your app lives on Apple's side. Let's set it up.
 
@@ -87,7 +87,7 @@ Click **Edit** next to Age Rating and answer the questionnaire. For GratitudeJar
 Apple requires a privacy policy URL for all apps. Since GratitudeJar uses Firebase (which collects some data), you need one.
 
 <ClaudeCodePrompt
-  prompt="I need a simple privacy policy for my iOS app called GratitudeJar. It's a personal journal app that uses Firebase Authentication (email/password), Firestore (stores text entries), and Firebase Storage (stores photos). Data is private to each user. The app doesn't share data with third parties, doesn't use analytics, and doesn't show ads. Can you draft a privacy policy I can host?"
+  prompt="I need a simple privacy policy for my iOS journal app called GratitudeJar. It uses Firebase for authentication, storing text entries, and storing photos. Data is private to each user, no third-party sharing, no analytics, no ads. Can you draft a privacy policy I can host?"
   context="Apple requires a privacy policy URL for every app submitted to the App Store or TestFlight."
   tip="Claude Code can draft a privacy policy tailored to your exact tech stack. You'll need to host it somewhere publicly accessible — a GitHub Pages site, Notion page, or even a Google Doc with link sharing works."
 />
@@ -184,7 +184,7 @@ Under the **App Store** tab, fill in the version information:
 Write a compelling app description (up to 4,000 characters):
 
 <ClaudeCodePrompt
-  prompt="Write an App Store description for GratitudeJar — a daily gratitude journal app for iOS. Key features: text and photo entries, shake-to-discover random past memories with haptic feedback, calendar heatmap showing journaling streaks, clean amber-themed UI. Keep it under 4000 characters, lead with the most compelling feature, and use short paragraphs that are easy to scan."
+  prompt="Write an App Store description for GratitudeJar — a daily gratitude journal app for iOS. It has text and photo entries, a shake-to-discover feature for random memories, a calendar heatmap for streaks, and a warm amber design. Lead with the most compelling feature and keep it scannable."
   tip="The first 3 lines of your App Store description are visible without tapping 'More' — make them count."
 />
 
@@ -232,7 +232,7 @@ You need a URL where users can get help. Options:
 
 ## Checkpoint
 
-<ChapterCheckpoint chapter={16}>
+<ChapterCheckpoint chapter={14}>
 - An **app record** exists in App Store Connect for GratitudeJar
 - The **Bundle ID** matches your Xcode project exactly
 - **App name**, subtitle, and category are filled in
@@ -251,4 +251,4 @@ The app record exists in App Store Connect. In the next chapter, we'll build, ar
 
 <TwitterCallout />
 
-**[Next: Chapter 17 — Building & Uploading to TestFlight →](./testflight)**
+**[Next: Chapter 15 — Building & Uploading to TestFlight →](./testflight)**

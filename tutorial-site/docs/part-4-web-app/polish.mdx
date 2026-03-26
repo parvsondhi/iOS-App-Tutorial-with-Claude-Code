@@ -1,0 +1,242 @@
+---
+sidebar_position: 4
+title: "Chapter 7: Polish — States & Onboarding"
+description: Add skeleton loading, empty states, toast notifications, relative timestamps, and an onboarding flow.
+---
+
+import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
+import TwitterCallout from '@site/src/components/TwitterCallout';
+import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
+import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
+
+# Chapter 7: Polish — States & Onboarding
+
+> Your app works, but it doesn't feel finished yet. This chapter makes it feel real.
+
+The difference between a project and a product is polish. Right now, loading feels abrupt, empty screens are blank, errors happen silently, and first-time users have no idea what the app does. We are going to fix all of that -- skeleton loading screens, rich empty states, toast notifications, an onboarding flow, and friendlier timestamps.
+
+---
+
+## What You'll Build
+
+- Skeleton loading cards that mimic entry shapes while data loads
+- A rich empty state with a call-to-action when the jar has no entries
+- A toast notification system for success and error feedback
+- A three-slide onboarding screen for first-time users
+- Relative timestamps on entry cards
+
+---
+
+## What You'll Learn
+
+- The three states every screen must handle: loading, empty, and content
+- Why skeleton screens feel faster than spinners
+- How to build a lightweight toast system without any external library
+- Using `localStorage` to track whether a user has seen onboarding
+- CSS animations with Tailwind utility classes
+
+---
+
+## The Three States
+
+Every screen in your app can be in one of three states:
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Loading    │     │    Empty     │     │   Content    │
+│              │     │              │     │              │
+│  ░░░░░░░░   │     │              │     │  ┌───────┐   │
+│  ░░░░░      │     │  Your jar    │     │  │ Entry │   │
+│  ░░░░░░░░   │     │  is empty    │     │  └───────┘   │
+│  ░░░░░      │     │  [Create]    │     │  ┌───────┐   │
+│              │     │              │     │  │ Entry │   │
+└─────────────┘     └─────────────┘     └─────────────┘
+     ↓                    ↓                    ↓
+  Data loading      No data found       Data available
+```
+
+Most beginners only build the Content state. A polished app handles all three gracefully. We will tackle them one at a time.
+
+---
+
+## Step 1: Build Skeleton Loading Cards
+
+Skeleton screens show the shape of content before it loads. Research shows users perceive them as faster than spinners because they hint at what is coming rather than just saying "please wait."
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 1"
+  prompt="Create a skeleton loading card component at src/components/EntrySkeleton.tsx that mimics the shape of an EntryCard. Use Tailwind's animate-pulse class. Then update Feed.tsx to show three EntrySkeleton cards instead of the spinner during loading."
+  context="Skeleton screens show the shape of content before it loads. Users perceive them as faster than spinners because they hint at what is coming."
+  expectedOutput="Claude Code will create EntrySkeleton.tsx with animated placeholder blocks matching the EntryCard layout, and update Feed.tsx to render three skeleton cards during the loading state."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+The key idea is that the skeleton card should mirror the exact shape of a real `EntryCard` -- same border radius, same padding, same section layout -- but filled with pulsing gray bars instead of text. Tailwind's `animate-pulse` class handles the animation automatically. Three skeleton cards stacked together give the impression of a populated feed that is about to appear.
+
+After Claude Code finishes, check that your Feed component now shows three gently pulsing placeholder cards instead of a loading spinner when data is being fetched.
+
+---
+
+## Step 2: Build a Rich Empty State
+
+When there are no entries, we should do more than show a blank screen. A good empty state explains what the app does and nudges the user toward creating their first entry.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 2"
+  prompt="Create a rich empty state component at src/components/EmptyState.tsx. Add some copy for 'Your jar is empty' heading, an encouraging description about capturing gratitude, and a 'Create Your First Entry' button with PlusCircle icon."
+  context="Empty states are an opportunity to guide users. Instead of a blank screen, show a message and a clear call-to-action."
+  expectedOutput="Claude Code will create EmptyState.tsx with an icon, heading, encouraging description, and a styled button. It will also update Feed.tsx to show this component when there are no entries."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+The empty state should feel welcoming, not empty. A circular icon area, a friendly heading, a short description encouraging the user to start journaling, and a prominent button that takes them straight to the Create tab. Make sure the button actually navigates -- Claude Code should wire it up so tapping "Create Your First Entry" switches to the create screen.
+
+---
+
+## Step 3: Build a Toast Notification System
+
+Toasts are non-blocking messages that slide in, confirm an action, and auto-dismiss. They are perfect for feedback like "Entry saved!" after creating an entry or "Failed to delete" when something goes wrong. Right now your app does these things silently -- the user has no idea if their action succeeded or failed.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 3"
+  prompt="Build a toast notification system that shows brief messages like 'Entry saved!' or 'Failed to delete'. Toasts should slide down from the top, show for 3 seconds, then disappear. Create the Toast component, a useToast hook, wire them into App.tsx, and add a slide-down animation to the CSS."
+  context="Toasts provide non-blocking feedback. They slide in, confirm the action, and auto-dismiss so they never block the user."
+  expectedOutput="Claude Code will create a Toast component, a useToast hook with showToast and dismissToast functions, wire them into App.tsx, and add a slide-down keyframe animation to index.css."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+The toast system has three parts. First, a `Toast` component that renders the visual toast messages with appropriate colors -- green for success, red for errors. Second, a `useToast` hook that manages the list of active toasts and exposes `showToast` and `dismissToast` functions. Third, a CSS animation that makes toasts slide down smoothly from the top of the screen.
+
+Once wired in, wrap your entry creation and deletion handlers with `showToast` calls so users get immediate visual feedback. A green "Entry saved!" toast sliding down after creating an entry is one of those small touches that makes an app feel professional.
+
+---
+
+## Step 4: Build the Onboarding Screen
+
+First-time users should see a welcome screen that explains what the app does before they are dropped into a login form. This is especially important for an app like a gratitude journal where the concept might not be immediately obvious from the UI alone.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 4"
+  prompt="Create an onboarding screen at src/pages/Onboarding.tsx with three slides: Welcome, Write & Snap, Shake to Discover. Include dot indicators, Next/Get Started buttons, and a Skip option. Accept an onComplete callback. In App.tsx, use localStorage to track if onboarding has been shown (key: 'gratitude-jar-onboarded'), and show Onboarding before the auth check if it hasn't."
+  context="First-time users see this before anything else. It explains the app's core features and only shows once, tracked via localStorage."
+  expectedOutput="Claude Code will create Onboarding.tsx with a three-slide carousel, dot indicators, Next/Get Started/Skip buttons, and update App.tsx with localStorage-based first-visit tracking."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+The onboarding has three slides. The first welcomes the user and describes the app. The second explains writing entries and snapping photos. The third introduces the shake-to-discover feature. Each slide has an icon, a title, and a short description.
+
+Navigation works through dot indicators showing which slide you are on, a "Next" button that advances through slides (which becomes "Get Started" on the last slide), and a "Skip" option for impatient users who want to jump straight in.
+
+The critical piece is persistence. When the user taps "Get Started" or "Skip," the `onComplete` callback fires, which sets `localStorage.setItem('gratitude-jar-onboarded', 'true')`. On future visits, `App.tsx` checks this key and skips straight to the auth flow. The onboarding never appears again unless the user clears their browser storage.
+
+---
+
+## Step 5: Add Relative Timestamps
+
+Full dates like "March 15, 2026" feel formal and detached. For recent entries, relative timestamps like "Just now," "5m ago," or "Yesterday" feel much more natural and human.
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Step 5"
+  prompt="Add a utility function that converts dates to relative timestamps like 'Just now', '5m ago', '2h ago', 'Yesterday'. Use it in EntryCard instead of the full date for recent entries. Fall back to the formatted date for entries older than a week."
+  context="Relative timestamps like '2h ago' feel more natural than 'March 15, 2026' on recent entries."
+  expectedOutput="Claude Code will add a getRelativeTime function to the dates utility and update EntryCard to use it for displaying timestamps."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
+/>
+
+The function works by calculating the difference between now and the entry's creation date, then choosing the right label based on thresholds: under a minute is "Just now," under an hour shows minutes, under a day shows hours, one day is "Yesterday," under a week shows days, and anything older falls back to the full formatted date. It is a small change that makes the entire feed feel more alive.
+
+---
+
+## Step 6: Test the Polish
+
+Start the dev server if it is not already running:
+
+```bash
+npm run dev
+```
+
+Walk through every state you just built:
+
+1. **Onboarding** -- Clear your localStorage (DevTools, then Application, then Local Storage, then Clear All) and refresh the page. The three-slide onboarding should appear. Tap through the slides or use Skip.
+2. **Loading state** -- After signing in, you should briefly see three skeleton cards pulse while entries load.
+3. **Empty state** -- If you have no entries, you should see the "Your jar is empty" screen with the create button.
+4. **Toast notifications** -- Create a new entry. A green "Entry saved!" toast should slide down from the top and disappear after 3 seconds.
+5. **Relative timestamps** -- Your new entry should show "Just now" instead of a full date.
+6. **Persistence** -- Refresh the page. Onboarding should not appear again.
+
+:::tip
+If the onboarding keeps appearing on every refresh, open DevTools and check Application then Local Storage. The key `gratitude-jar-onboarded` should be set to `true`. If it is missing, the `onComplete` callback is not firing correctly.
+:::
+
+---
+
+## Step 7: Commit Your Progress
+
+```bash
+git add -A
+```
+
+```bash
+git commit -m "Add polish: skeleton loading, empty states, toasts, onboarding, relative timestamps"
+```
+
+```bash
+git push
+```
+
+---
+
+<TroubleshootingAccordion items={[
+  {
+    error: "Onboarding shows every time I refresh",
+    solution: <p>Check that <code>localStorage.setItem('gratitude-jar-onboarded', 'true')</code> is being called in your <code>onComplete</code> handler. Open DevTools, go to Application, then Local Storage, and verify the key exists. If it does not, the callback is not wired up correctly in App.tsx.</p>
+  },
+  {
+    error: "Toast appears behind the header",
+    solution: <p>Make sure the Toast container has <code>z-50</code> (or higher) and is positioned below the header with <code>top-16</code> or similar. Both the header and toast use fixed positioning, so z-index determines which one stacks on top.</p>
+  },
+  {
+    error: "Skeleton cards flash briefly even when data loads fast",
+    solution: <p>That is normal behavior on fast connections. The skeleton appears for the brief moment between the component mounting and the data arriving. A quick flash is actually better than no loading indicator at all -- it tells the user something happened.</p>
+  },
+  {
+    error: "animate-slide-down class has no effect on toasts",
+    solution: <p>Make sure you added the <code>@keyframes slide-down</code> and <code>.animate-slide-down</code> CSS rules to your <code>src/index.css</code> file. They need to come after the Tailwind import. If Claude Code added them to a different file, move them to index.css.</p>
+  },
+  {
+    error: "Empty state button does nothing when tapped",
+    solution: <p>The "Create Your First Entry" button needs an <code>onClick</code> handler that navigates to the create tab. Make sure the <code>onCreateFirst</code> prop (or however it was named) is being passed down from App.tsx and calls <code>setActiveTab('create')</code> or your equivalent navigation function.</p>
+  },
+  {
+    error: "Relative timestamps show NaN or undefined",
+    solution: <p>The date being passed to the relative time function might not be a valid Date object. Firestore timestamps need to be converted with <code>.toDate()</code> before they can be used in date math. Check that your EntryCard is passing a proper Date instance.</p>
+  }
+]} />
+
+---
+
+## Checkpoint
+
+<ChapterCheckpoint chapter={7}>
+- **Skeleton loading** cards appear while entries load, replacing the old spinner
+- **Empty state** shows "Your jar is empty" with a "Create Your First Entry" button when the feed has no entries
+- **Toast notifications** slide down from the top for success and error feedback, auto-dismissing after 3 seconds
+- The **onboarding flow** shows three slides for first-time users and never appears again after completion
+- **Relative timestamps** show "Just now," "5m ago," "Yesterday" on recent entry cards
+- All three states -- loading, empty, and content -- are handled gracefully in the Feed
+</ChapterCheckpoint>
+
+---
+
+## What's Next
+
+Your app now feels like a real product. Loading is smooth, empty screens are helpful, actions give feedback, and new users get a proper welcome. In the next chapter, we add the final web feature -- a streak counter and calendar heatmap on the Profile page to help users visualize their journaling habit.
+
+<TwitterCallout />
+
+**[Next: Chapter 8 — Streaks & Stats →](./streaks)**

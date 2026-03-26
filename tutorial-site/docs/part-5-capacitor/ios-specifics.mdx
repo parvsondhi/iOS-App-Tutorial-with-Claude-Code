@@ -1,16 +1,15 @@
 ---
 sidebar_position: 4
-title: "Chapter 14: iOS-Specific Work"
+title: "Chapter 12: iOS-Specific Work"
 description: Handle safe areas, keyboard behavior, app icons, and splash screens for iOS.
 ---
 
 import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
 import TwitterCallout from '@site/src/components/TwitterCallout';
-import FileTree from '@site/src/components/FileTree';
 import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
 import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
-# Chapter 14: iOS-Specific Work
+# Chapter 12: iOS-Specific Work
 
 > Make the app look and feel like it belongs on iOS. Handle the notch, the keyboard, and all the little details.
 
@@ -64,12 +63,10 @@ Without safe areas:        With safe areas:
 
 iOS exposes safe area dimensions through CSS environment variables:
 
-```css
-env(safe-area-inset-top)     /* Space below the notch/Dynamic Island */
-env(safe-area-inset-bottom)  /* Space above the home indicator */
-env(safe-area-inset-left)    /* Space on the left (landscape) */
-env(safe-area-inset-right)   /* Space on the right (landscape) */
-```
+- `env(safe-area-inset-top)` — Space below the notch/Dynamic Island
+- `env(safe-area-inset-bottom)` — Space above the home indicator
+- `env(safe-area-inset-left)` — Space on the left (landscape)
+- `env(safe-area-inset-right)` — Space on the right (landscape)
 
 These values are `0` on devices without a notch (or in the browser) and ~47px on notched iPhones. This means our safe area CSS works everywhere without platform detection.
 
@@ -77,41 +74,16 @@ These values are `0` on devices without a notch (or in the browser) and ~47px on
 
 ## Step 2: Apply Safe Area Insets
 
-Send this prompt to Claude Code to apply safe area insets to your fixed elements, then compare the result with the reference below:
+Send this prompt to Claude Code to apply safe area insets to your fixed elements:
 
 <ClaudeCodePrompt
   variant="build"
   step="Step 2"
-  prompt="Update the fixed-position elements in our app to respect iOS safe area insets. In Header.tsx, add paddingTop: 'env(safe-area-inset-top)' as an inline style. In BottomNav.tsx, add paddingBottom: 'env(safe-area-inset-bottom)' as an inline style. In App.tsx, update the main content area padding to account for the larger header and nav using calc() with the safe area variables."
+  prompt="Update the fixed-position elements in our app to respect iOS safe area insets. The header needs padding for the notch, the bottom nav needs padding for the home indicator, and the main content area needs to account for both so nothing is hidden behind the fixed elements."
   context="Without safe area insets, content hides behind the notch and home indicator on modern iPhones."
   expectedOutput="Claude Code will update Header.tsx, BottomNav.tsx, and App.tsx with safe area padding using CSS env() variables."
-  tip="The env(safe-area-inset-*) CSS variables return 0 on devices without a notch, so this code works safely everywhere without platform detection."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
 />
-
-Here's the reference for each file update:
-
-```tsx title="src/components/Header.tsx (add safe area padding)"
-<header className="fixed top-0 left-0 right-0 z-50 bg-amber-50 border-b border-amber-200"
-  style={{ paddingTop: 'env(safe-area-inset-top)' }}
->
-```
-
-```tsx title="src/components/BottomNav.tsx (add safe area padding)"
-<nav className="fixed bottom-0 left-0 right-0 z-50 bg-amber-50 border-t border-amber-200"
-  style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
->
-```
-
-Update the main content area in App.tsx to account for the larger header/nav:
-
-```tsx title="src/App.tsx (update main padding)"
-<main className="max-w-lg mx-auto min-h-screen"
-  style={{
-    paddingTop: 'calc(3.5rem + env(safe-area-inset-top))',
-    paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))',
-  }}
->
-```
 
 ### Why inline styles instead of Tailwind?
 
@@ -125,44 +97,26 @@ Install the Status Bar plugin:
 
 ```bash
 npm install @capacitor/status-bar
+```
+
+```bash
 npx cap sync
 ```
 
-Send this prompt to Claude Code to configure the status bar, then compare the result with the reference below:
+Send this prompt to Claude Code to configure the status bar:
 
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="Configure the iOS status bar in src/main.tsx. Import Capacitor and the StatusBar plugin from @capacitor/status-bar. After the imports, add a native platform check that sets the status bar style to Style.Light (dark text for our light theme). Note: setBackgroundColor is Android-only so don't use it — on iOS, the status bar background comes from the app's root view background color."
+  prompt="Configure the iOS status bar in main.tsx. We have a light amber theme, so set the status bar to show dark text. Only apply this on native platforms."
   context="The status bar sits at the very top of the iOS screen. We need dark text on our light amber background."
   expectedOutput="Claude Code will update main.tsx with StatusBar plugin imports and a native platform check that configures the style."
-  tip="Style.Light means dark text — it refers to the background being light, not the text color. This trips up many developers."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
 />
 
-Here's the reference for the status bar configuration:
-
-```ts title="src/main.tsx (add status bar config)"
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import './index.css'
-import { Capacitor } from '@capacitor/core'
-import { StatusBar, Style } from '@capacitor/status-bar'
-
-// Configure status bar for iOS
-if (Capacitor.isNativePlatform()) {
-  StatusBar.setStyle({ style: Style.Light })
-  // Note: setBackgroundColor is Android-only. On iOS, the status bar
-  // background is controlled by the app's root view background color,
-  // which we set via CSS (bg-amber-50 on the root element).
-}
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
-```
+:::tip Style.Light vs Style.Dark
+`Style.Light` means dark text — it refers to the background being light, not the text color. This trips up many developers.
+:::
 
 ### Status bar options
 
@@ -177,57 +131,16 @@ Our app uses a light amber background, so dark status bar text (`Style.Light`) i
 
 ## Step 4: Fix Keyboard Behavior
 
-When a text input is focused on iOS, the keyboard slides up. In a web view, this can push the entire page or cover the input. Send this prompt to Claude Code to fix keyboard behavior, then compare with the reference below:
+When a text input is focused on iOS, the keyboard slides up. In a web view, this can push the entire page or cover the input. Send this prompt to Claude Code to fix keyboard behavior:
 
 <ClaudeCodePrompt
   variant="build"
   step="Step 4"
-  prompt="Fix iOS keyboard behavior in our Capacitor app. Update capacitor.config.ts to add an ios block with scrollEnabled: true and contentInset: 'automatic' so the web view resizes when the keyboard appears. Also add CSS rules to src/index.css: set scroll-margin-bottom: 120px on focused inputs/textareas so they scroll into view, and set font-size: 16px on all input, textarea, and select elements to prevent iOS auto-zoom on focus."
+  prompt="Fix iOS keyboard behavior in our Capacitor app. Update the Capacitor config so the web view resizes properly when the keyboard appears. Also add CSS rules so focused inputs scroll into view and inputs don't trigger iOS auto-zoom."
   context="Keyboard handling is one of the trickiest parts of iOS web views — these changes prevent inputs from being hidden."
   expectedOutput="Claude Code will update capacitor.config.ts with iOS keyboard config and add CSS rules to index.css for scroll margins and font sizes."
-  tip="The 16px font-size rule is critical — iOS Safari auto-zooms the page when focusing inputs smaller than 16px, creating a terrible user experience."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
 />
-
-Here's the reference for the keyboard configuration:
-
-```ts title="capacitor.config.ts (add keyboard config)"
-import type { CapacitorConfig } from '@capacitor/cli'
-
-const config: CapacitorConfig = {
-  appId: 'com.yourname.gratitudejar',
-  appName: 'GratitudeJar',
-  webDir: 'dist',
-  ios: {
-    // Keyboard behavior
-    scrollEnabled: true,
-    // Make the web view resize when keyboard appears
-    // instead of scrolling behind it
-    contentInset: 'automatic',
-  },
-  server: {
-    url: 'http://localhost:5173',
-    cleartext: true,
-  },
-}
-
-export default config
-```
-
-### Additional CSS for keyboard handling
-
-Add to your global CSS to ensure inputs scroll into view:
-
-```css title="src/index.css (add keyboard styles)"
-/* Ensure focused inputs are visible above the keyboard */
-input:focus, textarea:focus {
-  scroll-margin-bottom: 120px;
-}
-
-/* Prevent iOS from zooming on input focus (font-size must be >= 16px) */
-input, textarea, select {
-  font-size: 16px;
-}
-```
 
 :::warning The 16px Font Size Rule
 iOS Safari automatically zooms the page when an input with a font size smaller than 16px is focused. This is meant to help readability but creates a terrible UX — the page zooms in and doesn't zoom back. Setting `font-size: 16px` on all inputs prevents this.
@@ -237,46 +150,22 @@ iOS Safari automatically zooms the page when an input with a font size smaller t
 
 ## Step 5: Touch Target Sizes
 
-Apple's Human Interface Guidelines require minimum touch targets of **44×44 points**. Some of our buttons (especially icon-only ones) might be too small. Send this prompt to Claude Code to fix touch targets, then compare with the reference below:
+Apple's Human Interface Guidelines require minimum touch targets of **44×44 points**. Some of our buttons (especially icon-only ones) might be too small. Send this prompt to Claude Code to fix touch targets:
 
 <ClaudeCodePrompt
   variant="build"
   step="Step 5"
-  prompt="Audit and fix touch target sizes across our app to meet Apple's 44x44 minimum. Add a .touch-target utility class to src/index.css with min-height: 44px and min-width: 44px — apply it selectively to standalone interactive elements. Also review icon-only buttons — ensure they use at least p-2.5 padding with w-6 h-6 icons to reach the 44px minimum."
+  prompt="Audit and fix touch target sizes across our app to meet Apple's minimum guidelines. Add a utility CSS class for touch targets and review icon-only buttons to make sure they're large enough to tap comfortably."
   context="Apple's Human Interface Guidelines require 44x44pt minimum touch targets. Failing this can lead to App Store rejection."
   expectedOutput="Claude Code will add a global CSS rule for minimum touch target sizes and review icon buttons for compliance."
-  tip="Apple will reject apps with touch targets smaller than 44x44 points. This global CSS rule is a safety net, but always verify visually in the Simulator."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
 />
-
-Here's the reference for touch target sizing:
-
-```tsx title="General rule for icon buttons"
-{/* Too small — 32×32 */}
-<button className="p-1">
-  <Edit3 className="w-4 h-4" />
-</button>
-
-{/* Correct — 44×44 (p-2.5 = 10px padding + 24px icon = 44px) */}
-<button className="p-2.5">
-  <Edit3 className="w-6 h-6" />
-</button>
-```
 
 Check these components for touch target compliance:
 - **EntryCard** — edit and delete buttons
 - **BottomNav** — tab buttons (already good with `py-2` + icon + label)
 - **Header** — shake button
 - **ShakeReveal** — dismiss button
-
-A simple fix: add a utility class for touch targets and apply it selectively:
-
-```css title="src/index.css (add touch target utility)"
-/* Utility class for ensuring iOS minimum touch target */
-.touch-target {
-  min-height: 44px;
-  min-width: 44px;
-}
-```
 
 :::caution Don't Apply 44px Minimums Globally
 Avoid setting `min-height: 44px` and `min-width: 44px` on all `button` and `a` elements globally — this can break layouts with inline links, compact toggles, or small icon buttons. Instead, apply the `.touch-target` class selectively to interactive elements that need it, or use adequate padding (e.g., `p-2.5` with a `w-6 h-6` icon = 44px total).
@@ -367,24 +256,19 @@ Testing on a real device is the only way to verify:
 
 ### Using the dev server on a physical device
 
-Update `capacitor.config.ts` to use your Mac's local IP instead of `localhost`:
-
-```ts title="capacitor.config.ts (for physical device testing)"
-server: {
-  url: 'http://192.168.1.XXX:5173',  // Your Mac's local IP
-  cleartext: true,
-}
-```
-
-Find your Mac's IP: **System Settings → Network → Wi-Fi → Details → IP Address**
+Update `capacitor.config.ts` to use your Mac's local IP instead of `localhost`. Find your Mac's IP: **System Settings → Network → Wi-Fi → Details → IP Address**
 
 Your phone and Mac must be on the same Wi-Fi network.
+
+:::tip Paste Errors into Claude Code
+If you run into issues deploying to a physical device, paste the full Xcode error output directly into Claude Code. It can diagnose signing issues, provisioning profile problems, and device trust errors quickly.
+:::
 
 ---
 
 ## Step 9: Final Polish Checklist
 
-Before moving to Part 5 (TestFlight), walk through this checklist:
+Before moving to Part 6 (TestFlight), walk through this checklist:
 
 | Check | Status |
 |---|---|
@@ -404,44 +288,32 @@ Before moving to Part 5 (TestFlight), walk through this checklist:
 
 ## Step 10: Production Build
 
-Before moving to TestFlight, let's make a production build. Send this prompt to Claude Code to prepare the production config, then compare with the reference below:
+Before moving to TestFlight, let's make a production build. Send this prompt to Claude Code to prepare the production config:
 
 <ClaudeCodePrompt
   variant="build"
   step="Step 10"
-  prompt="Update capacitor.config.ts for production by removing the server block (url and cleartext). Keep the appId, appName, webDir, and the ios block with scrollEnabled and contentInset. The app should now load from the bundled dist/ files instead of connecting to a dev server."
+  prompt="Update capacitor.config.ts for production by removing the development server block. The app should load from the bundled files instead of connecting to localhost."
   context="This is the critical switch from development to production — the app must load from bundled files for TestFlight."
   expectedOutput="Claude Code will update capacitor.config.ts to remove the server block while keeping all other configuration."
-  tip="Forgetting to remove the server block is the most common TestFlight mistake — the app tries to connect to localhost and shows a blank screen for your testers."
+  tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
 />
-
-Here's the reference for the production configuration:
-
-```ts title="capacitor.config.ts (production)"
-import type { CapacitorConfig } from '@capacitor/cli'
-
-const config: CapacitorConfig = {
-  appId: 'com.yourname.gratitudejar',
-  appName: 'GratitudeJar',
-  webDir: 'dist',
-  ios: {
-    scrollEnabled: true,
-    contentInset: 'automatic',
-  },
-  // Remove the server block for production!
-}
-
-export default config
-```
 
 Then build and sync:
 
 ```bash
 npm run build
+```
+
+```bash
 npx cap sync
 ```
 
 Now the iOS app uses the bundled files from `dist/` instead of connecting to a dev server. This is what you'll submit to TestFlight.
+
+:::warning Don't Forget to Remove the Server Block
+Forgetting to remove the server block is the most common TestFlight mistake — the app tries to connect to localhost and shows a blank screen for your testers.
+:::
 
 ---
 
@@ -449,37 +321,17 @@ Now the iOS app uses the bundled files from `dist/` instead of connecting to a d
 
 ```bash
 git add .
+```
+
+```bash
 git commit -m "Add iOS polish: safe areas, status bar, keyboard handling, app icon, touch targets"
+```
+
+```bash
 git push
 ```
 
 ---
-
-<FileTree title="Updated project structure">
-
-```
-gratitude-jar/
-├── ios/
-│   └── App/
-│       ├── App/
-│       │   ├── Info.plist
-│       │   ├── Assets.xcassets/
-│       │   │   └── AppIcon.xcassets  ← UPDATED (app icon)
-│       │   └── Base.lproj/
-│       │       └── LaunchScreen.storyboard  ← UPDATED
-│       └── ...
-├── src/
-│   ├── components/
-│   │   ├── Header.tsx          ← UPDATED (safe area)
-│   │   ├── BottomNav.tsx       ← UPDATED (safe area)
-│   │   └── ...
-│   ├── main.tsx                ← UPDATED (status bar config)
-│   └── index.css               ← UPDATED (keyboard + touch targets)
-├── capacitor.config.ts         ← UPDATED (iOS config)
-└── ...
-```
-
-</FileTree>
 
 <TroubleshootingAccordion items={[
   {
@@ -508,7 +360,7 @@ gratitude-jar/
 
 ## Checkpoint
 
-<ChapterCheckpoint chapter={14}>
+<ChapterCheckpoint chapter={12}>
 - **Safe area insets** are applied — content doesn't overlap the notch or home indicator
 - **Status bar** has the correct style (dark text on light background)
 - **Keyboard** doesn't cover input fields when focused
@@ -521,19 +373,19 @@ gratitude-jar/
 
 ---
 
-## Part 4 Complete!
+## Part 5 Complete!
 
-Your web app is now a fully functional iOS app. Let's recap what Part 4 added:
+Your web app is now a fully functional iOS app. Let's recap what Part 5 added:
 
 | Feature | Chapter |
 |---|---|
-| Capacitor setup and Xcode project | Chapter 11 |
-| Native camera and haptic feedback | Chapter 12 |
-| Shake-to-discover with motion detection | Chapter 13 |
-| Safe areas, icons, keyboard, and polish | Chapter 14 |
+| Capacitor setup and Xcode project | Chapter 9 |
+| Native camera and haptic feedback | Chapter 10 |
+| Shake-to-discover with motion detection | Chapter 11 |
+| Safe areas, icons, keyboard, and polish | Chapter 12 |
 
-In Part 5, we'll take this app to the finish line — setting up an Apple Developer account, configuring App Store Connect, and shipping to TestFlight so other people can install and test your app on their iPhones.
+In Part 6, we'll take this app to the finish line — setting up an Apple Developer account, configuring App Store Connect, and shipping to TestFlight so other people can install and test your app on their iPhones.
 
 <TwitterCallout />
 
-**[Next: Chapter 15 — Apple Developer Account →](../part-5-testflight/apple-developer)**
+**[Next: Chapter 13 — Apple Developer Account →](../part-6-testflight/apple-developer)**

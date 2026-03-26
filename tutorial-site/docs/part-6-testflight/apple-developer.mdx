@@ -1,6 +1,6 @@
 ---
 sidebar_position: 1
-title: "Chapter 15: Apple Developer Account"
+title: "Chapter 13: Apple Developer Account"
 description: Understand certificates, provisioning profiles, and App IDs in plain English.
 ---
 
@@ -9,7 +9,11 @@ import TwitterCallout from '@site/src/components/TwitterCallout';
 import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
 import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
-# Chapter 15: Apple Developer Account
+:::info This section is optional
+Everything from here requires an Apple Developer Account ($99/year). If you're not ready to invest in that, you can skip Part 5 entirely — your app runs great in the Simulator and that's a complete achievement on its own. Come back to this section whenever you're ready.
+:::
+
+# Chapter 13: Apple Developer Account
 
 > Apple's developer tooling is confusing. This chapter explains it in plain English.
 
@@ -95,7 +99,7 @@ iOS checks the signature before allowing the app to run
 
 ### Do I need to create certificates manually?
 
-**No.** Xcode's **Automatic Signing** handles certificate creation for you. When you enable automatic signing (which we did in Chapter 11), Xcode:
+**No.** Xcode's **Automatic Signing** handles certificate creation for you. When you enable automatic signing (which we did in Chapter 9), Xcode:
 1. Generates a certificate signing request
 2. Sends it to Apple
 3. Downloads the signed certificate
@@ -137,7 +141,7 @@ Provisioning Profile = Certificate + App ID + Device List
 
 ### Bundle ID
 
-Your Bundle ID is the unique identifier for your app. We set this in Chapter 11:
+Your Bundle ID is the unique identifier for your app. We set this in Chapter 9:
 
 ```
 com.yourname.gratitudejar
@@ -177,7 +181,7 @@ Let's make sure everything is configured correctly in Xcode:
 If you see a green checkmark next to "Signing Certificate" and "Provisioning Profile" — you're good. Xcode has created everything automatically.
 
 <ClaudeCodePrompt
-  prompt="I'm setting up my Apple Developer account for the first time. I see terms like 'certificates', 'provisioning profiles', 'entitlements', and 'capabilities' in Xcode. Can you explain what each one does and whether I need to configure any of them manually, or if Xcode's automatic signing handles everything?"
+  prompt="I'm setting up my Apple Developer account for the first time and I see a lot of unfamiliar terms in Xcode — certificates, provisioning profiles, entitlements, capabilities. Can you explain what I actually need to worry about vs. what Xcode handles automatically?"
   tip="Claude Code is great at demystifying Apple's developer tooling. If you see an unfamiliar term in Xcode, just ask."
 />
 
@@ -226,7 +230,7 @@ Someone else has already registered this exact Bundle ID. Choose a different one
 
 ## Checkpoint
 
-<ChapterCheckpoint chapter={15}>
+<ChapterCheckpoint chapter={13}>
 - You have an active **Apple Developer Program membership** ($99/year)
 - You understand what **certificates**, **provisioning profiles**, and **App IDs** are
 - **Automatic signing** is enabled in Xcode with your team selected
@@ -242,4 +246,4 @@ Your developer account is set up and signing is configured. In the next chapter,
 
 <TwitterCallout />
 
-**[Next: Chapter 16 — App Store Connect Setup →](./app-store-connect)**
+**[Next: Chapter 14 — App Store Connect Setup →](./app-store-connect)**
