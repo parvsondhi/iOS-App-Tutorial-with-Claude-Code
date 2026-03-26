@@ -160,7 +160,7 @@ Firebase provides our backend — authentication, database, and file storage —
 ### Create a Firebase Project
 
 1. Go to [console.firebase.google.com](https://console.firebase.google.com)
-2. Click **Create a project** (or **Set up new project** depending on your console version)
+2. Click **+ Add project**
 3. Name it `gratitude-jar` (or anything you like)
 4. **Disable** Google Analytics (we don't need it and it adds complexity)
 5. Click **Create project**
@@ -179,21 +179,21 @@ Don't worry about pasting the config anywhere yet. We'll create a `.env` file an
 
 ### Enable Firestore Database
 
-1. In the Firebase console sidebar, look for **Firestore Database** (it may be under **Build** or listed separately depending on your console version)
+1. In the Firebase console left sidebar, expand **Build** and click **Firestore Database**
 2. Click **Create database**
 3. Choose **Start in test mode** (we'll add security rules later)
 4. Pick a location close to you (e.g., `us-central1` for North America)
 
 ### Enable Storage
 
-1. Look for **Storage** in the sidebar (may be under **Build** or listed separately)
+1. In the left sidebar, expand **Build** and click **Storage**
 2. Click **Get started**
 3. Choose **Start in test mode**
 4. Same location as Firestore
 
 ### Enable Authentication
 
-1. Look for **Authentication** in the sidebar (in newer console versions, this may be under **Security**)
+1. In the left sidebar, expand **Build** and click **Authentication**
 2. Click **Get started**
 3. Under **Sign-in method**, enable **Email/Password**
 
