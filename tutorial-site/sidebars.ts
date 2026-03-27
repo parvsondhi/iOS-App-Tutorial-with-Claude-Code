@@ -61,8 +61,8 @@ const sidebars: SidebarsConfig = {
       className: 'sidebar-part sidebar-part-6',
       items: [
         'part-6-testflight/apple-developer',
-        'part-6-testflight/app-store-connect',
         'part-6-testflight/testflight',
+        'part-6-testflight/app-store-connect',
       ],
     },
     {

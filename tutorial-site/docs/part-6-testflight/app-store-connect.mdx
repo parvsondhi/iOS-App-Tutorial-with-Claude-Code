@@ -1,7 +1,7 @@
 ---
-sidebar_position: 2
-title: "Chapter 14: App Store Connect Setup"
-description: Create your app record, add metadata, and prepare for TestFlight.
+sidebar_position: 3
+title: "Chapter 15: App Store Readiness"
+description: Add metadata, screenshots, and a privacy policy to prepare for App Store submission.
 ---
 
 import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
@@ -9,52 +9,27 @@ import TwitterCallout from '@site/src/components/TwitterCallout';
 import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
 import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
-# Chapter 14: App Store Connect Setup
+# Chapter 15: App Store Readiness
 
-> App Store Connect is where your app lives on Apple's side. Let's set it up.
+> Your app is on TestFlight. Now let's prepare it for the App Store.
 
-App Store Connect is Apple's web portal for managing your apps. Before you can upload a build to TestFlight, you need to create an app record here. This chapter walks through every field.
+Your app is already in testers' hands via TestFlight. This chapter covers everything Apple requires before you can submit to the actual App Store — metadata, privacy policy, screenshots, and descriptions. None of this is needed for TestFlight, so treat this chapter as optional until you're ready to go public.
 
 ---
 
 ## What You'll Do
 
-- Create the app record in App Store Connect
-- Match your Bundle ID exactly
-- Fill in app name, subtitle, and description
-- Set categories and age rating
-- Create a privacy policy
-- Prepare screenshots for the listing
+- Fill in app metadata (name, subtitle, category, age rating)
+- Create and host a privacy policy
+- Complete Apple's App Privacy questionnaire
+- Capture and upload screenshots
+- Write an App Store description and keywords
 
 ---
 
-## Step 1: Create the App Record
+## Step 1: App Information
 
-1. Go to [appstoreconnect.apple.com](https://appstoreconnect.apple.com)
-2. Sign in with your Apple ID
-3. Click **My Apps**
-4. Click the **+** button → **New App**
-5. Fill in the form:
-
-| Field | Value |
-|---|---|
-| **Platforms** | iOS |
-| **Name** | GratitudeJar |
-| **Primary Language** | English (U.S.) |
-| **Bundle ID** | Select `com.yourname.gratitudejar` from the dropdown |
-| **SKU** | `gratitudejar` (any unique identifier — not shown to users) |
-
-6. Click **Create**
-
-### If your Bundle ID doesn't appear in the dropdown
-
-This means Xcode hasn't registered it yet. Go back to Xcode, make sure automatic signing is enabled with your team, and build once (`Cmd + R`). The Bundle ID will be registered automatically. Then refresh App Store Connect.
-
----
-
-## Step 2: App Information
-
-After creating the app, you'll land on the App Information page. Fill in:
+In App Store Connect, select your app and go to the **App Information** section.
 
 ### App Name and Subtitle
 
@@ -82,28 +57,28 @@ Click **Edit** next to Age Rating and answer the questionnaire. For GratitudeJar
 
 ---
 
-## Step 3: Privacy Policy
+## Step 2: Privacy Policy
 
-Apple requires a privacy policy URL for all apps. Since GratitudeJar uses Firebase (which collects some data), you need one.
+Apple requires a privacy policy URL for all apps submitted to the App Store.
 
 <ClaudeCodePrompt
   prompt="I need a simple privacy policy for my iOS journal app called GratitudeJar. It uses Firebase for authentication, storing text entries, and storing photos. Data is private to each user, no third-party sharing, no analytics, no ads. Can you draft a privacy policy I can host?"
-  context="Apple requires a privacy policy URL for every app submitted to the App Store or TestFlight."
-  tip="Claude Code can draft a privacy policy tailored to your exact tech stack. You'll need to host it somewhere publicly accessible — a GitHub Pages site, Notion page, or even a Google Doc with link sharing works."
+  context="Apple requires a privacy policy URL for every app submitted to the App Store."
+  tip="Claude Code can draft a privacy policy tailored to your exact tech stack. You'll need to host it somewhere publicly accessible."
 />
 
 ### Where to host your privacy policy
 
 Pick the simplest option:
-1. **GitHub Pages** — Create a `privacy.md` in a public repo → enable Pages → link to it
-2. **Notion** — Write the policy → Share → Copy public link
-3. **Google Docs** — Write it → Share → Anyone with the link → Copy link
+1. **Notion** — Write the policy → Share → Copy public link
+2. **Google Docs** — Write it → Share → Anyone with the link → Copy link
+3. **Any free website host** — A simple HTML page works fine
 
 Paste the URL into the **Privacy Policy URL** field in App Store Connect.
 
 ---
 
-## Step 4: App Privacy (Data Collection)
+## Step 3: App Privacy (Data Collection)
 
 Apple's App Privacy section asks what data your app collects. Click **Get Started** and answer honestly:
 
@@ -131,9 +106,9 @@ Apple's App Privacy section asks what data your app collects. Click **Get Starte
 
 ---
 
-## Step 5: Prepare Screenshots
+## Step 4: Prepare Screenshots
 
-Apple requires screenshots for the App Store listing. Even for TestFlight, having screenshots makes your app look professional.
+Apple requires screenshots for the App Store listing.
 
 ### Required screenshot sizes
 
@@ -150,7 +125,7 @@ Apple requires screenshots for the App Store listing. Even for TestFlight, havin
 1. Run the app in the Simulator on an iPhone 15 Pro Max
 2. Navigate to the screen you want
 3. Press `Cmd + S` to save a screenshot to your Desktop
-4. Repeat for 3-5 key screens (Feed, Create entry, Profile with heatmap, Shake reveal)
+4. Repeat for 3-5 key screens
 
 **Option B: Physical device screenshots**
 
@@ -163,7 +138,7 @@ Apple requires screenshots for the App Store listing. Even for TestFlight, havin
 1. **Feed** — showing a few entries
 2. **Create** — the entry creation screen
 3. **Shake reveal** — the random memory card
-4. **Profile** — heatmap and streak stats
+4. **Profile** — streak and stats
 5. **Login** — the clean auth screen
 
 ### Upload screenshots
@@ -175,16 +150,16 @@ In App Store Connect → your app → **App Store** tab → scroll to **Screensh
 
 ---
 
-## Step 6: Version Information
+## Step 5: Description and Keywords
 
-Under the **App Store** tab, fill in the version information:
+Under the **App Store** tab, fill in the version information.
 
 ### Description
 
 Write a compelling app description (up to 4,000 characters):
 
 <ClaudeCodePrompt
-  prompt="Write an App Store description for GratitudeJar — a daily gratitude journal app for iOS. It has text and photo entries, a shake-to-discover feature for random memories, a calendar heatmap for streaks, and a warm amber design. Lead with the most compelling feature and keep it scannable."
+  prompt="Write an App Store description for GratitudeJar — a daily gratitude journal app for iOS. It has text and photo entries, a shake-to-discover feature for random memories, streak tracking with fire animations, and a warm amber design. Lead with the most compelling feature and keep it scannable."
   tip="The first 3 lines of your App Store description are visible without tapping 'More' — make them count."
 />
 
@@ -207,9 +182,9 @@ Initial release! Start your gratitude journaling practice today.
 ### Support URL
 
 You need a URL where users can get help. Options:
-- A simple GitHub repo with an Issues page
 - A contact email on a webpage
 - The same page as your privacy policy with a "Contact" section
+- Any simple webpage with your email address
 
 ---
 
@@ -219,12 +194,12 @@ You need a URL where users can get help. Options:
     solution: <p>App names must be unique on the App Store. Try variations: "GratitudeJar - Daily Journal", "My GratitudeJar", or a completely different name. The name in App Store Connect doesn't need to match the name in your app — it's the marketing name.</p>
   },
   {
-    error: "Bundle ID doesn't appear in the dropdown when creating the app",
-    solution: <p>Build your app once in Xcode with automatic signing enabled. This registers the Bundle ID with Apple. Then refresh App Store Connect. It may take a few minutes to appear.</p>
+    error: "'Missing required fields' when saving",
+    solution: <p>App Store Connect requires several fields before you can submit: Name, Description, Keywords, Screenshots, Privacy Policy URL, Support URL, and Age Rating. Make sure all required fields are filled in.</p>
   },
   {
-    error: "'Missing required fields' when saving",
-    solution: <p>App Store Connect requires several fields before you can save: Name, Bundle ID, SKU, and Primary Language at minimum. Make sure all required fields (marked with asterisks) are filled in.</p>
+    error: "Screenshot rejected — wrong dimensions",
+    solution: <p>Make sure your screenshots match the exact pixel dimensions Apple requires. The easiest approach is to use the Simulator with the matching device (e.g., iPhone 15 Pro Max for 6.7" screenshots) and press <code>Cmd + S</code>.</p>
   }
 ]} />
 
@@ -232,23 +207,30 @@ You need a URL where users can get help. Options:
 
 ## Checkpoint
 
-<ChapterCheckpoint chapter={14}>
-- An **app record** exists in App Store Connect for GratitudeJar
-- The **Bundle ID** matches your Xcode project exactly
+<ChapterCheckpoint chapter={15}>
 - **App name**, subtitle, and category are filled in
 - An **age rating** questionnaire is completed (4+)
 - A **privacy policy** URL is provided
 - **App Privacy** data collection details are filled in
-- At least 3 **screenshots** are prepared (can upload later)
+- At least 3 **screenshots** are uploaded
 - A **description** and **keywords** are drafted
+- A **support URL** is provided
 </ChapterCheckpoint>
 
 ---
 
-## What's Next
+## Part 6 Complete!
 
-The app record exists in App Store Connect. In the next chapter, we'll build, archive, and upload the actual app to TestFlight — then invite testers to try it on their iPhones.
+Your app is fully prepared for App Store submission. Here's everything Part 6 covered:
+
+| Step | Chapter |
+|---|---|
+| Apple Developer Account setup | Chapter 13 |
+| Build, upload, and test via TestFlight | Chapter 14 |
+| App Store metadata and submission readiness | Chapter 15 |
+
+In Part 7, we'll cover the update cycle (how to ship improvements) and the final step — submitting to the App Store.
 
 <TwitterCallout />
 
-**[Next: Chapter 15 — Building & Uploading to TestFlight →](./testflight)**
+**[Next: Chapter 16 — The Update Cycle →](../part-7-next-steps/iteration)**
