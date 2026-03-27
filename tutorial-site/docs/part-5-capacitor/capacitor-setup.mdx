@@ -307,6 +307,25 @@ Send this prompt to Claude Code to fix it:
   tip="If you don't see the spinner, you can still send this prompt as a preventive fix. It won't hurt anything and prevents a confusing bug later."
 />
 
+### If sign-in hangs (button spins forever)
+
+:::danger Firebase Auth Deadlocks in WKWebView
+If tapping "Sign In" causes the button to spin forever --- the network request succeeds (you can verify in Safari Web Inspector) but the `signInWithEmailAndPassword` promise never resolves or rejects --- this is a different WKWebView compatibility issue.
+
+Firebase Auth's default initialization (`getAuth`) auto-detects which storage mechanism to use for session persistence. In a normal browser this is instant. In Capacitor's WKWebView, this detection can deadlock: Firebase receives the auth token but gets stuck trying to persist it, and the promise hangs silently. No error, no timeout, just nothing.
+
+The fix is to replace `getAuth` with `initializeAuth` and explicitly tell Firebase to use IndexedDB. Send this prompt to Claude Code:
+:::
+
+<ClaudeCodePrompt
+  variant="build"
+  step="Fix"
+  prompt="In our Firebase config file, replace getAuth(app) with initializeAuth(app, { persistence: indexedDBLocalPersistence }). Import initializeAuth and indexedDBLocalPersistence from 'firebase/auth' instead of getAuth. This fixes a silent deadlock where Firebase Auth hangs in Capacitor's WKWebView because the automatic persistence detection fails. Do not change anything else."
+  context="Firebase Auth's getAuth auto-detects storage mechanisms for session persistence. In WKWebView, this detection deadlocks — the sign-in network call succeeds but the promise never resolves because Firebase gets stuck persisting the session. Using initializeAuth with explicit IndexedDB persistence skips the detection entirely."
+  expectedOutput="Claude Code will update your Firebase config to use initializeAuth with indexedDBLocalPersistence instead of getAuth."
+  tip="How to spot this: sign-in works in the browser but hangs in the Simulator. The network request succeeds in Safari Web Inspector but the app never moves past loading. No errors in the console."
+/>
+
 ---
 
 ## Step 6: Understand the Xcode Project
