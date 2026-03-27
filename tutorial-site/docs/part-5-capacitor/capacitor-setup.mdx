@@ -133,8 +133,8 @@ npx cap init
 ```
 
 During initialization, you'll be asked for:
-- **App name:** `GratitudeJar` (or whatever you named your app)
-- **App Package ID:** something like `com.yourname.gratitudejar` --- this is the unique identifier for your app on the App Store, using reverse domain notation
+- **App name:** `GratitudeTree` (or whatever you named your app)
+- **App Package ID:** something like `com.yourname.gratitudetree` --- this is the unique identifier for your app on the App Store, using reverse domain notation
 
 **Add the iOS platform** --- this creates the Xcode project:
 
@@ -160,7 +160,7 @@ Claude Code created a `capacitor.config.ts` file in your project root. This file
 
 | Setting | What it does |
 |---|---|
-| `appId` | Your app's unique identifier on the App Store (reverse domain notation, e.g., `com.yourname.gratitudejar`) |
+| `appId` | Your app's unique identifier on the App Store (reverse domain notation, e.g., `com.yourname.gratitudetree`) |
 | `appName` | The name displayed under the app icon on the home screen |
 | `webDir` | The folder containing your built web files --- this should be `dist` since Vite outputs there |
 | `server.url` | (Optional) During development, points to Vite's dev server for live reload |
@@ -264,7 +264,7 @@ Xcode will open with your project loaded.
 1. In the Xcode toolbar at the top, find the **device selector** dropdown. Click it and choose a Simulator --- for example, **iPhone 15** or **iPhone 16**
 2. Click the **Play button** (the triangle icon in the top-left, or press `Cmd + R`)
 3. Wait for the Simulator to boot up and the app to install. The first build takes longer because Xcode needs to compile native dependencies and set up the Simulator. Subsequent builds are much faster.
-4. Your GratitudeJar app appears --- running inside an iOS app, not a browser
+4. Your GratitudeTree app appears --- running inside an iOS app, not a browser
 
 ---
 
@@ -419,7 +419,7 @@ The `ios/` folder should be committed --- it contains your Xcode project configu
 <FileTree title="Updated project structure">
 
 ```
-gratitude-jar/
+gratitude-tree/
 ├── ios/                           <-- NEW (entire Xcode project)
 │   └── App/
 │       ├── App/

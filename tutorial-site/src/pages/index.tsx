@@ -124,7 +124,7 @@ function AppPreview() {
         <div className={styles.appPreviewInner}>
           <div className={styles.appPreviewText}>
             <Heading as="h2">What You'll Build</Heading>
-            <p className={styles.appName}>GratitudeJar</p>
+            <p className={styles.appName}>GratitudeTree</p>
             <p>
               A daily journal app where every entry is a moment worth keeping.
               Write a thought or snap a photo. Shake the jar to rediscover a
@@ -142,7 +142,7 @@ function AppPreview() {
           <div className={styles.appPreviewMockup}>
             <img
               src="/img/app-screenshot.png"
-              alt="GratitudeJar app running on iPhone"
+              alt="GratitudeTree app running on iPhone"
               className={styles.appScreenshot}
             />
           </div>

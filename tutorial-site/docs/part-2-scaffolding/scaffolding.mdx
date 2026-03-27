@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 title: "Chapter 2: Project Scaffolding"
-description: Create the GratitudeJar project with Vite, React, TypeScript, install all dependencies, and set up Firebase.
+description: Create the GratitudeTree project with Vite, React, TypeScript, install all dependencies, and set up Firebase.
 ---
 
 import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
@@ -30,15 +30,15 @@ By the end of this chapter, you'll have a running React + TypeScript project wit
 
 ## Step 1: Create the Project with Vite
 
-If you followed Chapter 1, you should have an empty `gratitude-jar` folder open in Cursor with Claude Code running in the terminal.
+If you followed Chapter 1, you should have an empty `gratitude-tree` folder open in Cursor with Claude Code running in the terminal.
 
 :::tip Already in Your Project Folder?
-If you opened a new project in Cursor in Chapter 1, you're already in the right place. The commands below assume you're inside the `gratitude-jar` folder.
+If you opened a new project in Cursor in Chapter 1, you're already in the right place. The commands below assume you're inside the `gratitude-tree` folder.
 
 If you're starting fresh from a different terminal, navigate to where you want your project to live first.
 :::
 
-Run this command to scaffold the project. Since we're already inside the `gratitude-jar` folder, we use `.` to create the project in the current directory:
+Run this command to scaffold the project. Since we're already inside the `gratitude-tree` folder, we use `.` to create the project in the current directory:
 
 ```bash
 npm create vite@latest . -- --template react-ts
@@ -117,7 +117,7 @@ Vite's template comes with demo content we don't need. Let's have Claude Code cl
 <ClaudeCodePrompt
   variant="build"
   step="Step 4"
-  prompt="Clean up the Vite starter files for our GratitudeJar app. Replace src/App.tsx with a minimal component that shows 'GratitudeJar' centered on the screen with a warm amber background using Tailwind. Delete the unused react.svg and vite.svg files. Update the page title in index.html to 'GratitudeJar'."
+  prompt="Clean up the Vite starter files for our GratitudeTree app. Replace src/App.tsx with a minimal component that shows 'GratitudeTree' centered on the screen with a warm amber background using Tailwind. Delete the unused react.svg and vite.svg files. Update the page title in index.html to 'GratitudeTree'."
   context="We're replacing Vite's demo content with a clean starting point for our app."
   expectedOutput="Claude Code will rewrite src/App.tsx with a simple centered layout using Tailwind's amber color scheme, delete unused SVG files, and change the title in index.html."
 />
@@ -128,7 +128,7 @@ Vite's template comes with demo content we don't need. Let's have Claude Code cl
 npm run dev
 ```
 
-You should see a warm amber page with "GratitudeJar" centered on the screen. If Tailwind classes are working (amber background, bold text), your setup is correct.
+You should see a warm amber page with "GratitudeTree" centered on the screen. If Tailwind classes are working (amber background, bold text), your setup is correct.
 
 ---
 
@@ -161,14 +161,14 @@ Firebase provides our backend — authentication, database, and file storage —
 
 1. Go to [console.firebase.google.com](https://console.firebase.google.com)
 2. Click **+ Add project**
-3. Name it `gratitude-jar` (or anything you like)
+3. Name it `gratitude-tree` (or anything you like)
 4. **Disable** Google Analytics (we don't need it and it adds complexity)
 5. Click **Create project**
 
 ### Register a Web App
 
 1. In your Firebase project dashboard, click the **web icon** (`</>`) to add a web app
-2. Name it `gratitude-jar-web`
+2. Name it `gratitude-tree-web`
 3. **Don't** check "Also set up Firebase Hosting"
 4. Click **Register app**
 5. Firebase will show you a config object — **copy it**
@@ -264,7 +264,7 @@ Let's make sure everything works together:
 npm run dev
 ```
 
-Open `http://localhost:5173` and confirm the page loads with GratitudeJar on an amber background. No errors in the browser console (`Cmd + Option + J` in Chrome).
+Open `http://localhost:5173` and confirm the page loads with GratitudeTree on an amber background. No errors in the browser console (`Cmd + Option + J` in Chrome).
 
 <ClaudeCodePrompt
   prompt="Review my project structure and tell me if I'm missing anything before I start building components. Check that Firebase is configured correctly and Tailwind is working."
@@ -299,7 +299,7 @@ Don't hesitate to paste error messages directly into Claude Code and ask it to h
 ## Checkpoint
 
 <ChapterCheckpoint chapter={2}>
-- Running `npm run dev` shows a page with "GratitudeJar" on an amber background
+- Running `npm run dev` shows a page with "GratitudeTree" on an amber background
 - Tailwind CSS classes are working (you can see the amber colors and centered layout)
 - The `src/lib/firebase.ts` file initializes Firebase
 - Your `.env` file has your Firebase config keys

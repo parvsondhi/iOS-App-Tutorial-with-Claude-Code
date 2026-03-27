@@ -35,7 +35,7 @@ In App Store Connect, select your app and go to the **App Information** section.
 
 | Field | Value | Notes |
 |---|---|---|
-| **Name** | GratitudeJar | 30 characters max. Must be unique on the App Store |
+| **Name** | GratitudeTree | 30 characters max. Must be unique on the App Store |
 | **Subtitle** | Daily Gratitude Journal | 30 characters max. Appears below the name in search |
 
 ### Category
@@ -51,7 +51,7 @@ Select **"This app does not contain, show, or access third-party content"** (unl
 
 ### Age Rating
 
-Click **Edit** next to Age Rating and answer the questionnaire. For GratitudeJar:
+Click **Edit** next to Age Rating and answer the questionnaire. For GratitudeTree:
 - No violence, gambling, horror, etc.
 - The result should be **4+** (suitable for all ages)
 
@@ -62,7 +62,7 @@ Click **Edit** next to Age Rating and answer the questionnaire. For GratitudeJar
 Apple requires a privacy policy URL for all apps submitted to the App Store.
 
 <ClaudeCodePrompt
-  prompt="I need a simple privacy policy for my iOS journal app called GratitudeJar. It uses Firebase for authentication, storing text entries, and storing photos. Data is private to each user, no third-party sharing, no analytics, no ads. Can you draft a privacy policy I can host?"
+  prompt="I need a simple privacy policy for my iOS journal app called GratitudeTree. It uses Firebase for authentication, storing text entries, and storing photos. Data is private to each user, no third-party sharing, no analytics, no ads. Can you draft a privacy policy I can host?"
   context="Apple requires a privacy policy URL for every app submitted to the App Store."
   tip="Claude Code can draft a privacy policy tailored to your exact tech stack. You'll need to host it somewhere publicly accessible."
 />
@@ -82,7 +82,7 @@ Paste the URL into the **Privacy Policy URL** field in App Store Connect.
 
 Apple's App Privacy section asks what data your app collects. Click **Get Started** and answer honestly:
 
-### Data types GratitudeJar collects
+### Data types GratitudeTree collects
 
 | Data Type | Collected? | Purpose |
 |---|---|---|
@@ -96,7 +96,7 @@ Apple's App Privacy section asks what data your app collects. Click **Get Starte
 - **Used for tracking?** No
 - **Purpose:** App Functionality
 
-### Data types GratitudeJar does NOT collect
+### Data types GratitudeTree does NOT collect
 
 - No analytics data
 - No location data
@@ -159,7 +159,7 @@ Under the **App Store** tab, fill in the version information.
 Write a compelling app description (up to 4,000 characters):
 
 <ClaudeCodePrompt
-  prompt="Write an App Store description for GratitudeJar — a daily gratitude journal app for iOS. It has text and photo entries, a shake-to-discover feature for random memories, streak tracking with fire animations, and a warm amber design. Lead with the most compelling feature and keep it scannable."
+  prompt="Write an App Store description for GratitudeTree — a daily gratitude journal app for iOS. It has text and photo entries, a shake-to-discover feature for random memories, streak tracking with fire animations, and a warm amber design. Lead with the most compelling feature and keep it scannable."
   tip="The first 3 lines of your App Store description are visible without tapping 'More' — make them count."
 />
 
@@ -190,8 +190,8 @@ You need a URL where users can get help. Options:
 
 <TroubleshootingAccordion items={[
   {
-    error: "App name 'GratitudeJar' is already taken on the App Store",
-    solution: <p>App names must be unique on the App Store. Try variations: "GratitudeJar - Daily Journal", "My GratitudeJar", or a completely different name. The name in App Store Connect doesn't need to match the name in your app — it's the marketing name.</p>
+    error: "App name 'GratitudeTree' is already taken on the App Store",
+    solution: <p>App names must be unique on the App Store. Try variations: "GratitudeTree - Daily Journal", "My GratitudeTree", or a completely different name. The name in App Store Connect doesn't need to match the name in your app — it's the marketing name.</p>
   },
   {
     error: "'Missing required fields' when saving",
