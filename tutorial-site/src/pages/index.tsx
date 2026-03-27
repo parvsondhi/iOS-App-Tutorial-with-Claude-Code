@@ -105,11 +105,6 @@ function HeroSection() {
               to="/docs/intro">
               Start Building — It's Free
             </Link>
-            <Link
-              className={clsx('button button--outline button--lg', styles.heroButtonOutline)}
-              href="https://github.com/parvsondhi/iOS-App-Tutorial-with-Claude-Code">
-              View on GitHub
-            </Link>
           </div>
         </div>
       </div>
