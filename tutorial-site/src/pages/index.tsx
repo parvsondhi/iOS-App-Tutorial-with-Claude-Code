@@ -141,7 +141,7 @@ function AppPreview() {
           </div>
           <div className={styles.appPreviewMockup}>
             <img
-              src="/img/hero/app-screenshot.png"
+              src="/img/app-screenshot.png"
               alt="GratitudeJar app running on iPhone"
               className={styles.appScreenshot}
             />
