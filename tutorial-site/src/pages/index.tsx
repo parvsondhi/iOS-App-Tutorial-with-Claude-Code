@@ -135,42 +135,16 @@ function AppPreview() {
               <li>Real-time sync across devices</li>
               <li>Camera integration with native iOS</li>
               <li>Shake-to-discover random memories</li>
-              <li>Calendar heatmap and streaks</li>
+              <li>Streak tracking with fire animations</li>
               <li>Full authentication flow</li>
             </ul>
           </div>
           <div className={styles.appPreviewMockup}>
-            <div className={styles.phoneMockup}>
-              <div className={styles.phoneScreen}>
-                <div className={styles.phoneHeader}>
-                  <span className={styles.phoneTime}>9:41</span>
-                </div>
-                <div className={styles.phoneApp}>
-                  <div className={styles.phoneAppHeader}>GratitudeJar</div>
-                  <div className={styles.phoneEntry}>
-                    <div className={styles.entryDate}>Today</div>
-                    <div className={styles.entryText}>
-                      Grateful for the morning coffee and quiet time to learn something new.
-                    </div>
-                  </div>
-                  <div className={styles.phoneEntry}>
-                    <div className={styles.entryPhoto} />
-                    <div className={styles.entryCaption}>Sunset at the park</div>
-                  </div>
-                  <div className={styles.phoneEntry}>
-                    <div className={styles.entryDate}>Yesterday</div>
-                    <div className={styles.entryText}>
-                      Finished Chapter 5 of the tutorial!
-                    </div>
-                  </div>
-                  <div className={styles.phoneNav}>
-                    <span>Feed</span>
-                    <span>+</span>
-                    <span>Profile</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <img
+              src="/img/hero/app-screenshot.png"
+              alt="GratitudeJar app running on iPhone"
+              className={styles.appScreenshot}
+            />
           </div>
         </div>
       </div>
