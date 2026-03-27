@@ -144,7 +144,7 @@ Provisioning Profile = Certificate + App ID + Device List
 Your Bundle ID is the unique identifier for your app. We set this in Chapter 9:
 
 ```
-com.yourname.gratitudejar
+com.yourname.gratitudetree
 ```
 
 This must be **globally unique** across all apps on the App Store. The convention is reverse domain notation: `com.yourcompany.appname`.
@@ -159,7 +159,7 @@ An App ID is registered in the Apple Developer Portal and links your Bundle ID t
 
 ```
 Apple Developer Account
-    └── App ID (com.yourname.gratitudejar)
+    └── App ID (com.yourname.gratitudetree)
             └── Provisioning Profile
                     └── Certificate
                             └── Your signed .ipa file
@@ -176,7 +176,7 @@ Let's make sure everything is configured correctly in Xcode:
 3. Go to the **Signing & Capabilities** tab
 4. Ensure **Automatically manage signing** is checked
 5. Select your **Team** from the dropdown (your Apple Developer account)
-6. The **Bundle Identifier** should be `com.yourname.gratitudejar`
+6. The **Bundle Identifier** should be `com.yourname.gratitudetree`
 
 If you see a green checkmark next to "Signing Certificate" and "Provisioning Profile" — you're good. Xcode has created everything automatically.
 
@@ -193,7 +193,7 @@ If you see a green checkmark next to "Signing Certificate" and "Provisioning Pro
 
 This means you (or another app) already has a distribution certificate. Xcode handles this automatically — it reuses the existing one. No action needed.
 
-### "No profiles for 'com.yourname.gratitudejar' were found"
+### "No profiles for 'com.yourname.gratitudetree' were found"
 
 This usually means:
 - Your Bundle ID in Xcode doesn't match what's registered
@@ -205,9 +205,9 @@ Fix: Check that **Automatically manage signing** is enabled and your **Team** is
 ### "The app ID cannot be registered to your development team"
 
 Someone else has already registered this exact Bundle ID. Choose a different one:
-- `com.yourname.gratitudejar2`
-- `com.youractualname.gratitudejar`
-- `io.github.yourusername.gratitudejar`
+- `com.yourname.gratitudetree2`
+- `com.youractualname.gratitudetree`
+- `io.github.yourusername.gratitudetree`
 
 ---
 
@@ -222,7 +222,7 @@ Someone else has already registered this exact Bundle ID. Choose a different one
   },
   {
     error: "Bundle ID is already taken",
-    solution: <p>App IDs are globally unique. Add a distinguishing element: <code>com.yourname.gratitudejar-app</code> or use your actual domain if you have one. Update the Bundle ID in both Xcode and <code>capacitor.config.ts</code>.</p>
+    solution: <p>App IDs are globally unique. Add a distinguishing element: <code>com.yourname.gratitudetree-app</code> or use your actual domain if you have one. Update the Bundle ID in both Xcode and <code>capacitor.config.ts</code>.</p>
   }
 ]} />
 

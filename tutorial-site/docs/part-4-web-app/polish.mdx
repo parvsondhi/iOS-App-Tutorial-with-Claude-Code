@@ -121,7 +121,7 @@ First-time users should see a welcome screen that explains what the app does bef
 <ClaudeCodePrompt
   variant="build"
   step="Step 4"
-  prompt="Create an onboarding screen at src/pages/Onboarding.tsx with three slides: Welcome, Write & Snap, Shake to Discover. Include dot indicators, Next/Get Started buttons, and a Skip option. Accept an onComplete callback. In App.tsx, use localStorage to track if onboarding has been shown (key: 'gratitude-jar-onboarded'), and show Onboarding before the auth check if it hasn't."
+  prompt="Create an onboarding screen at src/pages/Onboarding.tsx with three slides: Welcome, Write & Snap, Shake to Discover. Include dot indicators, Next/Get Started buttons, and a Skip option. Accept an onComplete callback. In App.tsx, use localStorage to track if onboarding has been shown (key: 'gratitude-tree-onboarded'), and show Onboarding before the auth check if it hasn't."
   context="First-time users see this before anything else. It explains the app's core features and only shows once, tracked via localStorage."
   expectedOutput="Claude Code will create Onboarding.tsx with a three-slide carousel, dot indicators, Next/Get Started/Skip buttons, and update App.tsx with localStorage-based first-visit tracking."
   tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
@@ -131,7 +131,7 @@ The onboarding has three slides. The first welcomes the user and describes the a
 
 Navigation works through dot indicators showing which slide you are on, a "Next" button that advances through slides (which becomes "Get Started" on the last slide), and a "Skip" option for impatient users who want to jump straight in.
 
-The critical piece is persistence. When the user taps "Get Started" or "Skip," the `onComplete` callback fires, which sets `localStorage.setItem('gratitude-jar-onboarded', 'true')`. On future visits, `App.tsx` checks this key and skips straight to the auth flow. The onboarding never appears again unless the user clears their browser storage.
+The critical piece is persistence. When the user taps "Get Started" or "Skip," the `onComplete` callback fires, which sets `localStorage.setItem('gratitude-tree-onboarded', 'true')`. On future visits, `App.tsx` checks this key and skips straight to the auth flow. The onboarding never appears again unless the user clears their browser storage.
 
 ---
 
@@ -170,7 +170,7 @@ Walk through every state you just built:
 6. **Persistence** -- Refresh the page. Onboarding should not appear again.
 
 :::tip
-If the onboarding keeps appearing on every refresh, open DevTools and check Application then Local Storage. The key `gratitude-jar-onboarded` should be set to `true`. If it is missing, the `onComplete` callback is not firing correctly.
+If the onboarding keeps appearing on every refresh, open DevTools and check Application then Local Storage. The key `gratitude-tree-onboarded` should be set to `true`. If it is missing, the `onComplete` callback is not firing correctly.
 :::
 
 ---
@@ -194,7 +194,7 @@ git push
 <TroubleshootingAccordion items={[
   {
     error: "Onboarding shows every time I refresh",
-    solution: <p>Check that <code>localStorage.setItem('gratitude-jar-onboarded', 'true')</code> is being called in your <code>onComplete</code> handler. Open DevTools, go to Application, then Local Storage, and verify the key exists. If it does not, the callback is not wired up correctly in App.tsx.</p>
+    solution: <p>Check that <code>localStorage.setItem('gratitude-tree-onboarded', 'true')</code> is being called in your <code>onComplete</code> handler. Open DevTools, go to Application, then Local Storage, and verify the key exists. If it does not, the callback is not wired up correctly in App.tsx.</p>
   },
   {
     error: "Toast appears behind the header",
