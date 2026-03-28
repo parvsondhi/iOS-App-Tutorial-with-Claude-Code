@@ -142,6 +142,8 @@ Cursor (and VS Code) has a built-in terminal. Press `` Ctrl + ` `` (backtick) to
 This means you can have your code editor and terminal side by side in one window.
 :::
 
+![Integrated terminal panel in Cursor (`` Ctrl + ` ``)](/img/open-terminal-cursor.png)
+
 ---
 
 ## Step 4: Install Claude Code
@@ -156,6 +158,14 @@ Now that Node.js is installed, you can install Claude Code:
 npm install -g @anthropic-ai/claude-code
 ```
 
+### Optional: Claude Code extension in Cursor or VS Code
+
+If you use **Cursor** or **VS Code**, you can also install the official **Claude Code** extension from the marketplace: open the **Extensions** view, search for `claude`, and install the one published by **Anthropic** (look for the verified publisher badge).
+
+![Extensions marketplace — search for Claude Code and click Install on the Anthropic extension](/img/install-extension.png)
+
+This is optional. The main workflow in this tutorial is **Claude Code in the terminal** (below), which works with or without the extension.
+
 ### Set up authentication
 
 After installing, run `claude` in your terminal to start it:
@@ -165,6 +175,8 @@ claude
 ```
 
 Follow the prompts to connect your Anthropic account. Once you see the Claude Code prompt, you're ready.
+
+![Claude Code authentication flow in the browser](/img/login-claude.png)
 
 ### Verify
 
@@ -260,6 +272,8 @@ cursor .
 
 Or open Cursor manually and use **File → Open Folder** to select the `gratitude-tree` folder.
 
+![Switching from chat/agent back to the editor in Cursor](/img/cursor-switch-to-editor.png)
+
 3. **Open the integrated terminal in Cursor** — press `` Ctrl + ` `` (backtick) to open the terminal panel at the bottom of Cursor. It should already be in your `gratitude-tree` directory.
 
 4. **Launch Claude Code** — in the integrated terminal, run:
@@ -268,7 +282,9 @@ Or open Cursor manually and use **File → Open Folder** to select the `gratitud
 claude
 ```
 
-5. **Send your first message** — try something simple to make sure everything works:
+5. **Send your first message** — try something simple to make sure everything works. In Cursor you can use the chat or agent panel to talk to the model; this tutorial uses **Claude Code in the terminal** as the main workflow:
+
+![Cursor chat / agent panel for prompts](/img/new-chat-cursor.png)
 
 <ClaudeCodePrompt
   variant="build"

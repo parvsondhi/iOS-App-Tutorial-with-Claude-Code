@@ -64,10 +64,10 @@ type JourneyStep = {
 const journeySteps: JourneyStep[] = [
   {part: 'Part 1', title: 'The Idea', chapters: 'Chapter 1', color: '#6366f1'},
   {part: 'Part 2', title: 'Foundation', chapters: 'Chapters 2–3', color: '#8b5cf6'},
-  {part: 'Part 3', title: 'Building the Web App', chapters: 'Chapters 4–10', color: '#ec4899'},
-  {part: 'Part 4', title: 'Going Mobile', chapters: 'Chapters 11–14', color: '#f59e0b'},
-  {part: 'Part 5', title: 'TestFlight', chapters: 'Chapters 15–17', color: '#10b981'},
-  {part: 'Part 6', title: 'Next Steps', chapters: 'Chapters 18–19', color: '#06b6d4'},
+  {part: 'Part 3', title: 'Building the Web App', chapters: 'Chapters 4–9', color: '#ec4899'},
+  {part: 'Part 4', title: 'Going Mobile', chapters: 'Chapters 10–13', color: '#f59e0b'},
+  {part: 'Part 5', title: 'TestFlight', chapters: 'Chapters 14–16', color: '#10b981'},
+  {part: 'Part 6', title: 'Next Steps', chapters: 'Chapters 17–18', color: '#06b6d4'},
 ];
 
 /* ───── Tech stack data ───── */
@@ -155,7 +155,7 @@ function FeatureCards() {
           What You'll Learn
         </Heading>
         <p className={styles.sectionSubtitle}>
-          19 chapters covering the complete journey — no steps skipped, no hand-waving.
+          18 chapters covering the complete journey — no steps skipped, no hand-waving.
         </p>
         <div className={styles.featureGrid}>
           {features.map((feature, idx) => (
@@ -181,7 +181,7 @@ function JourneyTimeline() {
           The Journey
         </Heading>
         <p className={styles.sectionSubtitle}>
-          6 parts, 19 chapters, one complete iOS app.
+          6 parts, 18 chapters, one complete iOS app.
         </p>
         <div className={styles.timeline}>
           {journeySteps.map((step, idx) => (

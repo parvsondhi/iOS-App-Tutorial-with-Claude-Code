@@ -99,7 +99,7 @@ This is the UI component users see when not logged in. It handles both login and
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="Create a login/signup screen at src/pages/AuthScreen.tsx. It should have email and password fields, a toggle to switch between login and signup modes, and good error messages when something goes wrong (like 'Invalid email or password' instead of cryptic error codes). Show a loading spinner while submitting. Use our amber theme and make it look polished."
+  prompt="Create a login/signup screen at src/pages/AuthScreen.tsx. It should have email and password fields, a toggle to switch between login and signup modes, and good error messages when something goes wrong (like 'Invalid email or password' instead of cryptic error codes). Show a loading spinner while submitting. Use our existing theme and make it look polished."
   context="This is the UI component users see when not logged in. It handles both login and signup in one screen with a toggle."
   expectedOutput="Claude Code will create src/pages/AuthScreen.tsx with form state management, Firebase error code translation, and a polished amber-themed login/signup form."
   tip="If you see terminal errors about missing Firebase imports, copy-paste the full error into Claude Code and it will fix the imports for you."
@@ -153,6 +153,8 @@ Right now, everyone sees everyone's entries. We need to add a `userId` field to 
 Firestore requires a composite index for queries that filter on one field (`userId`) and order by another (`createdAt`). When you first run the app after this change, you'll likely see an error in your browser console with a direct link to create the index. Click that link, hit **Create Index** in the Firebase console, and wait 1-2 minutes for it to build. The feed will start working as soon as the index status changes from "Building" to "Enabled".
 
 :::
+
+![Firestore composite index creation in the Firebase console](/img/create-composite-index-firebase.png)
 
 The critical change here is `where('userId', '==', userId)` in the Firestore query. This means each user only receives documents that belong to them. Notice that `useEntries` now takes a `userId` parameter -- when the user logs in or switches accounts, the subscription refreshes with the new userId.
 

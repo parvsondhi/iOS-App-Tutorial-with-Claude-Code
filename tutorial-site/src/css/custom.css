@@ -131,6 +131,35 @@ html {
   max-width: none;
 }
 
+/* ───── Tutorial screenshots (docs only) ─────
+   Markdown images were displaying at native resolution. Constrain width, center,
+   and add a light frame so they read as figures, not raw embeds.
+   Landing page / non-docs pages are unaffected (no .theme-doc-markdown). */
+.theme-doc-markdown img {
+  max-width: min(100%, 42rem);
+  width: auto;
+  height: auto;
+  display: block;
+  margin: 1.25rem auto;
+  border-radius: 10px;
+  box-shadow:
+    0 4px 6px -1px rgba(15, 23, 42, 0.08),
+    0 10px 28px -8px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+
+[data-theme='dark'] .theme-doc-markdown img {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.35),
+    0 12px 32px -10px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* One-off full-width in MDX: <img className="doc-img-full" src="/img/..." alt="..." /> */
+.theme-doc-markdown img.doc-img-full {
+  max-width: 100%;
+}
+
 /* ───── Hero section (landing page) ───── */
 .hero--primary {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);

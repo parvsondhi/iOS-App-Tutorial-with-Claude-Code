@@ -89,9 +89,9 @@ Now let's add the satisfying moment -- when the user submits an entry and their 
 <ClaudeCodePrompt
   variant="build"
   step="Step 3"
-  prompt="lets add a modal pop animation, so that if a new streak # has been achieved or has incremented, then one i submit the entry and it saves, there is a pop that shows the fire icon flaming and text animation below that shows the previous streak number incrementing to the new value."
+  prompt="Add a short celebratory modal with a pop-in (or scale/fade) animation. It should appear only after an entry saves successfully and the streak has increased—either the user just earned their first streak day or the consecutive-day count went up (do not show it when the streak is unchanged, e.g. a second entry on the same day). The modal should feature an animated fire icon with a clear flame effect, and below it animate the streak label so the number counts up from the previous value to the new one. Keep it lightweight: auto-dismiss after a couple of seconds and/or let the user tap outside or a control to close."
   context="This celebratory animation plays after a successful entry submission when the streak increases. It reinforces the habit loop by giving immediate visual feedback."
-  expectedOutput="Claude Code will create a pop animation modal that appears after saving an entry when the streak increments. It will show an animated fire icon with a number counting up from the previous streak to the new value."
+  expectedOutput="Claude Code will add a modal that pops in after a successful save when the streak increments, with an animated fire icon and a counting-up animation from the old streak value to the new one, plus sensible dismiss behavior."
   tip="If you get any terminal errors during this step, paste the full error output directly into Claude Code. It can read error messages and fix them faster than you can search Stack Overflow."
 />
 
@@ -207,22 +207,14 @@ git push
 
 ---
 
-## Part 4 Complete!
+## What's Next
 
-You have built a full-featured web application from scratch. Let's take a step back and look at everything you have created across Part 4:
-
-| Feature | Chapter |
-|---|---|
-| Mobile-first app shell with header and tab navigation | Chapter 4 |
-| CRUD for text and photo entries with Firestore and image compression | Chapter 5 |
-| User authentication with Firebase Auth | Chapter 6 |
-| Polish: skeleton loading, empty states, toasts, onboarding | Chapter 7 |
-| Streak counter, fire animation, calendar modal, and profile stats | Chapter 8 |
-
-Your web app is feature-complete. It has authentication, data persistence, media uploads, habit tracking, and a polished mobile interface. That is a real product.
-
-In Part 5, we take this exact web app and wrap it in Capacitor to turn it into a native iOS app. Same codebase, native superpowers -- camera access, haptic feedback, shake detection, and the App Store.
+You have finished the core Part 4 curriculum. There is an **optional bonus chapter** that adds a living tree home screen, renames the list tab to Feed, and moves entry creation into a slide-up sheet with a floating add button — great extra polish before you go mobile.
 
 <TwitterCallout />
 
-**[Next: Chapter 9 -- Capacitor Setup →](../part-5-capacitor/capacitor-setup)**
+**[Next: Chapter 9 (Bonus) — Having Fun →](./having-fun)**
+
+If you prefer to skip straight to native iOS:
+
+**[Next: Chapter 10 — Capacitor Setup →](../part-5-capacitor/capacitor-setup)**

@@ -93,6 +93,27 @@ Instead of storing entries in memory (where they'd disappear on refresh), we're 
 
 The `onSnapshot` listener is the key — it watches for any changes in the Firestore collection and automatically updates the UI. It's like a radio that's always tuned in.
 
+### Firestore rules (development)
+
+Before you test saving entries, confirm **Firestore Database → Rules** in the Firebase console allows access to your `entries` collection while you're still **before authentication**. For local development, rules often look like this — open read/write on `entries`, then **Publish** if you see an *unpublished changes* banner:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /entries/{entryId} {
+      allow read, write: if true;
+    }
+  }
+}
+```
+
+![Firestore Rules tab — development rules for the entries collection (publish before testing)](/img/update-firestore-rules.png)
+
+:::caution Temporary only
+These rules let anyone read and write `entries`. That is fine on a personal dev project. In **Chapter 6 — Authentication**, you will replace them with rules that require a signed-in user and match each document's `userId`.
+:::
+
 ---
 
 ## Step 4: Build the Feed
@@ -128,7 +149,7 @@ Each entry needs a detail view where users can edit or delete it:
 <ClaudeCodePrompt
   variant="build"
   step="Step 5"
-  prompt="For each card lets add a tap/click handler such that when i tap on the post it opens the post with the date of posting and then an edit option on edit it should let me edit the post or add an image and then also show a delete option so that i can delete the post if i want to. The header should have a back icon to go back to feed page and leave post view."
+  prompt="For each feed card, add a tap/click handler so that when I tap a post, it opens a detail view showing the full post and its posting date. Include an Edit action that lets me change the text or add an image, and a Delete action so I can remove the post. The header should include a back icon that returns to the feed and closes the post detail view."
   expectedOutput="Claude Code will add a post detail view that opens when you tap a card. It will include the full post content, date, edit functionality, delete with confirmation, and a back button."
 />
 
@@ -192,8 +213,8 @@ Let's clean up how images appear in the feed:
 <ClaudeCodePrompt
   variant="build"
   step="Step 9"
-  prompt="Lets clean up the feed preview of the images when uploaded. Depending on the image dimension we want to ensure that the full image is shown appropriately in the feed and not cut off inappropriately. sorry i want to update this so that its the full image but still scaled for mobile not just full dimension"
-  expectedOutput="Claude Code will update the feed card image display so images show fully, scaled appropriately for mobile screens without being cut off."
+  prompt="Improve how uploaded images appear in the feed cards: the entire image should always be visible (no cropping or clipping that hides parts of the photo). Scale images responsively for mobile—fit within the feed width, preserve aspect ratio, and avoid rendering at native full resolution so nothing overflows or dominates the screen."
+  expectedOutput="Claude Code will adjust feed image styling so the full photo is visible, scaled for mobile widths with aspect ratio preserved, without inappropriate cropping or oversized raw dimensions."
 />
 
 ---

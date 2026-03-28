@@ -1,6 +1,6 @@
 ---
 sidebar_position: 1
-title: "Chapter 13: Apple Developer Account"
+title: "Chapter 14: Apple Developer Account"
 description: Understand certificates, provisioning profiles, and App IDs in plain English.
 ---
 
@@ -13,7 +13,7 @@ import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 Everything from here requires an Apple Developer Account ($99/year). If you're not ready to invest in that, you can skip Part 5 entirely — your app runs great in the Simulator and that's a complete achievement on its own. Come back to this section whenever you're ready.
 :::
 
-# Chapter 13: Apple Developer Account
+# Chapter 14: Apple Developer Account
 
 > Apple's developer tooling is confusing. This chapter explains it in plain English.
 
@@ -99,7 +99,7 @@ iOS checks the signature before allowing the app to run
 
 ### Do I need to create certificates manually?
 
-**No.** Xcode's **Automatic Signing** handles certificate creation for you. When you enable automatic signing (which we did in Chapter 9), Xcode:
+**No.** Xcode's **Automatic Signing** handles certificate creation for you. When you enable automatic signing (which we did in Chapter 10), Xcode:
 1. Generates a certificate signing request
 2. Sends it to Apple
 3. Downloads the signed certificate
@@ -141,7 +141,7 @@ Provisioning Profile = Certificate + App ID + Device List
 
 ### Bundle ID
 
-Your Bundle ID is the unique identifier for your app. We set this in Chapter 9:
+Your Bundle ID is the unique identifier for your app. We set this in Chapter 10:
 
 ```
 com.yourname.gratitudetree
@@ -230,7 +230,7 @@ Someone else has already registered this exact Bundle ID. Choose a different one
 
 ## Checkpoint
 
-<ChapterCheckpoint chapter={13}>
+<ChapterCheckpoint chapter={14}>
 - You have an active **Apple Developer Program membership** ($99/year)
 - You understand what **certificates**, **provisioning profiles**, and **App IDs** are
 - **Automatic signing** is enabled in Xcode with your team selected
@@ -246,4 +246,4 @@ Your developer account is set up and signing is configured. In the next chapter,
 
 <TwitterCallout />
 
-**[Next: Chapter 14 — TestFlight →](./testflight)**
+**[Next: Chapter 15 — TestFlight →](./testflight)**

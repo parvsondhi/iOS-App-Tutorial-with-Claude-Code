@@ -130,6 +130,8 @@ npm run dev
 
 You should see a warm amber page with "GratitudeTree" centered on the screen. If Tailwind classes are working (amber background, bold text), your setup is correct.
 
+![First load in the browser after `npm run dev`](/img/default-first-load-screen.png)
+
 ---
 
 ## Step 5: Set Up the Folder Structure and Project Context
@@ -139,7 +141,7 @@ A clear folder structure keeps you organized as the app grows. Let Claude Code c
 <ClaudeCodePrompt
   variant="build"
   step="Step 5"
-  prompt="Create the folder structure for our app: src/components/, src/pages/, src/lib/, and src/hooks/. Also create a CLAUDE.md file in the project root with directions for any AI assistant: the app should follow iOS Human Interface Guidelines, use a premium minimal aesthetic with subtle shadows and rounded corners, the color scheme is warm amber tones, and the tech stack is React + TypeScript + Vite + Tailwind CSS v4 + Firebase + Capacitor."
+  prompt="Create the folder structure for our app: src/components/, src/pages/, src/lib/, and src/hooks/. Also create a CLAUDE.md file in the project root with directions for any AI assistant: the app should follow iOS Human Interface Guidelines, use a premium minimal aesthetic with subtle shadows and rounded corners, the color scheme is a minimal and clean black and white interface similar to Notion, and the tech stack is React + TypeScript + Vite + Tailwind CSS v4 + Firebase + Capacitor."
   context="The folder structure organizes our code. The CLAUDE.md file tells Claude Code about the project's design philosophy so you don't have to repeat it in every prompt."
   expectedOutput="Claude Code will create four directories and a CLAUDE.md file that acts as a style guide for the project."
   tip="The CLAUDE.md file is like giving Claude Code a design brief. Instead of repeating 'make it look premium' in every prompt, this file handles it automatically."
@@ -165,6 +167,8 @@ Firebase provides our backend — authentication, database, and file storage —
 4. **Disable** Google Analytics (we don't need it and it adds complexity)
 5. Click **Create project**
 
+![Firebase console — creating or viewing a project](/img/firebase-first-page.png)
+
 ### Register a Web App
 
 1. In your Firebase project dashboard, click the **web icon** (`</>`) to add a web app
@@ -178,6 +182,10 @@ Don't worry about pasting the config anywhere yet. We'll create a `.env` file an
 :::
 
 ### Enable Firestore Database
+
+Use the left sidebar under **Build** to open Firestore, Storage, and Authentication:
+
+![Firebase console — Build menu (Firestore, Storage, Auth, etc.)](/img/firebase-console-menu.png)
 
 1. In the Firebase console left sidebar, expand **Build** and click **Firestore Database**
 2. Click **Create database**

@@ -1,7 +1,7 @@
 ---
 sidebar_position: 4
-title: "Chapter 12: iOS-Specific Work"
-description: Handle safe areas, keyboard behavior, app icons, and splash screens for iOS.
+title: "Chapter 13: iOS-Specific Work"
+description: Handle safe areas, keyboard behavior, app icons, and iOS polish for real devices.
 ---
 
 import ClaudeCodePrompt from '@site/src/components/ClaudeCodePrompt';
@@ -9,7 +9,7 @@ import TwitterCallout from '@site/src/components/TwitterCallout';
 import TroubleshootingAccordion from '@site/src/components/TroubleshootingAccordion';
 import ChapterCheckpoint from '@site/src/components/ChapterCheckpoint';
 
-# Chapter 12: iOS-Specific Work
+# Chapter 13: iOS-Specific Work
 
 > Make the app look and feel like it belongs on iOS. Handle the notch, the keyboard, and all the little details.
 
@@ -22,7 +22,6 @@ Your app runs on iOS, but it doesn't quite feel native yet. The status bar overl
 - Handle safe area insets (the notch, home indicator, status bar)
 - Fix keyboard behavior so inputs aren't covered
 - Set up the app icon for all required sizes
-- Create a splash/launch screen
 - Configure the status bar style
 - Ensure touch targets meet Apple's minimum size guidelines
 - Test on the Simulator and a physical device
@@ -204,33 +203,7 @@ After adding the icon:
 
 ---
 
-## Step 7: Create a Launch Screen
-
-The launch screen (splash screen) is what users see between tapping the app icon and the app loading. Apple recommends matching it to your app's initial screen for a seamless transition.
-
-### Option A: Storyboard (recommended)
-
-In Xcode:
-1. Open `ios/App/App/Base.lproj/LaunchScreen.storyboard`
-2. Select the existing view
-3. Set the background color to your amber-50 (`#FFFBEB`)
-4. Optionally add your app icon centered on the screen
-5. Build and run to test
-
-### Option B: Simple color
-
-For the simplest approach, just set the background color:
-
-1. Open LaunchScreen.storyboard in Xcode
-2. Select the **View** in the hierarchy
-3. In the Attributes Inspector, set **Background** to a custom color: `#FFFBEB`
-4. This gives a clean amber splash that transitions smoothly into the app
-
-The launch screen should load almost instantly because Capacitor's web view starts loading immediately. A matching background color creates the illusion of an instant launch.
-
----
-
-## Step 8: Deploy to a Physical Device
+## Step 7: Deploy to a Physical Device
 
 Testing on a real device is the only way to verify:
 - Safe area insets with the actual notch
@@ -266,7 +239,7 @@ If you run into issues deploying to a physical device, paste the full Xcode erro
 
 ---
 
-## Step 9: Final Polish Checklist
+## Step 8: Final Polish Checklist
 
 Before moving to Part 6 (TestFlight), walk through this checklist:
 
@@ -279,20 +252,19 @@ Before moving to Part 6 (TestFlight), walk through this checklist:
 | Input fields don't trigger page zoom (font-size ≥ 16px) | |
 | All buttons are at least 44×44 touch targets | |
 | App icon appears on the home screen | |
-| Launch screen matches the app's background color | |
 | Haptics work on the physical device | |
 | Camera opens the actual viewfinder (not just file picker) | |
 | Shake detection works with a real shake | |
 
 ---
 
-## Step 10: Production Build
+## Step 9: Production Build
 
 Before moving to TestFlight, let's make a production build. Send this prompt to Claude Code to prepare the production config:
 
 <ClaudeCodePrompt
   variant="build"
-  step="Step 10"
+  step="Step 9"
   prompt="Update capacitor.config.ts for production by removing the development server block. The app should load from the bundled files instead of connecting to localhost."
   context="This is the critical switch from development to production — the app must load from bundled files for TestFlight."
   expectedOutput="Claude Code will update capacitor.config.ts to remove the server block while keeping all other configuration."
@@ -317,7 +289,7 @@ Forgetting to remove the server block is the most common TestFlight mistake — 
 
 ---
 
-## Step 11: Commit Your Progress
+## Step 10: Commit Your Progress
 
 ```bash
 git add .
@@ -360,13 +332,12 @@ git push
 
 ## Checkpoint
 
-<ChapterCheckpoint chapter={12}>
+<ChapterCheckpoint chapter={13}>
 - **Safe area insets** are applied — content doesn't overlap the notch or home indicator
 - **Status bar** has the correct style (dark text on light background)
 - **Keyboard** doesn't cover input fields when focused
 - All interactive elements meet the **44×44 minimum touch target**
 - The **app icon** appears on the home screen
-- The **launch screen** matches the app's background color
 - The app runs correctly on a **physical iOS device**
 - A **production build** works without the dev server
 </ChapterCheckpoint>
@@ -379,13 +350,13 @@ Your web app is now a fully functional iOS app. Let's recap what Part 5 added:
 
 | Feature | Chapter |
 |---|---|
-| Capacitor setup and Xcode project | Chapter 9 |
-| Native camera and haptic feedback | Chapter 10 |
-| Shake-to-discover with motion detection | Chapter 11 |
-| Safe areas, icons, keyboard, and polish | Chapter 12 |
+| Capacitor setup and Xcode project | Chapter 10 |
+| Native camera and haptic feedback | Chapter 11 |
+| Shake-to-discover with motion detection | Chapter 12 |
+| Safe areas, icons, keyboard, and polish | Chapter 13 |
 
 In Part 6, we'll take this app to the finish line — setting up an Apple Developer account, configuring App Store Connect, and shipping to TestFlight so other people can install and test your app on their iPhones.
 
 <TwitterCallout />
 
-**[Next: Chapter 13 — Apple Developer Account →](../part-6-testflight/apple-developer)**
+**[Next: Chapter 14 — Apple Developer Account →](../part-6-testflight/apple-developer)**

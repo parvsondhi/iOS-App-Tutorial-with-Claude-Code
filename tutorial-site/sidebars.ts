@@ -41,6 +41,7 @@ const sidebars: SidebarsConfig = {
         'part-4-web-app/auth',
         'part-4-web-app/polish',
         'part-4-web-app/streaks',
+        'part-4-web-app/having-fun',
       ],
     },
     {
