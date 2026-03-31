@@ -25,6 +25,14 @@ const config: Config = {
     },
   },
 
+  scripts: [
+    {
+      src: 'https://cdn.usefathom.com/script.js',
+      'data-site': 'FWVAMCRM',
+      defer: true,
+    },
+  ],
+
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],

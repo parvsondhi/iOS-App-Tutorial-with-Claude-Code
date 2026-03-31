@@ -19,7 +19,7 @@ const features: Feature[] = [
     icon: '💡',
     title: 'Start with an Idea',
     description:
-      'Learn how to scope an MVP, sketch wireframes, and design your data model before writing a single line of code.',
+      'Scope an MVP, sketch wireframes, and design your data model before writing a single line of code.',
   },
   {
     icon: '⚛️',
@@ -31,7 +31,7 @@ const features: Feature[] = [
     icon: '🔥',
     title: 'Power it with Firebase',
     description:
-      'Add real authentication, a Firestore database, and cloud storage for photos — a real backend, not mock data.',
+      'Add real authentication, a Firestore database, and cloud storage — a real backend, not mock data.',
   },
   {
     icon: '📱',
@@ -43,7 +43,7 @@ const features: Feature[] = [
     icon: '🤖',
     title: 'Accelerate with Claude Code',
     description:
-      'Use AI-assisted development at every step — scaffolding, debugging, iterating, and reviewing your code.',
+      'Use AI-assisted development at every step — scaffolding, debugging, iterating, and reviewing code.',
   },
   {
     icon: '🚀',
@@ -90,21 +90,48 @@ function HeroSection() {
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
-        <div className={styles.heroContent}>
-          <Heading as="h1" className={styles.heroTitle}>
-            {siteConfig.title}
-          </Heading>
-          <p className={styles.heroSubtitle}>{siteConfig.tagline}</p>
-          <p className={styles.heroDescription}>
-            A free, step-by-step tutorial that takes you from a blank folder to a
-            real iOS app on TestFlight. No prior mobile experience needed.
-          </p>
-          <div className={styles.heroButtons}>
-            <Link
-              className="button button--secondary button--lg"
-              to="/docs/intro">
-              Start Building — It's Free
-            </Link>
+        <div className={styles.heroGrid}>
+          <div className={styles.heroContent}>
+            <div className={styles.heroBadge}>Free · Hands-on · No mobile experience needed</div>
+            <Heading as="h1" className={styles.heroTitle}>
+              {siteConfig.title}
+            </Heading>
+            <p className={styles.heroSubtitle}>{siteConfig.tagline}</p>
+            <p className={styles.heroDescription}>
+              A step-by-step tutorial that takes you from a blank folder to a real iOS app on TestFlight — using Claude Code at every step.
+            </p>
+            <div className={styles.heroButtons}>
+              <Link
+                className="button button--secondary button--lg"
+                to="/docs/intro">
+                Start Building — It's Free
+              </Link>
+            </div>
+            <div className={styles.heroStats}>
+              <div className={styles.statItem}>
+                <span className={styles.statNumber}>18</span>
+                <span className={styles.statLabel}>Chapters</span>
+              </div>
+              <div className={styles.statDivider} />
+              <div className={styles.statItem}>
+                <span className={styles.statNumber}>6</span>
+                <span className={styles.statLabel}>Parts</span>
+              </div>
+              <div className={styles.statDivider} />
+              <div className={styles.statItem}>
+                <span className={styles.statNumber}>100%</span>
+                <span className={styles.statLabel}>Free</span>
+              </div>
+            </div>
+          </div>
+          <div className={styles.heroVideoCol}>
+            <video
+              className={styles.heroVideoFrame}
+              controls
+              playsInline
+              preload="metadata">
+              <source src="/img/tutorial.mp4" type="video/mp4" />
+            </video>
           </div>
         </div>
       </div>
@@ -112,35 +139,96 @@ function HeroSection() {
   );
 }
 
+type AppFeature = {
+  icon: string;
+  title: string;
+  description: string;
+};
+
+const appFeatures: AppFeature[] = [
+  {
+    icon: '🌳',
+    title: 'Living SVG tree',
+    description: 'Each journal entry grows a new branch on an animated SVG tree — rendered in real time as your memories accumulate.',
+  },
+  {
+    icon: '📸',
+    title: 'Text & photo entries',
+    description: 'Write a thought or snap a photo directly from the app using the native iOS camera.',
+  },
+  {
+    icon: '📳',
+    title: 'Shake to remember',
+    description: 'Shake your phone and a random past memory surfaces — powered by the device accelerometer.',
+  },
+  {
+    icon: '🔥',
+    title: 'Streak tracking',
+    description: 'A fire animation rewards daily journaling streaks, encouraging a habit that sticks.',
+  },
+  {
+    icon: '☁️',
+    title: 'Real-time sync',
+    description: 'Entries sync instantly across devices via Firestore — no refresh needed.',
+  },
+  {
+    icon: '🔐',
+    title: 'Full auth flow',
+    description: 'Sign up, log in, and persist sessions — a complete Firebase Authentication integration.',
+  },
+];
+
 function AppPreview() {
   return (
     <section className={styles.appPreview}>
       <div className="container">
-        <div className={styles.appPreviewInner}>
-          <div className={styles.appPreviewText}>
-            <Heading as="h2">What You'll Build</Heading>
-            <p className={styles.appName}>GratitudeTree</p>
-            <p>
-              A daily journal app where every entry is a moment worth keeping.
-              Write a thought or snap a photo. Shake the jar to rediscover a
-              random past memory.
-            </p>
-            <ul className={styles.featureList}>
-              <li>Text and photo journal entries</li>
-              <li>Real-time sync across devices</li>
-              <li>Camera integration with native iOS</li>
-              <li>Shake-to-discover random memories</li>
-              <li>Streak tracking with fire animations</li>
-              <li>Full authentication flow</li>
-            </ul>
-          </div>
-          <div className={styles.appPreviewMockup}>
-            <img
-              src="/img/app-screenshot.png"
-              alt="GratitudeTree app running on iPhone"
-              className={styles.appScreenshot}
-            />
-          </div>
+        <Heading as="h2" className={styles.sectionTitle}>What You'll Build</Heading>
+        <p className={styles.appName}>GratitudeTree</p>
+        <p className={styles.appDescription}>
+          A daily journal app where every entry is a moment worth keeping. Write a thought, snap a photo, shake to rediscover a memory — built end-to-end with Claude Code.
+        </p>
+        <div className={styles.appFeatureGrid}>
+          {appFeatures.map((f, idx) => (
+            <div key={idx} className={styles.appFeatureItem}>
+              <span className={styles.appFeatureIcon}>{f.icon}</span>
+              <div>
+                <strong className={styles.appFeatureTitle}>{f.title}</strong>
+                <p className={styles.appFeatureDesc}>{f.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AudienceSection() {
+  return (
+    <section className={styles.audience}>
+      <div className="container">
+        <div className={styles.audienceInner}>
+          <Heading as="h2" className={styles.audienceTitle}>Who This Tutorial Is For</Heading>
+          <p className={styles.audienceLead}>
+            <strong>Anyone who has an app idea and wants to see it in the App Store.</strong>
+          </p>
+          <p className={styles.audienceBody}>
+            You don't need to know React, Firebase, or mobile development. This tutorial
+            teaches you everything from scratch — using Claude Code to accelerate every step:
+          </p>
+          <ul className={styles.audienceList}>
+            <li>Writes and edits code directly in your project files</li>
+            <li>Helps you debug errors without copying and pasting into a chat window</li>
+            <li>Understands the full context of your codebase across every session</li>
+            <li>Runs multiple tasks in parallel so you spend less time waiting</li>
+            <li>Acts as a senior developer pair-programming alongside you</li>
+          </ul>
+          <p className={styles.audienceBody}>
+            This is AI integrated into your actual development workflow — not bolted on as a chat window.
+          </p>
+          <p className={styles.audienceFootnote}>
+            <strong>You don't need prior mobile or React experience.</strong> If you have a Mac and the drive to build something, you have everything you need to start.
+          </p>
         </div>
       </div>
     </section>
@@ -159,12 +247,12 @@ function FeatureCards() {
         </p>
         <div className={styles.featureGrid}>
           {features.map((feature, idx) => (
-            <div key={idx} className="feature-card">
+            <div key={idx} className={styles.featureCard}>
               <div className={styles.featureIcon}>{feature.icon}</div>
               <Heading as="h3" className={styles.featureCardTitle}>
                 {feature.title}
               </Heading>
-              <p>{feature.description}</p>
+              <p className={styles.featureCardText}>{feature.description}</p>
             </div>
           ))}
         </div>
@@ -239,18 +327,17 @@ function Prerequisites() {
         <div className={styles.prereqCard}>
           <Heading as="h2">Before You Start</Heading>
           <div className={styles.prereqGrid}>
-            <div>
-              <Heading as="h3">You Need</Heading>
-              <ul>
+            <div className={styles.prereqColumn}>
+              <Heading as="h3" className={styles.prereqHeadingYes}>You Need</Heading>
+              <ul className={styles.prereqList}>
                 <li>A Mac (required for iOS development)</li>
-                <li>Basic HTML, CSS, and JavaScript knowledge</li>
                 <li>A free GitHub account</li>
                 <li>Apple Developer account ($99/year — sign up early)</li>
               </ul>
             </div>
-            <div>
-              <Heading as="h3">You Don't Need</Heading>
-              <ul>
+            <div className={styles.prereqColumn}>
+              <Heading as="h3" className={styles.prereqHeadingNo}>You Don't Need</Heading>
+              <ul className={styles.prereqList}>
                 <li>Prior React experience (we'll teach you)</li>
                 <li>Mobile development experience</li>
                 <li>Firebase knowledge</li>
@@ -296,6 +383,7 @@ export default function Home(): ReactNode {
       <HeroSection />
       <main>
         <AppPreview />
+        <AudienceSection />
         <FeatureCards />
         <JourneyTimeline />
         <TechStackSection />
