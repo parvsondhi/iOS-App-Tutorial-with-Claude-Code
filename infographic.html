@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your First iOS App with Claude Code</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #0f0f0f;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .page {
+    width: 816px;
+    min-height: 1056px;
+    background: linear-gradient(180deg, #0a0a0a 0%, #111111 100%);
+    color: #e5e5e5;
+    padding: 44px 48px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* subtle grid texture */
+  .page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* amber glow accent top-right */
+  .page::after {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(245,158,11,.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .header {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 28px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #f59e0b;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1.15;
+    color: #ffffff;
+    margin-bottom: 8px;
+  }
+
+  h1 span {
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    font-size: 13.5px;
+    color: #a3a3a3;
+    line-height: 1.5;
+    max-width: 560px;
+  }
+
+  /* Tech stack pills */
+  .tech-stack {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .pill {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.04);
+    color: #d4d4d4;
+    letter-spacing: 0.3px;
+  }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    z-index: 1;
+    margin-top: 24px;
+  }
+
+  .phase {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0;
+    margin-bottom: 2px;
+  }
+
+  .phase-left {
+    padding: 16px 20px 16px 0;
+    border-right: 2px solid rgba(245,158,11,.25);
+    position: relative;
+    text-align: right;
+  }
+
+  .phase-left::after {
+    content: '';
+    position: absolute;
+    right: -7px;
+    top: 20px;
+    width: 12px;
+    height: 12px;
+    background: #f59e0b;
+    border-radius: 50%;
+    border: 2px solid #0a0a0a;
+  }
+
+  .phase:last-of-type .phase-left {
+    border-right-color: transparent;
+  }
+  .phase:last-of-type .phase-left::after {
+    background: #22c55e;
+  }
+
+  .phase-number {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #f59e0b;
+    margin-bottom: 2px;
+  }
+
+  .phase:last-of-type .phase-number {
+    color: #22c55e;
+  }
+
+  .phase-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .phase-time {
+    font-size: 10px;
+    color: #737373;
+    margin-top: 2px;
+  }
+
+  .phase-right {
+    padding: 14px 0 14px 24px;
+  }
+
+  .phase-content {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .step-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+  }
+
+  .step-grid.three-col {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: #d4d4d4;
+  }
+
+  .step-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    margin-top: 1px;
+  }
+
+  .icon-amber { background: rgba(245,158,11,.15); color: #f59e0b; }
+  .icon-blue { background: rgba(59,130,246,.15); color: #60a5fa; }
+  .icon-purple { background: rgba(168,85,247,.15); color: #c084fc; }
+  .icon-green { background: rgba(34,197,94,.15); color: #4ade80; }
+
+  .prompt-box {
+    margin-top: 8px;
+    background: rgba(245,158,11,.05);
+    border: 1px solid rgba(245,158,11,.15);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 10.5px;
+    color: #d4d4d8;
+    line-height: 1.45;
+    position: relative;
+  }
+
+  .prompt-box::before {
+    content: 'PROMPT';
+    position: absolute;
+    top: -7px;
+    left: 8px;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #f59e0b;
+    background: #111;
+    padding: 0 4px;
+  }
+
+  .cmd-box {
+    margin-top: 8px;
+    background: rgba(59,130,246,.04);
+    border: 1px solid rgba(59,130,246,.12);
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 10px;
+    color: #93c5fd;
+    line-height: 1.5;
+  }
+
+  .cmd-box .dim { color: #525252; }
+
+  /* What you're building */
+  .what-you-build {
+    position: relative;
+    z-index: 1;
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .feature-card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .feature-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .feature-card h4 {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 1px;
+  }
+
+  .feature-card p {
+    font-size: 10px;
+    color: #737373;
+    line-height: 1.35;
+  }
+
+  /* Prerequisites bar */
+  .prereqs {
+    position: relative;
+    z-index: 1;
+    margin-top: 16px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 8px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .prereq-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #737373;
+    white-space: nowrap;
+  }
+
+  .prereq-items {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .prereq-item {
+    font-size: 11px;
+    color: #a3a3a3;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .prereq-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #525252;
+  }
+
+  /* Footer */
+  .footer {
+    position: relative;
+    z-index: 1;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-left {
+    font-size: 11px;
+    color: #525252;
+  }
+
+  .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .footer-cta {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f59e0b;
+  }
+
+  .footer-url {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+  }
+
+  .arrow-icon {
+    color: #f59e0b;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="eyebrow">No iOS experience needed</div>
+    <h1>Build Your First iOS App<br>with <span>Claude Code</span></h1>
+    <p class="subtitle">Go from an empty folder to a real app on TestFlight — using React, Firebase, and Claude Code as your AI pair programmer. No Swift required.</p>
+  </div>
+
+  <!-- Tech stack -->
+  <div class="tech-stack">
+    <span class="pill">React</span>
+    <span class="pill">TypeScript</span>
+    <span class="pill">Vite</span>
+    <span class="pill">Tailwind CSS</span>
+    <span class="pill">Firebase</span>
+    <span class="pill">Capacitor</span>
+    <span class="pill">Claude Code</span>
+  </div>
+
+  <!-- What You're Building -->
+  <div class="what-you-build">
+    <div class="feature-card">
+      <div class="feature-icon icon-amber">📝</div>
+      <div>
+        <h4>Journal Entries</h4>
+        <p>Text &amp; photo entries with real-time Firestore sync</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-blue">🔐</div>
+      <div>
+        <h4>Authentication</h4>
+        <p>Email/password auth with per-user data isolation</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-purple">🔥</div>
+      <div>
+        <h4>Streaks &amp; Stats</h4>
+        <p>Animated fire icon, calendar heatmap, profile stats</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-green">📱</div>
+      <div>
+        <h4>Native iOS</h4>
+        <p>Camera, haptics, shake detection, safe areas</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prerequisites -->
+  <div class="prereqs">
+    <span class="prereq-label">You need</span>
+    <div class="prereq-items">
+      <span class="prereq-item">Mac</span>
+      <span class="prereq-dot"></span>
+      <span class="prereq-item">Xcode</span>
+      <span class="prereq-dot"></span>
+      <span class="prereq-item">Node.js 18+</span>
+      <span class="prereq-dot"></span>
+      <span class="prereq-item">Claude Code</span>
+      <span class="prereq-dot"></span>
+      <span class="prereq-item">Apple Developer Account ($99/yr)</span>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline">
+
+    <!-- Phase 1: Setup -->
+    <div class="phase">
+      <div class="phase-left">
+        <div class="phase-number">Part 1</div>
+        <div class="phase-title">Setup</div>
+        <div class="phase-time">~15 min</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-content">
+          <div class="step-grid three-col">
+            <div class="step-item">
+              <div class="step-icon icon-amber">1</div>
+              <span>Install Claude Code via npm</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-amber">2</div>
+              <span>Scaffold Vite + React + TS</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-amber">3</div>
+              <span>Configure Firebase project</span>
+            </div>
+          </div>
+          <div class="cmd-box">
+            npm install -g @anthropic-ai/claude-code<br>
+            mkdir gratitude-tree && cd gratitude-tree && claude
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2: Web App -->
+    <div class="phase">
+      <div class="phase-left">
+        <div class="phase-number">Part 2</div>
+        <div class="phase-title">Web App</div>
+        <div class="phase-time">2–4 hours</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-content">
+          <div class="step-grid">
+            <div class="step-item">
+              <div class="step-icon icon-blue">1</div>
+              <span>Mobile-first app shell with tabs</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-blue">2</div>
+              <span>CRUD + Firestore + photo upload</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-blue">3</div>
+              <span>Auth &amp; per-user data isolation</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-blue">4</div>
+              <span>Loading, empty states, toasts</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-blue">5</div>
+              <span>Streaks, stats &amp; calendar</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-blue">6</div>
+              <span>Animated tree &amp; micro-interactions</span>
+            </div>
+          </div>
+          <div class="prompt-box">
+            "Create a mobile-first app scaffold with a fixed header, bottom nav with Feed/Add/Profile tabs. Use warm amber tones." — Each feature is one prompt to Claude Code.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3: Go Native -->
+    <div class="phase">
+      <div class="phase-left">
+        <div class="phase-number">Part 3</div>
+        <div class="phase-title">Go Native</div>
+        <div class="phase-time">1–2 hours</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-content">
+          <div class="step-grid">
+            <div class="step-item">
+              <div class="step-icon icon-purple">1</div>
+              <span>Add Capacitor + iOS platform</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-purple">2</div>
+              <span>Fix WKWebView compatibility</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-purple">3</div>
+              <span>Native camera &amp; haptic feedback</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-purple">4</div>
+              <span>Shake-to-discover with motion API</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-purple">5</div>
+              <span>Safe areas, keyboard, touch targets</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-purple">6</div>
+              <span>App icon &amp; launch screen</span>
+            </div>
+          </div>
+          <div class="cmd-box">
+            npm install @capacitor/core @capacitor/cli @capacitor/ios<br>
+            npm run build && npx cap sync && npx cap open ios
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 4: TestFlight -->
+    <div class="phase">
+      <div class="phase-left">
+        <div class="phase-number">Part 4</div>
+        <div class="phase-title">TestFlight</div>
+        <div class="phase-time">1–2 hours</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-content">
+          <div class="step-grid">
+            <div class="step-item">
+              <div class="step-icon icon-green">1</div>
+              <span>Create app record in App Store Connect</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-green">2</div>
+              <span>Remove dev server &amp; production build</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-green">3</div>
+              <span>Archive in Xcode &amp; upload</span>
+            </div>
+            <div class="step-item">
+              <div class="step-icon icon-green">4</div>
+              <span>Invite testers — app on real iPhones</span>
+            </div>
+          </div>
+          <div class="cmd-box">
+            <span class="dim"># Production build, then archive + upload from Xcode</span><br>
+            npm run build && npx cap sync<br>
+            <span class="dim"># Xcode → Product → Archive → Distribute App → Upload</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Done -->
+    <div class="phase">
+      <div class="phase-left">
+        <div class="phase-number" style="color:#22c55e">Done</div>
+        <div class="phase-title" style="color:#4ade80">Ship It</div>
+        <div class="phase-time">~5–9 hours total</div>
+      </div>
+      <div class="phase-right">
+        <div class="phase-content" style="border-color: rgba(34,197,94,.15); background: rgba(34,197,94,.04);">
+          <div class="step-item" style="font-size: 12.5px; color: #e5e5e5;">
+            <span>Your app is on TestFlight. Real people are using something you built. From here you can iterate with the update cycle (build → sync → archive → upload) or prepare for full App Store submission.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-left">Built with Claude Code — no Swift required</div>
+    <div class="footer-right">
+      <span class="footer-cta">Full 18-chapter tutorial with troubleshooting →</span>
+      <span class="footer-url">ideatoios.com</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
